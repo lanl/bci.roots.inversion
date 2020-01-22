@@ -1,0 +1,17 @@
+
+# https://jasonstitt.com/gitignore-whitelisting-patterns
+# Ignore everything
+*
+# But descend into directories
+!*/
+# Recursively allow files under subtree
+!/R/**
+# You can be specific with these rules
+!.gitignore
+!*.rmd
+
+# https://stackoverflow.com/questions/44568184/gitignore-everything-except-a-subfolder-with-every-content
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata

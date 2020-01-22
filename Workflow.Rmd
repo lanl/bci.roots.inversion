@@ -1,0 +1,69 @@
+---
+title: "Workflow of Inverse Model for Rooting Profiles"
+author: "Rutuja"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, include = TRUE)
+```
+
+## How is this project set-up
+
+##### Load swp or gfac data from 
+## Then using a combination of a range of hypothetical root profiles obtained from 2.rooting_profiles.R and SWP ensemble simulations generate a btran time-series using equation : Btran= i=1 to i=z RootFrac_z * f(swp_z),
+where f(swp_z) is a growth.factor_z based on a linear step relationship with swp_z defined based on maximum value in BCI tlp data from Kunert's.
+Code/6.0_Growth_correlate_table_from_swp.R
+
+```{r Chunk 1.0, eval = FALSE}
+source("R/1.GLUEsetup_part1_BCI.R")
+GLUEsetup_part1(current.folder = "2019-10-14_5000", intervals = 5) # this can take 30 min to get btran by nsam
+```
+
+```{r Chunk 2.2.0, eval = FALSE}
+source("R/4.1.GLUEsetup_part2_BCI.R")
+GLUEsetup_part2(growth.type = "med", dbh.residuals = "on", solar.residuals = "off", 
+                growth.selection = "size_class_predefined_cc_scaled") #"size_class_varying_non_cc") #n.ensembles = 100000
+```
+
+```{r Chunk 2.3.0, eval = TRUE}
+# This sources "R/4.2GLUErun_part2_func_BCI.R"
+source("R/4.3.GLUErun_part2_BCI.R")
+GLUE_run(splevel = "off", goodness.fit = 0.3)
+GLUE_run(splevel = "on", goodness.fit = 0.3)
+```
+
+```{r Chunk 2.4.0, eval = TRUE}
+source("R/4.4.Best-fit_param_BCI.R")
+bestfit.param(splevel = "on")
+bestfit.param(splevel = "off")
+```
+
+```{r Chunk 2.4.1, eval = TRUE}
+source("R/4.5.prep.udi.calculator.R")
+prep.udi.calculator(splevel = "on")
+prep.udi.calculator(splevel = "off")
+```
+
+```{r Chunk 2.4.2, eval = TRUE}
+source("R/4.6.udi.calculator.R")
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.5) ## udi is not calculated below this rsq.thresh
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.5)
+```
+
+```{r Chunk 2.4.4, eval = TRUE}
+source("R/4.7.summarising_udi_by_sp_size.R")
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.7)
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.7)
+```
+
+```{r Chunk 2.5.0, eval = TRUE}
+source("R/10.Comparison_with_Meinzer1999.R")
+```
+
+```{r Chunk 2.5.1, eval = FALSE}
+source("R/5.species_graphs_BCI.R")
+source("R/9.5mortality_BCI.R")
+source("R/13.hydraulic_traits_BCI.R")
+```

@@ -20,23 +20,30 @@ intervals <- info$intervals
 n.ensembles <- growth_by_si.info$n.ensembles
 growth.type <- growth_by_si.info$growth.type
 growth.selection <- growth_by_si.info$growth.selection
-dbh.residuals <- growth_by_si.info$dbh.residuals
 si.type <- growth_by_si.info$si.type
-runs <- info$root.param
 goodness.fit <- 0.3
-dryseason = "on"
 soil.depths <- unique(info$root.param.long$depth)
-if(!dir.exists(file.path("figures/UDI", growth.type))) {dir.create(file.path("figures/UDI", growth.type))}
-
 ##
-load(file = paste("results/splevel/ds.bestfit_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_id_dryseason_", dryseason, ".Rdata", sep = ""))
-load(file = paste("results/splevel/ds.bestfit.longer_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_id_dryseason_", dryseason, ".Rdata", sep = ""))
-ds <- ds.bestfit
-dss <- ds.bestfit.longer
-load(file = paste("results/commlevel/ds.bestfit_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_id_dryseason_", dryseason, ".Rdata", sep = ""))
-load(file = paste("results/commlevel/ds.bestfit.longer_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_id_dryseason_", dryseason, ".Rdata", sep = ""))
+dbh.residuals <- "on"#growth_by_si.info$dbh.residuals
+dryseason <- "on"
+root.selection <- "on"
+iso.subset <- "off"
+##
+file.extension.base4 <- paste0(goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection,
+                               "_", dbh.residuals, "_", intervals, "_dryseason_", dryseason, "_iso.subset_",
+                               iso.subset, "_root.selection_", root.selection)
 
-ds <- rbind(ds, ds.bestfit) %>% mutate(tlplevel = as.factor(tlplevel))
+load(file = paste("results/splevel/ds.bestfit_cor", file.extension.base4, ".Rdata", sep = ""))
+ds <- ds.bestfit
+load(file = paste0("results/commlevel/ds.bestfit_cor", file.extension.base4, ".Rdata"))
+ds <- rbind(ds, ds.bestfit)
+
+ds <- ds %>% mutate(tlplevel = as.factor(tlplevel)) %>%
+  subset(!is.na(udi)) %>% droplevels()
+
+load(file = paste0("results/splevel/ds.bestfit.longer_cor", file.extension.base4, ".Rdata"))
+dss <- ds.bestfit.longer %>% mutate(tlplevel = as.factor(tlplevel))
+load(file = paste0("results/commlevel/ds.bestfit.longer_cor", file.extension.base4, ".Rdata"))
 dss <- rbind(dss, ds.bestfit.longer) %>% mutate(tlplevel = as.factor(tlplevel))
 length(ds$sp_size[!is.na(ds$udi)]) # 308 for cor.03
 # #dss <- read.csv(paste("results/StressIndex.modelfits_", n.ensembles, growth.type,".csv", sep = ""), na.strings = c("NA",""), header = T, row.names = NULL, check.names = F)
@@ -74,7 +81,7 @@ rev_sqrt_trans <- function() {
 }
 dss.long.sub <- dss %>% # %>% subset(!is.na(root.frac))
   select(udi, depth, cum.root.frac, root.frac, rf.sam,
-         sp, sp_size, size, sp_size_par.sam_n.best, n, max.root, tlplevel, rsq) %>%
+         sp, sp_size, size, sp_size_par.sam_rf.sam, n, max.root, tlplevel, rsq) %>%
   mutate(depth = as.numeric(depth)) %>% arrange(desc(n))
 
 sp_n <- unique(select(dss, sp_size, n)) %>% arrange(desc(n))
@@ -84,7 +91,7 @@ dss.long.sub.large.2 <- dss.long.sub %>%
 
 ggplot(dss.long.sub,
        aes(y = depth, x = root.frac)) + xlab("Root Fraction") + ylab("Depth (m)") +
-  geom_line(aes(group = sp_size_par.sam_n.best, color = sp), show.legend = FALSE) +
+  geom_line(aes(group = sp_size_par.sam_rf.sam, color = sp), show.legend = FALSE) +
   facet_grid(size ~ tlplevel) +
   scale_y_continuous(trans="rev_sqrt", breaks = soil.depths)
 ggsave(paste0("figures/UDI/", growth.type,"/root.frac_by_size_cor", goodness.fit, "_", si.type, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, ".jpeg"), width = 7, height = 7, units = 'in')
@@ -93,9 +100,11 @@ ggsave(paste0("figures/UDI/", growth.type,"/root.frac_by_size_cor", goodness.fit
 load(file = "results/sp_with_isotopic_record.Rdata")
 dss.long.sub.isosp <- dss.long.sub %>% subset(sp %in% iso.sp & size %in% c("large")) %>%
   droplevels() %>% arrange(udi)
+dss.long.sub.isosp <- dss.long.sub %>% subset(udi > 7.8 & size %in% c("large")) %>%
+  droplevels() %>% arrange(udi)
 # ggplot(dss.long.sub.isosp,
 #        aes(y = depth, x = cum.root.frac)) + xlab("Cumulative Root Fraction") + ylab("Depth (m)") +
-#   geom_line(aes(group = sp_size_par.sam_n.best, color = rsq)) +
+#   geom_line(aes(group = sp_size_par.sam_rf.sam, color = rsq)) +
 #   facet_wrap(sp ~ .) +
 #   scale_y_continuous(trans="rev_sqrt", breaks = soil.depths) +
 #   scale_color_continuous(trans = "reverse")
@@ -105,37 +114,51 @@ best.dss.long.sub.isosp <- dss.long.sub.isosp %>%
   unite("sp_size.tlplevel", sp_size, tlplevel, remove = FALSE) %>% group_by(sp_size.tlplevel) %>%
   mutate(max.rsq = rsq == max(rsq, na.rm = TRUE)) %>% subset(max.rsq == TRUE)
 tlplevels <- c("sp", "comm")
-rsq.thresh <- 0.9
+rsq.thresh <- 0.7
 for (i in 1: length(tlplevels)) {
   ggplot(dss.long.sub.isosp %>% subset(rsq >= rsq.thresh & tlplevel == tlplevels[i]),
          aes(y = depth, x = cum.root.frac)) + xlab("Cumulative Root Fraction") + ylab("Depth (m)") +
-    geom_line(aes(group = sp_size_par.sam_n.best, color = rsq)) +
+    geom_line(aes(group = sp_size_par.sam_rf.sam, color = rsq)) +
     geom_line(data = best.dss.long.sub.isosp %>% subset(tlplevel == tlplevels[i]),
-              aes(group = sp_size_par.sam_n.best), color = "red", size = 1) +
+              aes(group = sp_size_par.sam_rf.sam), color = "red", size = 1) +
     facet_wrap(sp ~ .) +
+    theme(panel.grid.major.y = element_line(color = "gray", size = 0.1)) +
     scale_y_continuous(trans="rev_sqrt", breaks = c(0.00001, soil.depths)) +
     scale_color_continuous(trans = "reverse")
   ggsave(paste0("figures/UDI/", growth.type,"/cum.root.frac_iso.sp_rsq", rsq.thresh ,"_cor", goodness.fit, "_",
-                tlplevels[i], "_", si.type, "_", growth.type, "_", intervals,".jpeg"), width = 9, height = 9, units = 'in')
+                tlplevels[i], "_", si.type, "_", growth.type, "_", intervals,".jpeg"), width = 9, height = 12, units = 'in')
 }
 
+for (i in 1: length(tlplevels)) {
+  ggplot(dss.long.sub.isosp %>% subset(rsq >= rsq.thresh & tlplevel == tlplevels[i]),
+         aes(y = depth, x = root.frac)) + xlab("Root Fraction") + ylab("Depth (m)") +
+    geom_point(aes(group = sp_size_par.sam_rf.sam, color = rsq)) +
+    geom_point(data = best.dss.long.sub.isosp %>% subset(tlplevel == tlplevels[i]),
+              aes(group = sp_size_par.sam_rf.sam), color = "red", size = 1) +
+    facet_wrap(sp ~ .) +
+    theme(panel.grid.major.y = element_line(color = "gray", size = 0.1)) +
+    scale_y_continuous(trans="rev_sqrt", breaks = c(0.00001, soil.depths)) +
+    scale_color_continuous(trans = "reverse")
+  ggsave(paste0("figures/UDI/", growth.type,"/root.frac_iso.sp_rsq", rsq.thresh ,"_cor", goodness.fit, "_",
+                tlplevels[i], "_", si.type, "_", growth.type, "_", intervals,".jpeg"), width = 9, height = 12, units = 'in')
+}
 ggplot(dss.long.sub.isosp,
        aes(y = depth, x = root.frac)) + xlab("Root Fraction") + ylab("Depth (m)") +
-  geom_line(aes(group = sp_size_par.sam_n.best, color = sp), show.legend = FALSE) +
+  geom_line(aes(group = sp_size_par.sam_rf.sam, color = sp), show.legend = FALSE) +
   facet_wrap(sp ~ .) +
   scale_y_continuous(trans="rev_sqrt", breaks = soil.depths)
 ggsave(paste0("figures/UDI/", growth.type,"/root.frac_iso.sp_cor", goodness.fit, "_", si.type, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, ".jpeg"), width = 7, height = 7, units = 'in')
 
 ggplot(dss.long.sub,
        aes(y = depth, x = cum.root.frac)) + xlab("Cumulative Root Fraction") + ylab("Depth (m)") +
-  geom_line(aes(group = sp_size_par.sam_n.best, color = sp), show.legend = FALSE) +
+  geom_line(aes(group = sp_size_par.sam_rf.sam, color = sp), show.legend = FALSE) +
   facet_grid(size ~ tlplevel) +
   scale_y_continuous(trans="rev_sqrt", breaks = soil.depths)
 ggsave(paste0("figures/UDI/", growth.type,"/cum.root.frac_by_size_cor", goodness.fit, "_", si.type, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, ".jpeg"), width = 7, height = 9, units = 'in')
 
-dss <- transform(dss, sp = reorder(sp, -udi))
-# this plots rsq for individual  sp_size_par.sam_n.best
-ggplot(dss, aes(x = udi, y = rsq, colour = size)) +
+dss <- transform(dss, sp = reorder(sp, -best.udi))
+# this plots rsq for individual  sp_size_par.sam_rf.sam
+ggplot(dss, aes(x = best.udi, y = rsq, colour = size)) +
   geom_point(size = 2, alpha = 0.7) +
   facet_grid(. ~ tlplevel) +
   guides(colour = guide_legend(title = "sp_size")) +
@@ -181,6 +204,7 @@ range(dss$n)
 # with dss$best.type.rsq >= 0.9; N > 5 -> 31 sp,
 ds <- ds %>% transform(sp = reorder(sp, udi)) %>%
   mutate(size = factor(size, levels = c("tiny", "small", "medium", "large"))) %>%
+  mutate(tlp.plot = recode_factor(tlplevel, comm  = "Community Level", sp = "Species Level")) %>%
   droplevels()
 ## to mantain same color for each sp_size
 # library(scales)
@@ -196,20 +220,30 @@ sp_n <- unique(select(ds, sp_size, n)) %>% arrange(desc(n))
 # ds <- subset(ds, sp_size %in% few_sp)
 #growth.type <- paste(growth.type, "top_sp", sep = "_")
 ###---------------
-ds.large <- ds %>% subset(size == "large" & !is.na(udi)) %>% transform(sp = reorder(sp, udi)) %>% droplevels()
-g <- ggplot(ds.large, aes(x = as.factor(sp), y = -udi)) +
-  geom_errorbar(aes(ymax = -udi + udi.se, ymin = -udi - udi.se), colour = "black", width = 0.001, size = 0.5) +
+ds.large <- ds %>% subset(size == "large" & !is.na(udi)) %>%
+  transform(sp = reorder(sp, udi)) %>% droplevels()
+g <- ggplot(ds.large, aes(x = as.factor(sp))) +
   #geom_point(colour = "black", fill = "white", aes(shape = tlplevel, size = n)) + # ,
-  scale_size(range = c(1, 5), "Sample Size", breaks = c(10, 100, 500)) +
+  # scale_size(range = c(1, 2), "Sample Size", breaks = c(200, 500)) +
   theme(legend.position = c(0.85, 0.75)) +
   scale_y_continuous(trans="rev_sqrt", breaks = soil.depths) +
   theme(axis.text.x = element_text(size = 10, face = "plain", angle = 45, vjust = 1, hjust = 1)) +
-  xlab("Species") + ylab(expression("Uptake Depth Index (m)"))
-g0 <- g + geom_point(colour = "darkgray", aes(shape = tlplevel, fill = sp, size = n)) +
-  scale_shape_manual(values = c(21, 24)) + guides(fill = "none") +
+  xlab("Species") + ylab(expression("Uptake Depth Index (m)")) +
+  theme(legend.position = "top")
+g0 <- g +
+  geom_errorbar(aes(ymax = udi + udi.se, ymin = udi - udi.se), colour = "black", width = 0.001, size = 0.5) +
+  geom_point(aes(y = udi, shape = tlp.plot, fill = sp), size = 2, colour = "darkgray") +
+  scale_shape_manual(name = "Turgor Loss Point", values = c(21, 24)) + guides(fill = "none") +
   theme(axis.text.x = element_text(size = 8, face = "plain", angle = 45, vjust = 1, hjust = 1),
         axis.text.y = element_text(size = 12), axis.title = element_text(size = 12))
 ggsave(plot = g0, file.path(paste0("figures/UDI/", growth.type,"/sp_uptake.depth_large_cor", goodness.fit, "_", growth.type, "_skIqAp.jpeg")), height = 5, width = 8, units ='in')
+g0 <- g %+% subset(ds.large %>% transform(sp = reorder(sp, udi.best)), tlplevel == "sp") +
+  geom_errorbar(aes(ymax = udi.best + udi.se, ymin = udi.best - udi.se), colour = "black", width = 0.001, size = 0.5) +
+  geom_point(aes(y = udi.best,  shape = tlp.plot, fill = sp), size = 4, colour = "darkgray") +
+  scale_shape_manual(name = "Turgor Loss Point", values = c(21, 24)) + guides(fill = "none") +
+  theme(axis.text.x = element_text(size = 8, face = "plain", angle = 45, vjust = 1, hjust = 1),
+        axis.text.y = element_text(size = 12), axis.title = element_text(size = 12))
+ggsave(plot = g0, file.path(paste0("figures/UDI/", growth.type,"/sp_uptake.depth_large_cor", goodness.fit, "_", growth.type, "_skIqAp_only_splevel.jpeg")), height = 5, width = 8, units ='in')
 
 # ggsave(file.path(paste("figures/UDI/", growth.type,"/BCI/UDI_confidence/sp_UDI_R-sq>0.5 & N>5_by_UDmean", growth.type, "_#skIqAp.tiff")), height = 5, width = 8, units ='in', compression = "lzw")
 # string(1, 6)
@@ -218,30 +252,36 @@ ggsave(plot = g0, file.path(paste0("figures/UDI/", growth.type,"/sp_uptake.depth
 # levels <- c(fruit = "apple", fruit = "banana")
 # fct_recode(x, !!!levels)
 
-g1 <- ggplot(ds %>% subset(!is.na(size) & !is.na(udi)) %>% transform(sp = reorder(sp, udi)) %>% droplevels(),
-         aes(x = as.factor(sp), y = -udi)) +
-  geom_errorbar(aes(ymax = -udi + udi.se, ymin = -udi - udi.se), colour = "black", width = 0.001, size = 0.5) +
+g1 <- ggplot(ds %>% subset(!is.na(size) & !is.na(udi)),
+         aes(x = as.factor(sp), y = udi.best)) +
+  geom_errorbar(aes(ymax = udi.best + udi.se, ymin = udi.best + udi.se), colour = "black", width = 0.001, size = 0.5) +
   scale_y_continuous(trans="rev_sqrt", breaks = soil.depths) +
   theme(axis.text.x = element_text(size = 10, face = "plain", angle = 45, vjust = 1, hjust = 1)) +
   xlab("Species") + ylab(expression("Uptake Depth Index (m)")) +
-  geom_point(colour = "darkgray", aes(shape = tlplevel, fill = sp, size = n)) +
-  scale_shape_manual(values = c(21, 24)) + guides(fill = "none") +
-  theme(axis.text.x = element_text(size = 4, face = "plain", angle = 45, vjust = 1, hjust = 1),
+  geom_point(colour = "darkgray", aes(shape = tlp.plot, fill = sp), size = 2) +
+  scale_shape_manual(name = "Turgor Loss Point", values = c(21, 24)) + guides(fill = "none") +
+  theme(axis.text.x = element_text(size = 6, face = "plain", angle = 90, vjust = 1, hjust = 1),
         axis.text.y = element_text(size = 12), axis.title = element_text(size = 20),
         strip.text = element_text(size = 20), legend.text = element_text(size = 16), legend.title = element_text(size = 20)) +
-  facet_wrap(. ~ size) +  theme(legend.position = c(0.9, 0.9)) +
-  scale_size(range = c(1, 3), "Sample Size", breaks = c(10, 100, 500))
+  facet_wrap(. ~ size) +  theme(legend.position = "top")
+  #scale_size(range = c(1, 3), "Sample Size", breaks = c(10, 100, 500))
 ggsave(plot = g1, file.path(paste0("figures/UDI/", growth.type,"/sp_uptake.depth_all_sizes_cor", goodness.fit, "_", growth.type, growth.selection, "_", dbh.residuals, "_", "_skIqAp.jpeg")), height = 8, width = 12, units ='in') #compression = "lzw"
+g2 <- g1 %+% subset(ds, !is.na(size) & !is.na(udi) & tlplevel == "sp") +
+  theme(axis.text.x = element_text(size = 8, face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(plot = g2, file.path(paste0("figures/UDI/", growth.type,"/sp_uptake.depth_all_sizes_cor", goodness.fit, "_", growth.type, growth.selection, "_", dbh.residuals, "_", "_skIqAp_only_splevel.jpeg")), height = 8, width = 12, units ='in') #compression = "lzw"
+g3 <- g1 %+% subset(ds, !is.na(size) & !is.na(udi) & tlplevel == "comm") +
+  theme(axis.text.x = element_text(size = 4, face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(plot = g3, file.path(paste0("figures/UDI/", growth.type,"/sp_uptake.depth_all_sizes_cor", goodness.fit, "_", growth.type, growth.selection, "_", dbh.residuals, "_", "_skIqAp_only_commlevel.jpeg")), height = 8, width = 12, units ='in') #compression = "lzw"
 
 ggplot(ds, aes(x = size, y = udi)) +
-  geom_boxplot(fill = "grey80") + xlab(expression("Size Class")) +
-  facet_wrap(. ~ tlplevel) + scale_y_reverse() +
+  geom_boxplot(fill = "grey80", notch = TRUE) + xlab(expression("Size Class")) +
+  facet_wrap(. ~ tlp.plot) + scale_y_reverse() +
   ylab(expression("Uptake Depth (m)"))
 ggsave(file.path(paste0("figures/UDI/", growth.type,"/boxplot_all_sizes_cor", goodness.fit, "_",growth.type, "_", growth.selection, "_", dbh.residuals, "_", "_skIqAp.jpeg")), height = 5, width = 7, units ='in') #compression = "lzw"
 
 ggplot(ds, aes(x = size, y = udi)) +
   geom_violin(fill = "grey80", draw_quantiles = c(0.25, 0.5, 0.75)) + xlab(expression("Size Class")) +
-  facet_wrap(. ~ tlplevel) + scale_y_reverse() +
+  facet_wrap(. ~ tlp.plot) + scale_y_reverse() +
   ylab(expression("Uptake Depth (m)"))
 ggsave(file.path(paste0("figures/UDI/", growth.type,"/violinplot_all_sizes_cor", goodness.fit, "_",growth.type, "_skIqAp.jpeg")), height = 5, width = 7, units ='in') #compression = "lzw"
 

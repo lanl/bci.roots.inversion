@@ -506,6 +506,7 @@ theme_update(text = element_text(size = 14),
 )
 
 load(file.path("data-raw/swp.gfac.rda"))
+load(file.path("data-raw/psi.rda"))
 census.meds <- readr::read_rds("results/census.mediandates.rds")
 census.beg <- census.meds[3: length(census.meds)]
 cut.breaks <- census.beg
@@ -525,6 +526,22 @@ plot.swp.gfac.stat.3 <- ggplot(swp.gfac.stat.2, aes(x = interval.yrs, y = mean))
   scale_fill_viridis_c("Growth\nFactor\n[unitless, 0-1]", trans = "reverse", option = "plasma") +
   ggtitle("Average Growth Factor by interval and depth across best-fit ensembles")
 ggsave("swp.gfac_mean_across_params.top.few_full_interval_no-depth.jpeg", plot = plot.swp.gfac.stat.3, path =
+         file.path("figures"), height = 5, width = 5, units='in')
+
+psi <- psi %>%
+  mutate(interval.yrs = cut(date, include.lowest = TRUE, breaks = cut.breaks,
+                            labels = cut.labels.2, right = TRUE))
+
+psi.stat.2 <- psi %>%
+  subset(!is.na(interval.yrs)) %>%
+  group_by(interval.yrs) %>%
+  summarise(mean = mean(psi, na.rm = TRUE)) %>%
+  droplevels()
+plot.psi.stat.3 <- ggplot(psi.stat.2, aes(x = interval.yrs, y = mean)) +
+  geom_point() + ylab("PSI (MPa)") + xlab("Census Interval") +
+  scale_fill_viridis_c("Soil\nWater\nPotential\n[MPa]", trans = "reverse", option = "plasma") +
+  ggtitle("Mean Soil Water Potential by interval and depth across best-fit ensembles")
+ggsave("psi_mean_across_params.top.few_full_interval_no-depth.jpeg", plot = plot.psi.stat.3, path =
          file.path("figures"), height = 5, width = 5, units='in')
 
 ####------------------------------------------------------

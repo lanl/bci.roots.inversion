@@ -16,7 +16,7 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
     n.ensembles <- length(btran)
     ## Observed growth
     ## individual, species or sp by size level
-    growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
+    growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_ci_", intervals, "_", growth.selection, ".Rdata"))
     growth <- get(growth.name); rm(growth.name)
     sp_size.name <- load(file = paste0("results/sp_size.", growth.type, ".names_", intervals, "_", growth.selection, ".Rdata"))
     growth.meta <- data.frame(sp_size = get(sp_size.name)) %>%
@@ -78,7 +78,7 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
       growth = growth,
       si = btran.matrix,
       si.param.rel = si.param.rel,
-      si.type = current.folder
+      si.type = info$si.type
     )
     save(file = "results/4.1GLUEsetup_part2_BCI.RData", growth_by_si.info)
     # load(file.path("results/4.1GLUEsetup_part2_BCI.RData"))

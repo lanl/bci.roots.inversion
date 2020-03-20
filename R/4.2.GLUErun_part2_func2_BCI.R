@@ -1,5 +1,5 @@
 ## function to calculate rsq between observed growth vs. simulated SI matrix
-growth_by_si.func <- function(growth_by_si.info, goodness.fit, statistic, splevel){
+growth_by_si.func2 <- function(growth_by_si.info, goodness.fit, statistic, splevel){
 
   if (splevel == "on"){
     sp.with.tlp <- names(info.2$sp.si)
@@ -46,21 +46,11 @@ growth_by_si.func <- function(growth_by_si.info, goodness.fit, statistic, spleve
     }
     GLUE.sub <- apply(si.matrix, 1, function (x) {
       sim <- x[obs$interval - location.adj]
-      cor.val <- cor(obs$median, sim, method = "pearson", use = "complete.obs")
-      if (!is.na(cor.val) & (abs(cor.val) > (goodness.fit - 0.01))) {
-        if (statistic == "rsq") {
-          value <- cor.val^2 } else {
-            value <- cor.val
-            }
-      } else {
-        value <- NA
-      }
-      # list(cor = cor, rsq = rsq)
-      # model <- lm(y ~ obs)
-      # summary(model)$r.squared
-      # list(model = model, rsq = rsq)
-    }
-    )
+      model <- lm.fit(matrix(sim), matrix(obs$median))
+      within.ci <- data.table::between(model$fitted.values, obs$lwr, obs$upr)
+      # return(all(data.table::between(model$fitted.values, obs$lwr, obs$upr), na.rm = FALSE))
+      return(sum(within.ci, na.rm = TRUE))
+    })
     GLUE.list[[jj]] <- unlist(GLUE.sub)
   }
   Sys.time()
@@ -69,6 +59,8 @@ growth_by_si.func <- function(growth_by_si.info, goodness.fit, statistic, spleve
   parallel::stopCluster(cl)
   GLUE <- data.frame(do.call(rbind, GLUE.list))
   row.names(GLUE) <- sp_size
+  # apply(GLUE, 1, function(x){sum(x, na.rm = TRUE)}) ## if all were TRUE
+  # matches.cutoff <- 5; cond <- apply(GLUE, 1, function(x){length(x[x >= matches.cutoff])}); length(cond[cond != 0])/length(cond)
   # 12 min for splevel = "on" sp-size & ~1500 n.rf.sam, 33 min for splevel = "off"
   return(GLUE)
 }

@@ -67,6 +67,9 @@ for (i in 1: length(max.rds)) {
 }
 
 profiles <- do.call(rbind, profiles.dfs)
+write.csv(profiles, "results/root_profiles.csv", row.names = FALSE)
+profiles <- read.csv(file = file.path("results/root_profiles.csv"), header = TRUE)
+
 n.profiles <- unique(profiles$rf.sam)
 length(n.profiles)
 ggplot(profiles %>% subset(maxD == max.rds[length(max.rds)]), aes(y = abs.depth, x = cum.root.frac, color = maxD)) +
@@ -89,7 +92,17 @@ ggplot(profiles %>% subset(!is.na(depth)),
   scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2))
 ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_ELM_FATES_depths.jpeg")), height = 8, width = 8, units ='in')
 
-write.csv(profiles, "results/root_profiles.csv", row.names = FALSE)
+### only those rf.sam in which root fraction does not increase with depth
+
+ggplot(profiles %>% subset(power < 0.5),
+       aes(y = abs.depth, x = cum.root.frac, color = as.factor(rf.sam))) +
+  ylab("Depths (m)") + xlab("Cumulative Root Fraction (0-1)") +
+  geom_line(aes(group = rf.sam), alpha = 0.7, show.legend = FALSE) +
+  scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2))
+ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_power.threshold_0.5.jpeg")), height = 8, width = 8, units ='in')
+
+select.rf.sam <- unique(profiles$rf.sam[profiles$power < 0.5])
+write.csv(select.rf.sam, "results/rf.sam_power.threshold_0.5.csv", row.names = FALSE)
 
 profiles.sub <- profiles %>% select(rf.sam, depth, cum.root.frac) %>%
   subset(!is.na(depth))

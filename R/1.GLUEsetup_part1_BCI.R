@@ -96,7 +96,20 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   ##*************************************
   ## 3.b  With community level tlp
   ##*************************************
-  load(file = file.path("data-raw/swp.gfac.rda"))
+  load(file = file.path("data-raw/psi.rda"))
+
+  traits.indi <- read.csv("data-raw/traits/HydraulicTraits_Kunert/hydraulic_traits_panama_kunert.csv") # Nobby's data
+  tlp <- traits.indi %>% group_by(sp) %>% select(-idividual, -ind_ID) %>%
+    dplyr::summarise(tlp = mean(mean_TLP_Mpa, na.rm = TRUE))
+  write.csv(tlp, file.path("data-raw/traits/HydraulicTraits_Kunert/tlp_sp_mean.csv"), row.names = FALSE)
+  n.sp <- length(tlp$sp)
+  tlp.mean.positive <- -mean(tlp$tlp, na.rm = TRUE)
+
+  swp.gfac <- psi %>% mutate(psi.positive = -psi) %>%
+    mutate(gfac = if_else(psi.positive >= 0 & psi.positive < 0.5, 1,
+                          if_else(psi.positive == 0.5, 1,
+                                  if_else(psi.positive > tlp.mean.positive, 0,
+                                          (tlp.mean.positive - psi.positive)/(tlp.mean.positive - 0.5)))))
 
   ## depths are: signif(round(depth, 2), 2) in bci.elm.fates.hydro/R/6.0_ELM-FATES_full best-fit_swp.R
   ## so root.frac depths should also be formatted similarly
@@ -143,13 +156,7 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   ##*************************************
   ## 3.b  With species level tlp
   ##*************************************
-  load(file = file.path("data-raw/psi.rda"))
-
-  traits.indi <- read.csv("data-raw/traits/hydraulic_traits_panama_kunert.csv") # Nobby's data
-  tlp <- traits.indi %>% group_by(sp) %>% select(-idividual, -ind_ID) %>%
-    dplyr::summarise(tlp = mean(mean_TLP_Mpa, na.rm = TRUE))
-  n.sp <- length(tlp$sp)
-  ## IN Kuert's tlp data: swp ranges from -1.13 to -2.42 MPa
+  ## IN Kunert's tlp data: swp ranges from -1.13 to -2.42 MPa
   # at -2.42 MPa f(swp) = 0
   # from 0 to 0.5 f(swp) = 1,
   # f(swp) = linearly decreases from 0 to 1 f(swp) =  1/(2.42-0.5)*2.42 - 1/(2.42-0.5)*swp = (2.42 - swp)/(2.42-0.5)
@@ -160,13 +167,13 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   beg <- Sys.time()
   sp.hydro.output.chosen <- list()
   for(jj  in 1 : n.sp) {
-    x <- -tlp$tlp[jj]
+    sp.tlp <- -tlp$tlp[jj]
     sp.hydro.output.chosen[[jj]] <- psi %>% mutate(psi.2 = -psi) %>%
-      filter(date %in% min(census.meds.chosen):max(census.meds.chosen)) %>%
-      mutate(gfac = if_else(psi.2 >= 0 & psi.2 < 0.5, 1,
-                            if_else(psi.2 == 0.5, 1,
-                                    if_else(psi.2 > x, 0,
-                                            (x - psi.2)/(x - 0.5))))) %>%
+      filter(date %in% min(census.meds.chosen):masp.tlp(census.meds.chosen)) %>%
+      mutate(gfac = if_else(psi.positive >= 0 & psi.positive < 0.5, 1,
+                            if_else(psi.positive == 0.5, 1,
+                                    if_else(psi.positive > sp.tlp, 0,
+                                            (sp.tlp - psi.positive)/(sp.tlp - 0.5))))) %>%
       select(date, gfac, par.sam, depth) %>%
       mutate(date = as.Date(date),
              interval = droplevels(cut(date, include.lowest = TRUE, breaks = cut.breaks,
@@ -233,7 +240,8 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
                 hydro = hydro.output.chosen,
                 btran = btran.nsam.int,
                 root.param = root.nsam,
-                root.param.long = pro.df
+                root.param.long = pro.df,
+                si.type = current.folder
   )
   # save this variables to a workspace
   save(file = "results/GLUEsetup_part1_BCI.RData", info)

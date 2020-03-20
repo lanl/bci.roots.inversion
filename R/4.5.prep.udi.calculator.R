@@ -37,6 +37,8 @@ prep.udi.calculator <- function(splevel) {
   depth.thick <- data.frame(depth = as.numeric(unique(rdt$depth))) %>%
     mutate(thickness = depth - lag(depth, default = 0)) %>% data.table()
 
+  file.extension.base1 <- paste0(goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals)
+
   if (splevel == "on") {
     load(file.path("results/sp.hydro.output.chosen.RData"))
     sp.hydro.output.chosen <- lapply(sp.hydro.output.chosen, function(x){
@@ -47,25 +49,58 @@ prep.udi.calculator <- function(splevel) {
         paw.df, on = c("date","depth","par.sam"), `:=`(paw = i.paw)][,
                                                                      tw := paw*thickness*1000][, !c("paw", "thickness")], depth)
     })
-    save(sdt.list, file = paste("results/splevel/sdt.list_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_dryseason_off.Rdata", sep = ""))
+    save(sdt.list, file = paste0("results/splevel/sdt.list_cor", file.extension.base1, "_dryseason_off.Rdata"))
     rm(sp.hydro.output.chosen)
-    ### Subsetting to dryseason----
-    sdt.list <- lapply(sdt.list, function(x) {
-      x[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "1997"] ## Choosing Feb, March and April
+    sdt.list.full <- sdt.list
+    # load(file = paste0("results/splevel/sdt.list_cor", file.extension.base1, "_dryseason_off.Rdata"))
+    ### Subsetting to late dryseason 1997----
+    sdt.list <- lapply(sdt.list.full, function(x) {
+      x[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "1997"] ## Choosing March and April
     })
     sdt.list <- lapply(sdt.list,  droplevels)
-    save(sdt.list, file = paste("results/splevel/sdt.list_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_dryseason_on.Rdata", sep = ""))
-  } else {
+    save(sdt.list, file = paste0("results/splevel/sdt.list_cor", file.extension.base1, "_dryseason_on.Rdata"))
+    ### Subsetting to dryseason Jan 1997----
+    sdt.list <- lapply(sdt.list.full, function(x) {
+      x[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("01") & year == "1997"] ## Choosing March and April
+    })
+    sdt.list <- lapply(sdt.list,  droplevels)
+    save(sdt.list, file = paste0("results/splevel/sdt.list_cor", file.extension.base1, "_dryseason_jan.Rdata"))
+    ### Subsetting to late dryseason 1992----
+    sdt.list <- lapply(sdt.list.full, function(x) {
+      x[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "1992"] ## Choosing March and April
+    })
+    sdt.list <- lapply(sdt.list,  droplevels)
+    save(sdt.list, file = paste0("results/splevel/sdt.list_cor", file.extension.base1, "_dryseason_1992.Rdata"))
+    } else {
     hydro <- info$hydro %>% mutate(date = as.factor(date)) %>% data.table()
     sdt <- setkey(hydro[depth.thick, on = "depth", `:=`(thickness = i.thickness)][
       paw.df, on = c("date","depth","par.sam"), `:=`(paw = i.paw)][,
                                                                    tw := paw*thickness*1000][, !c("paw", "thickness")], depth)
     rm(hydro)
-    save(sdt, file = paste("results/commlevel/sdt_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_dryseason_off.Rdata", sep = ""))
-    ### Subsetting to dryseason----
-    sdt <- sdt[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "1997"]
+    save(sdt, file = paste0("results/commlevel/sdt_cor", file.extension.base1, "_dryseason_off.Rdata"))
+    sdt.full <- sdt
+    # load(file = paste0("results/commlevel/sdt_cor", file.extension.base1, "_dryseason_off.Rdata"))
+    ### Subsetting to late dryseason 1997------
+    sdt <- sdt.full[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "1997"]
     sdt <- sdt %>% droplevels()
-    save(sdt, file = paste("results/commlevel/sdt_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_dryseason_on.Rdata", sep = ""))
+    save(sdt, file = paste0("results/commlevel/sdt_cor", file.extension.base1, "_dryseason_on.Rdata"))
+    ### Subsetting to dryseason Jan 1997------
+    sdt <- sdt.full[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("01") & year == "1997"]
+    sdt <- sdt %>% droplevels()
+    save(sdt, file = paste0("results/commlevel/sdt_cor", file.extension.base1, "_dryseason_jan.Rdata"))
+    ### Subsetting to late dryseason 1992------
+    sdt <- sdt.full[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "1992"]
+    sdt <- sdt %>% droplevels()
+    save(sdt, file = paste0("results/commlevel/sdt_cor", file.extension.base1, "_dryseason_1992.Rdata"))
+    ### Subsetting to late dryseason 2016------
+    hydro <- info$hydro.output %>% mutate(date = as.factor(date)) %>% data.table()
+    sdt.full <- setkey(hydro[depth.thick, on = "depth", `:=`(thickness = i.thickness)][
+      paw.df, on = c("date","depth","par.sam"), `:=`(paw = i.paw)][,
+                                                                   tw := paw*thickness*1000][, !c("paw", "thickness")], depth)
+    rm(hydro)
+    sdt <- sdt.full[, ':='(month = format(as.Date(date), "%m"), year = format(as.Date(date), "%Y"))][month %chin% c("03", "04") & year == "2016"]
+    sdt <- sdt %>% droplevels()
+    save(sdt, file = paste0("results/commlevel/sdt_cor", file.extension.base1, "_dryseason_2016.Rdata"))
   }
   rm(info, paw.df)
   save(rdt, file = "results/rdt.Rdata")

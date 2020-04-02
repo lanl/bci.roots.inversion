@@ -78,9 +78,9 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   root.nsam <- root.nsam.long.sub %>% pivot_wider(names_from = depth, names_prefix = "depth.", values_from = root.frac)
   ## ----------- End of 2 --------------
 
-  ##---------------------------------------------------------
-  ## 3. Get Btran by census interval for each best-fit par.sam
-  ##---------------------------------------------------------
+  ##----------------------------------------------------------------------------
+  ## 3. Get Btran by census interval for each best-fit par.sam by root profiles
+  ##----------------------------------------------------------------------------
   ##*************************************
   ## At both community and species level tlp
   ##*************************************

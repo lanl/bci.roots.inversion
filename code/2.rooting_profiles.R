@@ -13,7 +13,14 @@ rev_sqrt_trans <- function() {
     transform = function(x) -sqrt(abs(x)),
     inverse = function(x) x^2);
 }
+
+# graphics info
 theme_set(theme_bw())
+theme_update(text = element_text(size=14),
+             panel.grid.major = element_blank(),
+             panel.grid.minor = element_blank(),
+             strip.background = element_blank()
+)
 
 ####--------------------------------------------
 #### Rooting profiles for inversion
@@ -101,6 +108,16 @@ ggplot(profiles %>% subset(power < 0.5),
   scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2))
 ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_power.threshold_0.5.jpeg")), height = 8, width = 8, units ='in')
 
+ggplot(profiles %>% subset(!is.na(depth) & power < 0.5),
+       aes(y = depth, x = cum.root.frac, color = as.factor(rf.sam))) +
+  ylab("Depths (m)") + xlab("Cumulative Root Fraction (0-1)") +
+  geom_line(aes(group = rf.sam), alpha = 0.7, show.legend = FALSE) +
+  geom_point(show.legend = FALSE) +
+  scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2))
+ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_ELM_FATES_depths_power.threshold_0.5.jpeg")), height = 8, width = 8, units ='in')
+
+
+#####---------
 select.rf.sam <- unique(profiles$rf.sam[profiles$power < 0.5])
 write.csv(select.rf.sam, "results/rf.sam_power.threshold_0.5.csv", row.names = FALSE)
 

@@ -46,15 +46,18 @@ iso.subset <- "off"
 file.extension.base4 <- paste0(goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection,
                                "_", dbh.residuals, "_", intervals, "_dryseason_", dryseason, "_iso.subset_",
                                iso.subset, "_root.selection_", root.selection)
-
-load(file = paste("results/splevel/ds.bestfit_cor", file.extension.base4, ".Rdata", sep = ""))
+tlplevels <- "sp"
+level.folder <- "splevel"
+load(file = paste0("results/", level.folder, "/ds.bestfit_cor", file.extension.base4, ".Rdata"))
 ds <- ds.bestfit
 length(unique(ds$sp))
+
+figures.folder <- paste0("figures/traits/", growth.type, "/", level.folder)
+if(!dir.exists(figures.folder)) {dir.create(figures.folder)}
 
 # load(file = paste("results/commlevel/ds.bestfit_cor", file.extension.base4, ".Rdata", sep = ""))
 # ds <- rbind(ds, ds.bestfit)
 level_key <- c("tiny" = 1, "small" = 2, "medium" = 3, "large" = 4) #c(a = "apple", b = "banana", c = "carrot")
-recode_factor(char_vec, !!!level_key)
 
 ds <- ds %>% mutate(tlplevel = as.factor(tlplevel)) %>%
   subset(!is.na(udi.best)) %>%
@@ -66,7 +69,7 @@ deci <- read.csv("data-raw/traits/HydraulicTraits_Kunert/deciduous_species_Meake
 deci <- deci %>% mutate(sp = as.character(Species.code), Deciduousness = as.character(Deciduousness)) %>%
   select(sp, Deciduousness)
 deci.level_key <- c("Evg" = 1, "DF" = 2, "DB" = 3, "DO" = 4, "D" = "4") #c(a = "apple", b = "banana", c = "carrot")
-recode_factor(char_vec, !!!deci.level_key)
+
 
 
 lwp <- read_excel("data-raw/traits/2016ENSO_Panama_LWP_20170407181307/2016ENSO_Panama_LWP.xlsx",
@@ -130,10 +133,10 @@ p0 <- ggplot(plot.dst, aes(y = udi.best, x = value)) +
   geom_text_npc(inherit.aes = FALSE,
                 aes(npcx = 0.95, npcy = 0.05, label = stars), size = 6, color = "red", show.legend = FALSE) +
   ylim(c(max(plot.dst$udi.best, na.rm = TRUE) + 1), 0) + scale_y_reverse()
-ggsave(file.path(paste0("figures/traits/", growth.type, "/udi_vs_panama.traits",
+ggsave(file.path(paste0(figures.folder, "/udi_vs_panama.traits",
                       "splevel_large.jpeg")), plot = p0, height = 18, width = 24, units ='in')
 p1 <- p0 %+% subset(plot.dst, !is.na(stars) & !trait %in% c("Chl", "root.95"))
-ggsave(file.path(paste0("figures/traits/", growth.type, "/udi_vs_panama.traits",
+ggsave(file.path(paste0(figures.folder ,"/udi_vs_panama.traits",
                         "splevel_large_signif.jpeg")), plot = p1, height = 9, width = 12, units ='in')
 
 
@@ -209,7 +212,7 @@ traits.long <- traits %>% select(-DeciLvl) %>%
 #   #ylab("Trait") + xlab("Deciduousness") +
 #   facet_grid(trait ~ ., scales = "free_y") +
 #   ggtitle("Kunert's trait data by deciduousness")
-# ggsave(file.path(paste0("figures/traits/", growth.type, "/sp_udi.best_vs_deciduousness.jpeg")), height = 5, width = 5, units ='in')
+# ggsave(file.path(paste0(figures.folder ,"/sp_udi.best_vs_deciduousness.jpeg")), height = 5, width = 5, units ='in')
 #
 ### With Tukey labels:
 # xx <- traits.long %>% subset(trait == "SPAD")
@@ -248,12 +251,12 @@ ggplot(traits.labels.data, aes(x = Deciduousness, y = value)) +
   facet_wrap(. ~  trait, scales = "free_y") +
   geom_text(aes(label = groups, color = Deciduousness), vjust = 1, hjust = 0) +
   geom_boxplot(data = traits.long, aes(fill = Deciduousness), stat = "boxplot", notch = TRUE)
-ggsave(file.path(paste0("figures/traits/traits_vs_deciduousness.jpeg")), height = 9, width = 12, units ='in')
+ggsave(file.path(figures.folder, paste0("traits_vs_deciduousness.jpeg")), height = 9, width = 12, units ='in')
 
 hyd.long <- hyd %>%
   select(sp, Deciduousness, AlAsw, TLPBrett, p80S, p88S, Fcap, CWR, Felbow, WDBrett, LMABrett, LDMC, BarkThick,
          HSM88S,  HSMTLPBrett, HSMFelbow, HSMTLP.88S,
-         grate.adult, grate.juve, mrate.adult, mrate.juve, Panama.Moist, Panama.Moist2, Plot.swp, Plot.swp.ENSO) %>%
+         grate.adult, grate.juve, mrate.adult, mrate.juve, Panama.Moist, Panama.Moist2, Plot.swp, Plot.swp.ENSO, lwp.min) %>%
   left_join(ds %>% subset(size %in% c("large")) %>% select(sp, udi.best), by = "sp") %>%
   gather(trait, value, -sp, -Deciduousness)
 
@@ -284,11 +287,10 @@ ggplot(hyd.labels.data, aes(x = Deciduousness, y = value)) +
   facet_wrap(. ~  trait, scales = "free_y") +
   geom_text(aes(label = groups, color = Deciduousness), vjust = 1, hjust= 0) +
   geom_boxplot(data = hyd.long, aes(fill = Deciduousness), stat = "boxplot", notch = TRUE)
-ggsave(file.path(paste0("figures/traits/hyd_traits_vs_deciduousness.jpeg")), height = 9, width = 12, units ='in')
+ggsave(file.path(figures.folder, paste0("hyd_traits_vs_deciduousness.jpeg")), height = 9, width = 12, units ='in')
 
 
 #####----------traits plot end-----------
-tlplevels <- c("sp")
 size.class <- levels(ds$size)
 demo <- c("off", "on")
 
@@ -308,11 +310,16 @@ for (j in 1: length(tlplevels)){
       ylab("Water Uptake Depth (m)") + xlab("Turgor Loss Point [-MPa]") +
       geom_text(aes(x = TLP + 0.06, label = sp, color = Deciduousness), size = 2) +
       ggtitle(paste0("Species Uptake Depth Vs TLP\nSize Class = ", size.class[i], "\n", lm.1.label))
-    ggsave(file.path(paste0("figures/traits/", growth.type, "/sp_udi.best_vs_tlp_by_dec_", size.class[i], ".jpeg")), height = 6, width = 6, units ='in')
+    ggsave(file.path(paste0(figures.folder ,"/sp_udi.best_vs_tlp_by_dec_", size.class[i], ".jpeg")), height = 6, width = 6, units ='in')
   }
 }
 
 length(unique(traits$sp)) # 51 species
+figures.folder.deci <- paste0(figures.folder, "/deciduousness/")
+if(!dir.exists(figures.folder.deci)) {dir.create(figures.folder.deci)}
+if(!dir.exists(paste0(figures.folder, "/pca/"))) {dir.create(paste0(figures.folder, "/pca/"))}
+if(!dir.exists(paste0(figures.folder, "/chart/"))) {dir.create(paste0(figures.folder, "/chart/"))}
+
 with_kmax <- "yes"
 for (j in 1: length(tlplevels)){
   for (i in 1: length(size.class)){
@@ -358,11 +365,11 @@ for (j in 1: length(tlplevels)){
         geom_text_npc(inherit.aes = FALSE,
                       aes(npcx = 0.95, npcy = 0.05, label = stars), size = 6, color = "red", show.legend = FALSE) +
         ylim(c(max(plot.dst$udi.best, na.rm = TRUE) + 1), 0) + scale_y_reverse()
-      ggsave(file.path(paste0("figures/traits/", growth.type, "/udi_vs_traits",
+      ggsave(file.path(paste0(figures.folder ,"/udi_vs_traits",
                               tlplevels[j], "_", size.class[i], "_demo_", demo[k], "_chart_with_kmax_",
                               with_kmax, ".jpeg")), plot = p0, height = 9, width = 12, units ='in')
       p1 <- p0 %+% subset(plot.dst, !is.na(stars) & !trait %in% c("Chl", "root.95"))
-      ggsave(file.path(paste0("figures/traits/", growth.type, "/udi_vs_traits",
+      ggsave(file.path(paste0(figures.folder ,"/udi_vs_traits",
                               tlplevels[j], "_", size.class[i], "_demo_", demo[k], "_chart_with_kmax_",
                               with_kmax, "_signif.jpeg")), plot = p1, height = 6, width = 7, units ='in')
 
@@ -383,7 +390,7 @@ for (j in 1: length(tlplevels)){
         facet_wrap(. ~  trait, scales = "free_y") +
         geom_text(aes(label = groups, color = Deciduousness), vjust = 1, hjust = 0) +
         geom_boxplot(data = traits.long, aes(fill = Deciduousness), stat = "boxplot")
-      ggsave(file.path(paste0("figures/traits/", growth.type, "/deciduousness/traits_vs_deciduousness_notch_",
+      ggsave(file.path(paste0(figures.folder.deci, "traits_vs_deciduousness_notch_",
                               tlplevels[j], "_", size.class[i], "_demo_", demo[k], "_chart_with_kmax_", with_kmax, ".jpeg")),
              height = 9, width = 12, units ='in')
       ###
@@ -393,11 +400,11 @@ for (j in 1: length(tlplevels)){
       df.pca <- df.pca %>% subset(complete.cases(df.pca)) %>% select(-root.95)
       result.pca <- prcomp(df.pca, center = TRUE, scale = TRUE)
       if( with_kmax == "no") { title.piece = "Nobby's Data without Kmax"} else { title.piece = "Nobby's Data with Kmax"}
-      pdf(file.path(paste0("figures/traits/", growth.type, "/pca/sp_udi.best_traits_demo",
+      pdf(file.path(paste0(figures.folder ,"/pca/sp_udi.best_traits_demo",
                            tlplevels[j], "_", size.class[i], "_with_kmax_", with_kmax, "_axes_1_2.pdf")), height = 8, width = 8)
       biplot(result.pca, choices = 1:2, pc.biplot = TRUE, main = paste0(title.piece, " | No. of Species = ", nrow(df.pca)))
       dev.off()
-      pdf(file.path(paste0("figures/traits/", growth.type, "/pca/sp_udi.best_traits_demo",
+      pdf(file.path(paste0(figures.folder ,"/pca/sp_udi.best_traits_demo",
                            tlplevels[j], "_", size.class[i], "_with_kmax_", with_kmax, "_axes_3_4.pdf")), height = 8, width = 8)
       biplot(result.pca, choices = 3:4, pc.biplot = TRUE, main = paste0(title.piece, " | No. of Species = ", nrow(df.pca)))
       dev.off()
@@ -410,16 +417,25 @@ for (j in 1: length(tlplevels)){
                  lab = TRUE,
                  title = paste0("TLPlevel = ", tlplevels[j], "\n Tree Size Class = ", size.class[i],
                                 "\nNo. of species = ", nrow(df[complete.cases(df),])))
-      ggsave(plot = g.deci, file.path(paste0("figures/traits/", growth.type, "/sp_udi.best_vs_traits_corrplot_tlp",
+      ggsave(plot = g.deci, file.path(paste0(figures.folder ,"/sp_udi.best_vs_traits_corrplot_tlp",
                               tlplevels[j], "_", size.class[i], "_demo_", demo[k], "_with_kmax_", with_kmax,".jpeg")), height = 10, width = 10, units ='in')
       ## Correlation chart
-      pdf(file.path(paste0("figures/traits/", growth.type, "/chart/sp_udi.best_vs_traits_corrplot_tlp",
+      pdf(file.path(paste0(figures.folder ,"/chart/sp_udi.best_vs_traits_corrplot_tlp",
                            tlplevels[j], "_", size.class[i], "_demo_", demo[k], "_chart_with_kmax_", with_kmax, ".pdf")))
       chart.Correlation(df, histogram=TRUE, pch=19)# does not take title
       dev.off()
     }
   }
 }
+
+figures.folder.hyd <- paste0(figures.folder, "/hyd/")
+if(!dir.exists(figures.folder.hyd)) {dir.create(figures.folder.hyd)}
+if(!dir.exists(paste0(figures.folder.hyd, "/pca/"))) {dir.create(paste0(figures.folder.hyd, "/pca/"))}
+if(!dir.exists(paste0(figures.folder.hyd, "/chart/"))) {dir.create(paste0(figures.folder.hyd, "/chart/"))}
+if(!dir.exists(paste0(figures.folder.hyd, "/sub/"))) {dir.create(paste0(figures.folder.hyd, "/sub/"))}
+if(!dir.exists(paste0(figures.folder.hyd, "/full/"))) {dir.create(paste0(figures.folder.hyd, "/full/"))}
+if(!dir.exists(paste0(figures.folder.hyd, "/sub/deciduousness/"))) {dir.create(paste0(figures.folder.hyd, "/sub/deciduousness/"))}
+if(!dir.exists(paste0(figures.folder.hyd, "/full/deciduousness/"))) {dir.create(paste0(figures.folder.hyd, "/full/deciduousness/"))}
 
 data.subset <- c("sub", "full")
 q <- 1 #for data.subset[q]
@@ -479,17 +495,18 @@ for (j in 1: length(tlplevels)){
         geom_text_npc(inherit.aes = FALSE,
                       aes(npcx = 0.8, npcy = 0.07, label = stars), size = 6, color = "red", show.legend = FALSE) +
         ylim(c(max(plot.dst$udi.best, na.rm = TRUE) + 1), 0) + scale_y_reverse()
-      ggsave(file.path(paste0("figures/traits/", growth.type, "/hyd/", "udi_vs_traits_",
+      ggsave(file.path(paste0(figures.folder.hyd, "udi_vs_traits_",
                               tlplevels[j], "_", size.class[i],"_", data.subset[q], "_all.traits_",
                               all.traits[m],"_demo.jpeg")), plot = p0,
              # height = 9, width = 12, units ='in')
              height = 8*(1 + 0.5*(m-1)), width = 10.5*(1 + 0.5*(m-1)), units ='in')
-      p1 <- p0 %+% subset(plot.dst, !is.na(stars) & !trait %in% c("Chl", "root.95"))
-      ggsave(file.path(paste0("figures/traits/", growth.type, "/hyd/", "udi_vs_traits_",
-                              tlplevels[j], "_", size.class[i],"_", data.subset[q], "_all.traits_",
-                              all.traits[m],"_demo_signif.jpeg")), plot = p1,
-             height = 5, width = 7, units ='in')
-
+      if (nrow(subset(plot.dst, !is.na(stars) & !trait %in% c("Chl", "root.95"))) != 0) {
+        p1 <- p0 %+% subset(plot.dst, !is.na(stars) & !trait %in% c("Chl", "root.95"))
+        ggsave(file.path(paste0(figures.folder.hyd, "udi_vs_traits_",
+                                tlplevels[j], "_", size.class[i],"_", data.subset[q], "_all.traits_",
+                                all.traits[m],"_demo_signif.jpeg")), plot = p1,
+               height = 5, width = 7, units ='in')
+      }
 
       ###---traits by deciduousness-----
       traits.long <- dst %>%
@@ -508,17 +525,17 @@ for (j in 1: length(tlplevels)){
         facet_wrap(. ~  trait, scales = "free_y") +
         geom_text(aes(label = groups, color = Deciduousness), vjust = 1, hjust = 0) +
         geom_boxplot(data = traits.long, aes(fill = Deciduousness), stat = "boxplot")
-      ggsave(file.path(paste0("figures/traits/", growth.type, "/hyd/", data.subset[q] , "/deciduousness/traits_vs_deciduousness_notch_",
+      ggsave(file.path(figures.folder.hyd, paste0(data.subset[q], "/deciduousness/traits_vs_deciduousness_notch_",
                               tlplevels[j], "_", size.class[i],"_", data.subset[q], "_all.traits_", all.traits[m],"_demo.jpeg")), height = 7, width = 9, units ='in')
       ### PCA ---------
       df.pca <- dst %>% remove_rownames %>% column_to_rownames(var = "sp") %>%
         select_if(is.numeric) %>% subset(complete.cases(dst)) %>% select(-root.95)## more species without Kmax data %>% select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
       result.pca <- prcomp(df.pca, center = TRUE, scale = TRUE)
-      pdf(file.path(paste0("figures/traits/", growth.type, "/hyd/pca/sp_udi.best_traits_demo",
+      pdf(file.path(paste0(figures.folder.hyd, "pca/sp_udi.best_traits_demo",
                            tlplevels[j], "_", size.class[i], "_", data.subset[q], "_all.traits_", all.traits[m], "_axes_1_2.pdf")), height = 8, width = 8)
       biplot(result.pca, choices = 1:2, pc.biplot = TRUE, main = paste0(title.piece, " | No. of Species = ", nrow(df.pca)))
       dev.off()
-      pdf(file.path(paste0("figures/traits/", growth.type, "/hyd/pca/sp_udi.best_traits_demo",
+      pdf(file.path(paste0(figures.folder.hyd, "sp_udi.best_traits_demo",
                            tlplevels[j], "_", size.class[i], "_", data.subset[q], "_all.traits_", all.traits[m], "_axes_3_4.pdf")), height = 8, width = 8)
       biplot(result.pca, choices = 3:4, pc.biplot = TRUE, main = paste0(title.piece, " | No. of Species = ", nrow(df.pca)))
       dev.off()
@@ -531,11 +548,11 @@ for (j in 1: length(tlplevels)){
                  lab = TRUE,
                  title = paste0("TLPlevel = ", tlplevels[j], "\n Tree Size Class = ", size.class[i],
                                 "\nNo. of species = ", nrow(df[complete.cases(df),])))
-      ggsave(plot = g.deci, file.path(paste0("figures/traits/", growth.type, "/hyd/", data.subset[q] ,"/sp_udi.best_vs_traits_corrplot_tlp",
+      ggsave(plot = g.deci, file.path(paste0(figures.folder.hyd, data.subset[q] ,"/sp_udi.best_vs_traits_corrplot_tlp",
                               tlplevels[j], "_", size.class[i],"_", data.subset[q], "_all.traits_", all.traits[m],"_demo.jpeg")),
              height = 10*(1 + 0.5*(m-1)), width = 10*(1 + 0.5*(m-1)), units ='in')
       ## Correlation chart
-      pdf(file.path(paste0("figures/traits/", growth.type, "/hyd/chart/sp_udi.best_vs_traits_corrplot_tlp",
+      pdf(file.path(paste0(figures.folder.hyd, "chart/sp_udi.best_vs_traits_corrplot_tlp",
                            tlplevels[j], "_", size.class[i], "_", data.subset[q], "_all.traits_", all.traits[m], "_demo_chart.pdf")),
           height = 10*(1 + 0.5*(m-1)), width = 10*(1 + 0.5*(m-1)))
       chart.Correlation(df, histogram=TRUE, pch=19) # does not take title

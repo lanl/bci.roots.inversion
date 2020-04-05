@@ -70,8 +70,6 @@ deci <- deci %>% mutate(sp = as.character(Species.code), Deciduousness = as.char
   select(sp, Deciduousness)
 deci.level_key <- c("Evg" = 1, "DF" = 2, "DB" = 3, "DO" = 4, "D" = "4") #c(a = "apple", b = "banana", c = "carrot")
 
-
-
 lwp <- read_excel("data-raw/traits/2016ENSO_Panama_LWP_20170407181307/2016ENSO_Panama_LWP.xlsx",
              sheet = "Panama_LWP")
 lwp <- lwp %>% mutate(month = format(Date, "%b")) %>% subset(LWP_bar != -9999) ## same sp is not measured at two different locations

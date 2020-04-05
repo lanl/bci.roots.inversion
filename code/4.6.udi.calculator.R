@@ -8,7 +8,8 @@ for (i in 1:5) {gc()}
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, doParallel, foreach, data.table)
 
-udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
+udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh = rsq.thresh,
+                           n.ci.thresh = n.ci.thresh, iso.subset = iso.subset, drop.months = drop.months) {
   # load interval and n.ensembles
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
   load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
@@ -19,9 +20,9 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
   growth.selection <- growth_by_si.info$growth.selection
   dbh.residuals <- growth_by_si.info$dbh.residuals
   si.type <- growth_by_si.info$si.type
-  si.param.rel <- growth_by_si.info$si.param.rel
+  si.param.rel <- growth_by_si.info$si.param.rel[[drop.months]]
   goodness.fit <- 0.3 # rsq0.3
-  ncor <- detectCores() - 2
+  ncor <- detectCores() - 1
 
   if (splevel == "on") {
     level.folder <- "splevel"
@@ -35,35 +36,39 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
   n.rf.sam <- length(rf.sam.vec)
   rm(info); rm(growth_by_si.info)
   ## sdt is chosen based on dryseason on/off
-  file.extension.base1 <- paste0(goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals)
+  file.extension.base1 <- paste0("drop.months", drop.months, "_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_",
+                                 growth.type, "_", growth.selection, "_", dbh.residuals, "_",
+                                 intervals)
   file.extension.base2 <- paste0(file.extension.base1, "_dryseason_", dryseason)
   file.extension.base3 <- paste0(file.extension.base2, "_iso.subset_", iso.subset)
 
-  load(file = paste0("results/", level.folder, "/GLUE.rsq_cor", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  load(file = paste0("results/", level.folder, "/GLUE.rsq_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  load(file = paste0("results/", level.folder, "/GLUE.matches_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
+
   if (iso.subset == "on") {
     load(file = "results/sp_with_isotopic_record.Rdata")
     sp_size.on <- c(paste0(iso.sp, "_large"), paste0(iso.sp, "_medium"))
-    GLUE.rsq.vector <- GLUE.rsq.vector %>% subset(rownames(GLUE.rsq.vector) %in% sp_size.on)
+    GLUE.rsq <- GLUE.rsq %>% subset(rownames(GLUE.rsq) %in% sp_size.on)
   }
-  sp_size <- row.names(GLUE.rsq.vector)
+  sp_size <- row.names(GLUE.rsq)
   sp <- stringr::str_split(sp_size, "_", simplify = TRUE)[, 1]
   size <- stringr::str_split(sp_size, "_", simplify = TRUE)[, 2]
 
   if (splevel == "on") {
-    load(file = paste0("results/splevel/sdt.list_cor", file.extension.base2, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+    load(file = paste0("results/splevel/sdt.list_", file.extension.base2, ".Rdata"), envir = parent.frame(), verbose = FALSE)
     if (iso.subset == "on") {
       sdt.list <- sdt.list[sp]
     }
   } else {
-    load(file = paste0("results/commlevel/sdt_cor", file.extension.base2, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+    load(file = paste0("results/commlevel/sdt_", file.extension.base2, ".Rdata"), envir = parent.frame(), verbose = FALSE)
   }
   load(file = paste0("results/rdt.Rdata"), envir = parent.frame(), verbose = FALSE)
   ######----------------------------------------------
   ###### Calculating uptake depth index
   ######----------------------------------------------
 
-  vec.in.list <- rep(-999, ncol(GLUE.rsq.vector))
-  best10.type.udi.list <- best10.type.sdi.list <- rep(list(vec.in.list), nrow(GLUE.rsq.vector))
+  vec.in.list <- rep(-999, ncol(GLUE.rsq))
+  best10.type.udi.list <- best10.type.sdi.list <- rep(list(vec.in.list), nrow(GLUE.rsq))
   #growth_by_si.info$si.param.rel
   Sys.time()
   rows.par.sam <- list()
@@ -72,8 +77,9 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
     rows.par.sam[[j]] <- which(si.param.rel$par.sam == par.sam.vec[j])
   }
   names(rows.par.sam) <- par.sam.vec
-  GLUE.rsq.vector.thresh <- as.matrix(GLUE.rsq.vector)
-  GLUE.rsq.vector.thresh <- as.matrix(ifelse(GLUE.rsq.vector.thresh < rsq.thresh, NA, GLUE.rsq.vector.thresh))
+  GLUE.rsq.thresh <- as.matrix(GLUE.rsq)
+  GLUE.rsq.thresh <- as.matrix(ifelse(GLUE.rsq.thresh < rsq.thresh, NA, GLUE.rsq.thresh))
+  GLUE.rsq.thresh <- as.matrix(ifelse(GLUE.matches < n.ci.thresh, NA, GLUE.rsq.thresh))
 
   beg <- Sys.time()
   if (splevel == "on") { ## foreach at splevel exhausts memory, hence a for loop
@@ -85,7 +91,7 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
         ## selecting rf.sam for which GLUE.rsq is above the threshold
         ## For this first selecting values in GLUE.rsq that belong to jth par.sam.vec; each correspond to a rf.sam, with sequence as in the rf.sam.vec
         ## within those selecting values that are above threshold
-        rf.sam.j <- rf.sam.vec[!is.na(GLUE.rsq.vector.thresh[ii, cols.on])]
+        rf.sam.j <- rf.sam.vec[!is.na(GLUE.rsq.thresh[ii, cols.on])]
         for (k in 1: length(rf.sam.j)) {
           hydro.rf <- merge(sdt[par.sam %in% par.sam.vec[j]],
                          rdt[rf.sam %in% rf.sam.j[k]])
@@ -122,7 +128,7 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
         ## selecting rf.sam for which GLUE.rsq is above the threshold
         ## For this first selecting values in GLUE.rsq that belong to jth par.sam.vec; sequence refers to rf.sam.vec
         ## within those selecting values that are above threshold
-        rf.sam.j <- rf.sam.vec[!is.na(GLUE.rsq.vector.thresh[ii, cols.on])]
+        rf.sam.j <- rf.sam.vec[!is.na(GLUE.rsq.thresh[ii, cols.on])]
         for (k in 1: length(rf.sam.j)) {
           hydro.rf <- merge(sdt[par.sam == par.sam.vec[j]],
                          rdt[rf.sam %in% rf.sam.j[k]])
@@ -149,7 +155,7 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
         ## selecting rf.sam for which GLUE.rsq is above the threshold
         ## For this first selecting values in GLUE.rsq that belong to par.sam.vec; sequence refer to rf.sam.vec
         ## within those selecting values that are above threshold
-        rf.sam.j <- rf.sam.vec[!is.na(GLUE.rsq.vector.thresh[ii, cols.on])]
+        rf.sam.j <- rf.sam.vec[!is.na(GLUE.rsq.thresh[ii, cols.on])]
         for (k in 1: length(rf.sam.j)) {
           hydro.rf <- merge(sdt[par.sam == par.sam.vec[j]],
                             rdt[rf.sam %in% rf.sam.j[k]])
@@ -189,24 +195,25 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
   #best10.type.rsq <- t(apply(GLUE.rsq, 1, function(x) {sort(x, decreasing = T)[1:10]}))
   # > length(which(rowSums(is.na(best10.type.rsq)) == ncol(best10.type.rsq)))
   # [1] 732; so 732 spe-size have not found a match with r-sq >= 0.3
-  save(best10.type.sdi, file = paste0("results/", level.folder, "/best10.type.sdi_cor", file.extension.base3, ".Rdata"))
-  save(best10.type.udi, file = paste0("results/", level.folder, "/best10.type.udi_cor", file.extension.base3, ".Rdata"))
+  save(best10.type.sdi, file = paste0("results/", level.folder, "/best10.type.sdi_", file.extension.base3, ".Rdata"))
+  save(best10.type.udi, file = paste0("results/", level.folder, "/best10.type.udi_", file.extension.base3, ".Rdata"))
   # if (splevel == "on") {
-  #   load(file = paste0("results/splevel/best10.type.sdi_cor", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
-  #   load(file = paste0("results/splevel/best10.type.udi_cor", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/splevel/best10.type.sdi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/splevel/best10.type.udi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
   # } else {
-  #   load(file = paste0("results/commlevel/best10.type.sdi_cor", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
-  #   load(file = paste0("results/commlevel/best10.type.udi_cor", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/commlevel/best10.type.sdi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/commlevel/best10.type.udi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
   # }
+
   ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  ## associating growth time series to their best fit parameters and model outputs and uptake depths----
+  ## associating growth time series to their best fit parameters, model outputs and uptake depths----
   ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   # load root params
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
   root.param <- info$root.param
 
-  pro.df <- read.csv(file = file.path("results/root.profiles.long.csv"), header = TRUE)
+  pro.df <- read.csv(file = file.path("results/rf.sam_exponentially_decreasing.csv"), header = TRUE)
 
   root.param$root.75 <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac >= 0.75])))
   root.param$root.95 <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac >= 0.95])))
@@ -221,7 +228,8 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
     rf.sam.rows <- si.param.rel$rf.sam
     ds.bestfit.list[[ii]] <- root.param[rf.sam.rows,] %>% ## this works because rf.sam in root.param is consecutive
       mutate(par.sam = si.param.rel$par.sam,
-             rsq = as.numeric(GLUE.rsq.vector[ii,]),
+             rsq = as.numeric(GLUE.rsq[ii,]),
+             matches = as.numeric(GLUE.matches[ii,]),
              sdi = as.numeric(best10.type.sdi[ii,]),
              udi = as.numeric(best10.type.udi[ii,]),
              sp = sp[ii],
@@ -233,7 +241,8 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
       subset(!is.na(rf.sam)) %>% droplevels()
   }
   ###*****************
-  ## List is 10 GB+, so that may be the reason why the code generates null list elements on Macbook, but (not imac), needs to be run with shorter batches
+  ## List is 10 GB+, which may be the reason why the code generates null list elements on Macbook,
+  ## but (not imac), needs to be run with shorter batches
   ###*****************
   stopImplicitCluster()
   ds.bestfit.all <- do.call(rbind, ds.bestfit.list) %>%
@@ -245,5 +254,5 @@ udi.calculator <- function(splevel, dryseason, rsq.thresh, iso.subset) {
    } else {
     ds.bestfit.all$tlplevel <- "comm"
    }
-  save(ds.bestfit.all, file = paste0("results/", level.folder, "/ds.bestfit.all_cor", file.extension.base3, ".Rdata"))
+  save(ds.bestfit.all, file = paste0("results/", level.folder, "/ds.bestfit.all_", file.extension.base3, ".Rdata"))
 }

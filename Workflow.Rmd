@@ -27,22 +27,27 @@ where f(swp_z) is a growth.factor_z based on a linear step relationship with swp
 Code/6.0_Growth_correlate_table_from_swp.R
 
 ```{r Chunk 1.0, eval = FALSE}
-source("code/1.GLUEsetup_part1_BCI.R")
+source("code/4.1.1.GLUEsetup_part1_BCI.R")
 GLUEsetup_part1(current.folder = "2019-10-14_5000", intervals = 5) # this can take 30 min to get btran by nsam
 ```
 
 ```{r Chunk 2, eval = FALSE}
-source("code/4.1.GLUEsetup_part2_BCI.R")
-GLUEsetup_part2(growth.type = "med", dbh.residuals = "off", solar.residuals = "off", 
+source("code/4.1.2.GLUEsetup_part2_BCI.R")
+GLUEsetup_part2(growth.type = "med", dbh.residuals = "on", solar.residuals = "off", 
                 growth.selection = "size_class_predefined_cc_scaled") #"size_class_varying_non_cc") #n.ensembles = 100000
-# growth.type = "med"; dbh.residuals = "off"; solar.residuals = "off"; growth.selection = "size_class_predefined_cc_scaled"
+# growth.type = "med"; dbh.residuals = "on"; solar.residuals = "off"; growth.selection = "size_class_predefined_cc_scaled"
 ```
 
 ```{r Chunk 3, eval = TRUE}
 # This sources "code/4.2GLUErun_part2_func_BCI.R"
 source("code/4.3.GLUErun_part2_BCI.R")
-GLUE_run(splevel = "off", goodness.fit = 0.3)
-# GLUE_run(splevel = "on", goodness.fit = 0.3)
+# splevel = "on"; goodness.fit = 0.3; drop.months = "Mar"
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "Feb")
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "Mar")
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "FebMar")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "Feb")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "Mar")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "FebMar")
 ```
 
 <!-- ```{r Chunk 2.4.0, eval = TRUE} -->
@@ -53,36 +58,81 @@ GLUE_run(splevel = "off", goodness.fit = 0.3)
 
 ```{r Chunk 4, eval = TRUE}
 source("code/4.5.prep.udi.calculator.R")
-prep.udi.calculator(splevel = "on")
-prep.udi.calculator(splevel = "off")
+# splevel = "on"; drop.months = "JanFebMar"
+prep.udi.calculator(splevel = "on", drop.months = "Feb")
+prep.udi.calculator(splevel = "on", drop.months = "FebMar")
+prep.udi.calculator(splevel = "on", drop.months = "Mar")
+
+prep.udi.calculator(splevel = "off", drop.months = "Feb")
+prep.udi.calculator(splevel = "off", drop.months = "FebMar")
+prep.udi.calculator(splevel = "off", drop.months = "Mar")
 ```
 
 ```{r Chunk 5, eval = TRUE}
 source("code/4.6.udi.calculator.R")
 ##---needs to be run manually on macbook for splevel = "off" and iso.subset = "off"---
 # udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.5, iso.subset = "on") ## udi is not calculated below this rsq.thresh
-# # splevel = "on"; dryseason = "off"; rsq.thresh = 0.5; iso.subset = "on"
-# udi.calculator(splevel = "on", dryseason = "off", rsq.thresh = 0.5, iso.subset = "on") 
-# udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.5, iso.subset = "on")
-udi.calculator(splevel = "off", dryseason = "jan", rsq.thresh = 0.5, iso.subset = "on")
-udi.calculator(splevel = "on", dryseason = "jan", rsq.thresh = 0.5, iso.subset = "on")
-# udi.calculator(splevel = "off", dryseason = "1992", rsq.thresh = 0.5, iso.subset = "off") 
-# udi.calculator(splevel = "on", dryseason = "1992", rsq.thresh = 0.5, iso.subset = "off")
+# splevel = "on"; dryseason = "on"; rsq.thresh = 0.5;  n.ci.thresh = 3; iso.subset = "on"; drop.months = "JanFebMar"
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "on", drop.months = "Feb")
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "on", drop.months = "FebMar")
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "on", drop.months = "Mar")
+
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "on", drop.months = "Feb")
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "on", drop.months = "FebMar")
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "on", drop.months = "Mar")
+
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "off", drop.months = "Feb")
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "off", drop.months = "FebMar")
+udi.calculator(splevel = "on", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "off", drop.months = "Mar")
+
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "off", drop.months = "Feb")
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "off", drop.months = "FebMar")
+udi.calculator(splevel = "off", dryseason = "on", rsq.thresh = 0.3, 
+               n.ci.thresh = 3, iso.subset = "off", drop.months = "Mar")
 ```
 
 ```{r Chunk 6, eval = TRUE}
 source("code/4.7.summarising_udi_by_sp_size.R")
-# summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "on", iso.subset = "on")
-# # splevel = "on"; dryseason = "off"; rsq.thresh = 0.5; root.selection = "on"; iso.subset = "off"
-# summarise.udi(splevel = "on", dryseason = "off", rsq.thresh = 0.5, root.selection = "on", iso.subset = "on")
-# summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "on", iso.subset = "on")
-# summarise.udi(splevel = "off", dryseason = "off", rsq.thresh = 0.5, root.selection = "on", iso.subset = "on")
-summarise.udi(splevel = "on", dryseason = "jan", rsq.thresh = 0.5, root.selection = "on", iso.subset = "on")
-summarise.udi(splevel = "off", dryseason = "jan", rsq.thresh = 0.5, root.selection = "on", iso.subset = "on")
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Feb")
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "FebMar")
+# # splevel = "on"; dryseason = "off"; rsq.thresh = 0.5; root.selection = "exp"; iso.subset = "off"
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Jan")
+
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "FebMar")
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Feb")
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Mar")
+
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "off", drop.months = "Feb")
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "off", drop.months = "FebMar")
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "off", drop.months = "Mar")
+
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "off", drop.months = "FebMar")
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "off", drop.months = "Feb")
+summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "off", drop.months = "Mar")
 ```
 
 ```{r Chunk 7, eval = TRUE}
 source("code/10.Comparison_with_Meinzer1999.R")
+iso.compare(goodness.fit = 0.3, dryseason = "on", 
+            root.selection = "exp", iso.subset = "on", drop.months = "None")
+iso.compare(goodness.fit = 0.3, dryseason = "on", 
+            root.selection = "exp", iso.subset = "on", drop.months = "JanFebMar")
+iso.compare(goodness.fit = 0.3, dryseason = "on", 
+            root.selection = "exp", iso.subset = "on", drop.months = "JanFeb")
+iso.compare(goodness.fit = 0.3, dryseason = "on", 
+            root.selection = "exp", iso.subset = "on", drop.months = "Jan")
+# goodness.fit = 0.3; dryseason = "on"; root.selection = "exp"; iso.subset = "on"; drop.months = "None"
 ```
 
 ```{r Chunk 8, eval = FALSE}

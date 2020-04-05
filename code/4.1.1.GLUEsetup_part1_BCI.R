@@ -1,19 +1,21 @@
 # This file imports the data and sets up the 'Extra' variable
 
 rm(list=ls())
-gc()
+for (i in 1:5) {gc()}
 graphics.off()
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, doParallel, foreach, data.table)
 
-GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
+GLUEsetup_part1 <- function(current.folder = current.folder, intervals = intervals) {
+  # current.folder = "2019-10-14_5000"; intervals = 5
+  if(!dir.exists(file.path("results"))) {dir.create(file.path("results"))}
   if(!dir.exists(file.path("results", current.folder))) {dir.create(file.path("results", current.folder))}
 
   ####-------------------------------------
   #### 1. To enable hydro time series into intervals
   ####-------------------------------------
   ##
-  ## Storing census med and interval start and end dates--------------
+  # # Storing census med and interval start and end dates--------------
   # load("data-raw/CTFScensuses/bci.tree1.Rdata")
   # load("data-raw/CTFScensuses/bci.tree2.Rdata")
   # load("data-raw/CTFScensuses/bci.tree3.Rdata")
@@ -39,7 +41,6 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   # ggplot(bci.tree, aes(x = ExactDate)) +
   #   geom_histogram() +
   #   facet_wrap(~ census)
-  # library(dplyr)
   # mediandates <- summarise(bci.tree %>% group_by(census), mediandate = median(ExactDate, na.rm = T))
   # census.meds <- mediandates$mediandate
   # saveRDS(census.meds, "results/census.mediandates.rds") #-------
@@ -68,7 +69,7 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   ##-------------------------------------
   #root.nsam.long <- read.csv(file = file.path("data", current.folder, "params.root_fraction_by_depth_long.csv"), header = TRUE)
   # Generated from R/3.090_root_parameters_b.R
-  pro.df <- read.csv(file = file.path("results/root.profiles.long.csv"), header = TRUE)
+  pro.df <- read.csv(file = file.path("results/rf.sam_exponentially_decreasing.csv"), header = TRUE)
 
   root.nsam.long.sub <- pro.df %>% select(rf.sam, depth, root.frac) %>%
     mutate(depth = signif(round(depth, 2), 2))
@@ -124,37 +125,92 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
     filter(date %in% min(census.meds.chosen):max(census.meds.chosen)) %>%
     mutate_at(vars(interval), droplevels)
 
+  # set up the 'info' Structure----------
+  info <- list(census.meds = census.meds,
+               census = census,
+               census.meds.chosen = census.meds.chosen,
+               census.start = census.start,
+               census.end = census.end,
+               interval.mean = interval.mean$interval.mean,
+               intervals = intervals,
+               hydro.output = hydro.output,
+               hydro = hydro.output.chosen,
+               root.param = root.nsam,
+               root.param.long = pro.df,
+               si.type = current.folder
+  )
+  # save this variables to a workspace
+  save(file = "results/GLUEsetup_part1_BCI.RData", info)
+
   ##-------------------------------------------------------------
-  ## summarise Btran by census interval for each best-fit par.sam
+  ## summarise Btran by census interval for each best-fit par.sam -----
   ##--------------------------------------------------------------
   ## creating a list of nsam with a list of n.best with a matrix to store btran by interval
   sdt <- data.table(hydro.output.chosen, key = "depth")
-  btran.nsam.int <- list()
+  ncor <- detectCores() - 1
+  cl <- parallel::makeForkCluster(ncor)
+  doParallel::registerDoParallel(cl)
+
   Sys.time()
   beg <- Sys.time()
-  ## saving btran by nsam would be too big
-  #where Btran=i=1i=zRootFracz * gfac
-  btran.nsam.int <- foreach(ii  = 1 : nsam) %dopar% {
-    hydro <- merge(sdt, rdt[rf.sam == ii])
-    btran.nsam.int[[ii]] <- hydro[, btran := root.frac*gfac][
-      , keyby = .(par.sam, date, interval),
-          .(btran.sum = sum(btran, na.rm = TRUE))][ # daily sums should range (0-1)
-                       , keyby = .(par.sam, interval),
+  drop.months.vec <- list("Feb", "Mar", c("Feb", "Mar"))
+  btran.nsam.int <- vector(mode = "list", length = length(drop.months.vec))
+  for (k in 1: length(drop.months.vec)){
+    sdt.k <- sdt[, ':='(month = format(as.Date(date), "%b"))][!month %chin% drop.months.vec[[k]]]
+    ## saving btran by nsam would be too big
+    #where Btran=i=1i=zRootFracz * gfac
+    btran.nsam.int[[k]] <- foreach(ii  = 1 : nsam) %dopar% {
+      hydro <- merge(sdt.k, rdt[rf.sam == ii])
+      btran.nsam.int[[ii]] <- hydro[, btran := root.frac*gfac][
+        , keyby = .(par.sam, date, interval),
+        .(btran.sum = sum(btran, na.rm = TRUE))][ # daily sums should range (0-1)
+          , keyby = .(par.sam, interval),
           .(btran = mean(btran.sum, na.rm = TRUE))]
+    }
+    Sys.time()
+    end <- Sys.time()
+    (end - beg)
+    print(k)
   }
-  Sys.time()
-  end <- Sys.time()
-  (end - beg)
+  names(btran.nsam.int) <- lapply(drop.months.vec, paste, collapse = "")
+  parallel::stopCluster(cl)
+  # 4 min for root.nsam = 599
   # 1.15 hrs for nsam 10K n.best 100 1990-2018
   #
   # , interval := cut(date, include.lowest = TRUE, breaks = cut.breaks,
   #                   labels = cut.labels, right = FALSE)]
-  btran.nsam.int[[nsam]]
-  save(btran.nsam.int, file = file.path("results", current.folder, paste0("btran.nsam.int.Rda")))
-  load(file.path("results", current.folder, paste0("btran.nsam.int.Rda")))
+  btran.nsam.int[[1]][[nsam]]
+
   rm(sdt)
+  Sys.time()
+  beg <- Sys.time()
+  n.ensembles <- length(btran.nsam.int[[1]])
+  btran.matrix <- si.param.rel <- vector(mode = "list", length = length(drop.months.vec))
+  for (k in 1: length(drop.months.vec)){
+    btran.mat.list <- lapply(btran.nsam.int[[k]], function(x) {
+      btran.wide <- x %>% pivot_wider(names_from = interval, values_from = btran) %>% as.matrix()
+      btran.wide[, -1]
+    })
+    btran.matrix[[k]] <- do.call(rbind, btran.mat.list)
+    ### record relational info for si to rf.sam and par.sam
+    btran.wide.1 <- btran.nsam.int[[k]][[1]] %>% pivot_wider(names_from = interval, values_from = btran) %>%
+      as.matrix()
+    n.best <- nrow(btran.wide.1); par.sam.vec <- btran.wide.1[, "par.sam"]
+    si.param.rel[[k]] <- data.frame(row.num = 1:nrow(btran.matrix[[k]]),
+                                    rf.sam = rep(c(1:n.ensembles), each = n.best),
+                                    par.sam = rep(par.sam.vec, times = n.ensembles))
+    print(k)
+  }
+  names(btran.matrix) <- names(si.param.rel) <- lapply(drop.months.vec, paste, collapse = "")
+
+  info.3 <- list(btran = btran.nsam.int,
+                 btran.matrix = btran.matrix,
+                 si.param.rel = si.param.rel,
+                 drop.months.vec = drop.months.vec)
+  save(file = "results/GLUEsetup_part1.3_BCI.RData", info.3)
+
   ##*************************************
-  ## 3.b  With species level tlp
+  ## 3.b  With species level tlp -----
   ##*************************************
   ## IN Kunert's tlp data: swp ranges from -1.13 to -2.42 MPa
   # at -2.42 MPa f(swp) = 0
@@ -162,91 +218,99 @@ GLUEsetup_part1 <- function(current.folder = "2019-10-14_5000", intervals = 5) {
   # f(swp) = linearly decreases from 0 to 1 f(swp) =  1/(2.42-0.5)*2.42 - 1/(2.42-0.5)*swp = (2.42 - swp)/(2.42-0.5)
   # f(swp) =  1.260417 - 0.5208333*swp
   ## such that at -2.42 MPa f(swp) = 0
+  deci <- read.csv("data-raw/traits/HydraulicTraits_Kunert/deciduous_species_Meakem.csv")
+  deci <- deci %>% mutate(sp = as.character(Species.code), Deciduousness = as.character(Deciduousness)) %>%
+    select(sp, Deciduousness)
+  tlp.deci <- tlp %>% subset(sp %in% unique(deci$sp)) %>% droplevels()
+
+  sp.vec <- list(tlp$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp)
+  tlp.vec <- list(tlp$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp)
 
   Sys.time()
   beg <- Sys.time()
-  sp.hydro.output.chosen <- list()
-  for(jj  in 1 : n.sp) {
-    sp.tlp <- -tlp$tlp[jj]
-    sp.hydro.output.chosen[[jj]] <- psi %>% mutate(psi.2 = -psi) %>%
-      filter(date %in% min(census.meds.chosen):masp.tlp(census.meds.chosen)) %>%
-      mutate(gfac = if_else(psi.positive >= 0 & psi.positive < 0.5, 1,
-                            if_else(psi.positive == 0.5, 1,
-                                    if_else(psi.positive > sp.tlp, 0,
-                                            (sp.tlp - psi.positive)/(sp.tlp - 0.5))))) %>%
-      select(date, gfac, par.sam, depth) %>%
-      mutate(date = as.Date(date),
-             interval = droplevels(cut(date, include.lowest = TRUE, breaks = cut.breaks,
-                            labels = cut.labels, right = FALSE)))
+  sp.hydro.output.chosen <- vector(mode = "list", length = length(drop.months.vec))
+  for (k  in 1 : length(drop.months.vec)) {
+    psi.k <- psi %>% mutate(psi.positive = -psi) %>%
+      filter(date %in% min(census.meds.chosen):max(census.meds.chosen)) %>%
+      mutate(month = format(as.Date(date), "%b")) %>%
+      filter(!month %in% drop.months.vec[[k]])
+    sp.tlp.vec <- tlp.vec[[k]]
+    for (jj  in 1 : length(sp.vec[[k]])) {
+      sp.tlp <- -sp.tlp.vec[jj]
+      sp.hydro.output.chosen[[k]][[jj]] <- psi.k %>%
+        mutate(gfac = if_else(psi.positive >= 0 & psi.positive < 0.5, 1,
+                              if_else(psi.positive == 0.5, 1,
+                                      if_else(psi.positive > sp.tlp, 0,
+                                              (sp.tlp - psi.positive)/(sp.tlp - 0.5))))) %>%
+        select(date, gfac, par.sam, depth) %>%
+        mutate(date = as.Date(date),
+               interval = droplevels(cut(date, include.lowest = TRUE, breaks = cut.breaks,
+                                         labels = cut.labels, right = FALSE)))
 
+    }
+    names(sp.hydro.output.chosen[[k]]) <- sp.vec[[k]]
+    print(k)
   }
   Sys.time()
   end <- Sys.time()
-  (end - beg) # 2.2 min
-  names(sp.hydro.output.chosen) <- tlp$sp
-  rm(psi)
-
+  (end - beg)
+  rm(psi); rm(psi.k)
+  names(sp.hydro.output.chosen) <- lapply(drop.months.vec, paste, collapse = "")
+  save(file = "results/sp.hydro.output.chosen.RData", sp.hydro.output.chosen)
+  load("results/sp.hydro.output.chosen.RData")
+  # 2.2 min
+  # 2 min for root.nsam = 599
   # saving sp.swp.gfac first crashes system as ~20 GB # also parallel too slow
 
   #   # plot(gfac ~ psi.2, data = sp.swp.gfac[[1]][1:500,], ylab = "Growth Factor", xlab = "Soil Water Potential (-MPa)",
   #   #      main = "SWP - Growth factor Relationship")
 
   ##-------------------------------------------------------------
-  ## summarise Btran by census interval for each best-fit par.sam
+  ## summarise Btran by census interval for each best-fit par.sam-----
   ##--------------------------------------------------------------
+  cl <- parallel::makeForkCluster(ncor)
+  doParallel::registerDoParallel(cl)
+
   Sys.time()
   beg <- Sys.time()
-  sp.btran.matrix <- list()
-  for(jj  in 1 : n.sp) {
-    sdt <- data.table(sp.hydro.output.chosen[[jj]], key = "depth")
-    sp.btran.nsam.int <- list()
-    sp.btran.nsam.int <- foreach(ii  = 1 : nsam) %dopar% {
-      hydro <- merge(sdt, rdt[rf.sam == ii])
-      sp.btran.nsam.int[[ii]] <- hydro[, btran := root.frac*gfac][
-        , keyby = .(par.sam, date, interval),
-        .(btran.sum = sum(btran, na.rm = TRUE))][ # daily sums should range (0-1)
-          , keyby = .(par.sam, interval),
-          .(btran = mean(btran.sum, na.rm = TRUE))]
+
+  sp.btran.matrix <- vector(mode = "list", length = length(drop.months.vec))
+  names(sp.btran.matrix) <- lapply(drop.months.vec, paste, collapse = "")
+  for (k in 1: length(drop.months.vec)){
+    for(jj  in 1 : length(sp.vec[[k]])) {
+      sdt <- data.table(sp.hydro.output.chosen[[k]][[jj]], key = "depth")
+      sp.btran.nsam.int <- list()
+      sp.btran.nsam.int <- foreach(ii  = 1 : nsam) %dopar% {
+        hydro <- merge(sdt, rdt[rf.sam == ii])
+        sp.btran.nsam.int[[ii]] <- hydro[, btran := root.frac*gfac][
+          , keyby = .(par.sam, date, interval),
+          .(btran.sum = sum(btran, na.rm = TRUE))][ # daily sums should range (0-1)
+            , keyby = .(par.sam, interval),
+            .(btran = mean(btran.sum, na.rm = TRUE))]
+      }
+      sp.btran.mat.list <- lapply(sp.btran.nsam.int, function(x) {
+        btran.wide <- x %>% pivot_wider(names_from = interval, values_from = btran) %>%
+          as.matrix()
+        btran.wide[,-1]
+      }
+      )
+      sp.btran.matrix[[k]][[jj]] <- do.call(rbind, sp.btran.mat.list)
+      print(jj)
     }
-    sp.btran.mat.list <- lapply(sp.btran.nsam.int, function(x) {
-      btran.wide <- x %>% pivot_wider(names_from = interval, values_from = btran) %>%
-        as.matrix()
-      btran.wide[,-1]
-    }
-    )
-    sp.btran.matrix[[jj]] <- do.call(rbind, sp.btran.mat.list)
-    print(jj)
+    names(sp.btran.matrix[[k]]) <- sp.vec[[k]]
   }
-  names(sp.btran.matrix) <- tlp$sp
+  parallel::stopCluster(cl)
+
   Sys.time()
   end <- Sys.time()
-  (end - beg) ## 13.4 sec for 1 sp and nsam = 18, so 5.6 hrs for 51 sp & 533 nsam
+  (end - beg)
+  ## 18 hrs for 4 dropped.months rf.sam = 599, 51 sp
+  # (end - beg) ## 13.4 sec for 1 sp and nsam = 18, so 5.6 hrs for 51 sp & 533 nsam
   duration <- end-beg
   save(file = "results/duration.RData", duration)
   parallel::stopCluster(cl)
-  save(file = "results/sp.btran.matrix.RData", sp.btran.matrix)
-  save(file = "results/sp.hydro.output.chosen.RData", sp.hydro.output.chosen)
-  load(file.path("results/sp.btran.matrix.RData"))
-
-  # set up the 'info' Structure----------
-  info <- list(census.meds = census.meds,
-                census = census,
-                census.meds.chosen = census.meds.chosen,
-                census.start = census.start,
-                census.end = census.end,
-                interval.mean = interval.mean$interval.mean,
-                intervals = intervals,
-                hydro.output = hydro.output,
-                hydro = hydro.output.chosen,
-                btran = btran.nsam.int,
-                root.param = root.nsam,
-                root.param.long = pro.df,
-                si.type = current.folder
-  )
-  # save this variables to a workspace
-  save(file = "results/GLUEsetup_part1_BCI.RData", info)
   info.2 <- list(sp.si = sp.btran.matrix)
-  save(file = "results/GLUEsetup_part1.5_BCI.RData", info.2)
+  save(file = "results/GLUEsetup_part1.2_BCI.RData", info.2)
 }
 
 

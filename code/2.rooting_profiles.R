@@ -116,6 +116,81 @@ ggplot(profiles %>% subset(!is.na(depth) & power < 0.5),
   scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2))
 ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_ELM_FATES_depths_power.threshold_0.5.jpeg")), height = 8, width = 8, units ='in')
 
+### creating new profiles that exponentially decrease
+no.of.bases <- 1000
+select.x <- seq(from = 1, to = 5.6, length.out = 1000) ## so that y max is 1000
+y <- round(select.x^4, 0)
+plot(y ~ select.x)
+head(y)
+
+base.df <- data.frame(x = seq(from = 0, to = 500, length = no.of.bases)[y])
+plot(base.df$x)
+# base.df2 <- base.df %>% mutate(y = x + c(x - lag(x))/2) %>% rename(x = y)
+base.df <- base.df %>% #bind_rows(base.df2) %>%
+  arrange(x) %>%
+  mutate(base = 1.1^(x)) %>% subset(!is.na(base) & !duplicated(base))
+# base.df <- base.df[-c(1:4),]
+head(base.df); nrow(base.df); summary(base.df)
+  # mutate(base = seq(from = 1, to = 10^7, length.out = 100))
+
+## for tick-marks------
+#  From https://stackoverflow.com/questions/34533472/insert-blanks-into-a-vector-for-e-g-minor-tick-labels-in-r
+
+ggplot(base.df, aes(x = x, y = base)) +
+  geom_point(aes(color = base), show.legend = FALSE) +
+  scale_color_distiller(name = "Base",  trans = "log10", direction = -1, palette = "RdYlBu") +
+  # scale_color_viridis_c(name = "Base",  trans = "reverse", option = "inferno") +
+  ylab("Base") + xlab("x") +
+  scale_y_log10() +
+  annotate("text", x = 100, y = 0.1*max(base.df$base, na.rm = TRUE), parse = TRUE, label =
+             as.character(expression("Base = e"^x)),
+            family = "Helvetica", size = 6)
+ggsave(file.path(paste0("figures/base_exponetially_increasing.jpeg")), height = 6, width = 6, units ='in')
+
+pro.df <- data.frame(depth = rep(soil.depths, times = length(base.df$base)),
+                      base = rep(base.df$base, each = length(soil.depths)),
+                      rf.sam = rep(1:length(base.df$base), each = length(soil.depths))) %>%
+                        mutate(exp.fun = base^-depth) %>% group_by(base) %>%
+  mutate(cum.exp.fun = sum(exp.fun),
+         root.frac = exp.fun/cum.exp.fun,
+         cum.root.frac = cumsum(root.frac))
+#  max(pro.df$rf.sam) 599
+# View(pro.df)
+rf.breaks = signif(round(soil.depths, 2), 2)
+rf.labels = rf.breaks # c(breaks[1], rep("", 4), breaks[6], "", breaks[8: length(breaks)])
+p.rf <- ggplot(pro.df, aes(y = depth, x = root.frac)) +
+  geom_point(aes(color = base)) +
+  geom_line(aes(color = base, group = base), show.legend = FALSE) +
+  ylab("Depth (m)") + xlab("Root Fraction (0-1)") +
+  scale_color_distiller(name = "Base",  trans = "log10", direction = -1, palette = "RdYlBu") +
+  # scale_color_distiller(name = "Base",  trans = "reverse", palette = "RdYlBu") +
+  # scale_color_viridis_c(name = "Base",  trans = "reverse", option = "inferno") +
+  theme(legend.position = c(0.75, 0.4)) +
+  annotate("text", x = 0.37, y = 1.7, parse = TRUE, label =
+             as.character(expression(RootFraction[z] == frac(Base^-Depth[z], sum(Base^-Depth[z], z==1, 13)))),
+           family = "Helvetica", size = 5) +
+  scale_y_continuous(trans="rev_sqrt", breaks = rf.breaks, labels = rf.labels)
+  # scale_y_reverse(breaks = rf.breaks, labels = rf.labels)  # scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2))
+ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_exponentially_decreasing_root.frac.jpeg")),
+       plot = p.rf, height = 6, width = 4.5, units ='in')
+
+p.cum.rf <- ggplot(pro.df, aes(y = depth, x = cum.root.frac)) +
+  geom_point(aes(color = base)) +
+  geom_line(aes(color = base, group = base), show.legend = FALSE) +
+  ylab("Depth (m)") + xlab("Cumulative Root Fraction (0-1)") +
+  scale_color_distiller(name = "Base",  trans = "log10", direction = -1, palette = "RdYlBu") +
+  # scale_color_distiller(name = "Base",  trans = "reverse", palette = "RdYlBu") +
+  theme(legend.position = c(0.3, 0.4)) +
+  annotate("text", x = 0.5, y = 10, parse = TRUE, label =
+             as.character(expression(RootFraction[z] == frac(Base^-Depth[z], sum(Base^-Depth[z], z==1, N =13)))),
+           family = "Helvetica", size = 5) +
+  # scale_y_reverse(breaks = rf.breaks, labels = rf.labels)
+  scale_y_continuous(trans="rev_sqrt", breaks = rf.breaks, labels = rf.labels)
+ggsave(file.path(paste0("figures/rooting_profiles_for_inversion_exponentially_decreasing.jpeg")),
+       plot = p.cum.rf, height = 6, width = 4.5, units ='in')
+
+write.csv(pro.df, "results/rf.sam_exponentially_decreasing.csv", row.names = FALSE)
+pro.df <- read.csv(file = file.path("results/rf.sam_exponentially_decreasing.csv"), header = TRUE)
 
 #####---------
 select.rf.sam <- unique(profiles$rf.sam[profiles$power < 0.5])

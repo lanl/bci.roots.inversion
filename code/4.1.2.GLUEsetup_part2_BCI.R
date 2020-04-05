@@ -12,8 +12,8 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
     load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
     intervals <- info$intervals
     ## load Result of 3.GLUErun_part1_BCI.R:
-    btran <- info$btran
-    n.ensembles <- length(btran)
+    load("results/GLUEsetup_part1.3_BCI.RData")
+    n.ensembles <- length(info.3$btran.int.sam[[1]])
     ## Observed growth
     ## individual, species or sp by size level
     growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_ci_", intervals, "_", growth.selection, ".Rdata"))
@@ -51,22 +51,6 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
     ## convert growth with activecols to vector; then to matrix
     # growth.matrix <- as.matrix(growth[, activecols.growth], nrow = nrow(growth),
     #                            ncol = length(activecols.growth), byrow = T)
-    Sys.time()
-    beg <- Sys.time()
-    btran.mat.list <- lapply(btran, function(x) {
-      btran.wide <- x %>% pivot_wider(names_from = interval, values_from = btran) %>% as.matrix()
-      btran.wide[, -1]
-    })
-    Sys.time()
-    end <- Sys.time()
-    (end - beg)
-    btran.matrix <- do.call(rbind, btran.mat.list)
-    ### record relational info for si to rf.sam and par.sam
-    btran.wide.1 <- btran[[1]] %>% pivot_wider(names_from = interval, values_from = btran) %>% as.matrix()
-    n.best <- nrow(btran.wide.1); par.sam.vec <- btran.wide.1[, "par.sam"]
-    si.param.rel <- data.frame(row.num = 1:nrow(btran.matrix),
-                         rf.sam = rep(c(1:n.ensembles), each = n.best),
-                         par.sam = rep(par.sam.vec, times = n.ensembles))
 
     growth_by_si.info <- list(
       n.ensembles = n.ensembles,
@@ -76,8 +60,9 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
       growth.type = growth.type,
       growth.meta = growth.meta,
       growth = growth,
-      si = btran.matrix,
-      si.param.rel = si.param.rel,
+      si = info.3$btran.matrix,
+      si.param.rel = info.3$si.param.rel,
+      drop.months.vec = info.3$drop.months.vec,
       si.type = info$si.type
     )
     save(file = "results/4.1GLUEsetup_part2_BCI.RData", growth_by_si.info)

@@ -3,7 +3,7 @@ gc()
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, data.table)
 
-summarise.udi <- function(splevel, dryseason, rsq.thresh, root.selection, iso.subset) {
+summarise.udi <- function(splevel, dryseason, rsq.thresh, root.selection, iso.subset, drop.months) {
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
   load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
 
@@ -23,10 +23,13 @@ summarise.udi <- function(splevel, dryseason, rsq.thresh, root.selection, iso.su
     level.folder <- "commlevel"
   }
 
-  file.extension.base3 <- paste0(goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals, "_dryseason_", dryseason, "_iso.subset_", iso.subset)
+  file.extension.base3 <- paste0("drop.months", drop.months, "_cor", goodness.fit, "_",
+                                 si.type, "_", n.ensembles, "_", growth.type, "_",
+                                 growth.selection, "_", dbh.residuals, "_", intervals,
+                                 "_dryseason_", dryseason, "_iso.subset_", iso.subset)
   file.extension.base4 <- paste0(file.extension.base3, "_root.selection_", root.selection)
 
-  load(file = paste0("results/", level.folder, "/ds.bestfit.all_cor", file.extension.base3, ".Rdata"))
+  load(file = paste0("results/", level.folder, "/ds.bestfit.all_", file.extension.base3, ".Rdata"))
 
   if (root.selection == "on") {
     select.rf.sam <- read.csv(file = file.path("results/rf.sam_power.threshold_0.5.csv"), header = TRUE)
@@ -92,8 +95,8 @@ summarise.udi <- function(splevel, dryseason, rsq.thresh, root.selection, iso.su
     } else {
       ds.bestfit$tlplevel <- ds.bestfit.longer$tlplevel <- "comm"
     }
-  save(ds.bestfit, file = paste0("results/", level.folder, "/ds.bestfit_cor", file.extension.base4, ".Rdata"))
-  save(ds.bestfit.longer, file = paste0("results/", level.folder, "/ds.bestfit.longer_cor", file.extension.base4, ".Rdata"))
-  # load(file = paste0("results/splevel/ds.bestfit_cor", file.extension.base4, ".Rdata"))
-  # load(file = paste0("results/splevel/ds.bestfit.longer_cor", file.extension.base4, ".Rdata"))
+  save(ds.bestfit, file = paste0("results/", level.folder, "/ds.bestfit_", file.extension.base4, ".Rdata"))
+  save(ds.bestfit.longer, file = paste0("results/", level.folder, "/ds.bestfit.longer_", file.extension.base4, ".Rdata"))
+  # load(file = paste0("results/splevel/ds.bestfit_", file.extension.base4, ".Rdata"))
+  # load(file = paste0("results/splevel/ds.bestfit.longer_", file.extension.base4, ".Rdata"))
 }

@@ -155,6 +155,7 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   beg <- Sys.time()
   drop.months.vec <- list("Feb", "Mar", c("Feb", "Mar"))
   btran.nsam.int <- vector(mode = "list", length = length(drop.months.vec))
+  names(btran.nsam.int) <- lapply(drop.months.vec, paste, collapse = "")
   for (k in 1: length(drop.months.vec)){
     sdt.k <- sdt[, ':='(month = format(as.Date(date), "%b"))][!month %chin% drop.months.vec[[k]]]
     ## saving btran by nsam would be too big
@@ -172,7 +173,6 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
     (end - beg)
     print(k)
   }
-  names(btran.nsam.int) <- lapply(drop.months.vec, paste, collapse = "")
   parallel::stopCluster(cl)
   # 4 min for root.nsam = 599
   # 1.15 hrs for nsam 10K n.best 100 1990-2018
@@ -186,6 +186,8 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   beg <- Sys.time()
   n.ensembles <- length(btran.nsam.int[[1]])
   btran.matrix <- si.param.rel <- vector(mode = "list", length = length(drop.months.vec))
+  names(btran.matrix) <- names(si.param.rel) <- lapply(drop.months.vec, paste, collapse = "")
+
   for (k in 1: length(drop.months.vec)){
     btran.mat.list <- lapply(btran.nsam.int[[k]], function(x) {
       btran.wide <- x %>% pivot_wider(names_from = interval, values_from = btran) %>% as.matrix()
@@ -201,13 +203,13 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
                                     par.sam = rep(par.sam.vec, times = n.ensembles))
     print(k)
   }
-  names(btran.matrix) <- names(si.param.rel) <- lapply(drop.months.vec, paste, collapse = "")
 
   info.3 <- list(btran = btran.nsam.int,
                  btran.matrix = btran.matrix,
                  si.param.rel = si.param.rel,
                  drop.months.vec = drop.months.vec)
   save(file = "results/GLUEsetup_part1.3_BCI.RData", info.3)
+  # load("results/GLUEsetup_part1.3_BCI.RData")
 
   ##*************************************
   ## 3.b  With species level tlp -----
@@ -311,6 +313,7 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   parallel::stopCluster(cl)
   info.2 <- list(sp.si = sp.btran.matrix)
   save(file = "results/GLUEsetup_part1.2_BCI.RData", info.2)
+  # load("results/GLUEsetup_part1.2_BCI.RData")
 }
 
 

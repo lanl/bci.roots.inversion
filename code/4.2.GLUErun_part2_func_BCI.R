@@ -6,7 +6,7 @@ growth_by_si.func <- function(fun.version = fun.version,
                               drop.months = drop.months,
                               statistic = statistic) {
 
-  if (splevel == "on"){
+  if (splevel == "on") {
     sp.with.tlp <- names(info.2$sp.si[[drop.months]])
     growth.meta <- growth_by_si.info$growth.meta %>%
       subset(sp %in% sp.with.tlp)
@@ -26,13 +26,14 @@ growth_by_si.func <- function(fun.version = fun.version,
     if (drop.months != "None"){
       # only species that are deciduous need to be retained from the growth matrix
       deci <- read.csv("data-raw/traits/HydraulicTraits_Kunert/deciduous_species_Meakem.csv")
-      deci <- deci %>% mutate(sp = as.character(Species.code), Deciduousness = as.character(Deciduousness)) %>%
-        select(sp, Deciduousness)
+      deci <- deci %>% mutate(sp = as.character(Species.code),
+                              Deciduousness = as.character(Deciduousness))
       sp.in.sp_size <- stringr::str_split_fixed(names(growth), "_", 2)[,1]
       growth <- growth[sp.in.sp_size %in% unique(deci$sp)]
     }
     sp_size <- names(growth)
-    location.adj <- as.numeric(strsplit(colnames(growth_by_si.info$si[[drop.months]]),".", fixed = TRUE)[[1]][2]) - 1
+    location.adj <- as.numeric(strsplit(colnames(growth_by_si.info$si[[drop.months]]), ".",
+                                        fixed = TRUE)[[1]][2]) - 1
     ## Taking the sp.si list element for the prescribed drop.months
     si <- unname(growth_by_si.info$si[[drop.months]])
   }
@@ -79,7 +80,7 @@ growth_by_si.func <- function(fun.version = fun.version,
       )
       GLUE.list[[jj]] <- unlist(GLUE.sub)
     }
-  } else if (fun.version == "likelihood") {
+  } else if (fun.version == "within.ci") {
     GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
       obs <- growth[[jj]]
       if(splevel == "on") {
@@ -95,6 +96,23 @@ growth_by_si.func <- function(fun.version = fun.version,
         # returns no. of data points(censuses) out of the total data points(censuses) in a time series
         # that fell within the CI
         return(sum(within.ci, na.rm = TRUE))
+      })
+      GLUE.list[[jj]] <- unlist(GLUE.sub)
+    }
+  } else if (fun.version == "likelihood") {
+    GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
+      obs <- growth[[jj]]
+      if(splevel == "on") {
+        si.matrix <- sp.si.match[[jj]]
+      } else {
+        si.matrix <- si
+      }
+      GLUE.sub <- apply(si.matrix, 1, function (x) {
+        sim <- x[obs$interval - location.adj]
+        model <- .lm.fit(matrix(sim), matrix(obs$median))
+        Rd <- suppressWarnings(dnorm(as.numeric(model$residuals), 0, 1, log = TRUE))
+        return(-sum(Rd, na.rm = TRUE))
+        ## -Thus negative LL. Needs to be minimised
       })
       GLUE.list[[jj]] <- unlist(GLUE.sub)
     }

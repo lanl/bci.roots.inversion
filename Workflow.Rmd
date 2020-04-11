@@ -41,13 +41,21 @@ GLUEsetup_part2(growth.type = "med", dbh.residuals = "on", solar.residuals = "of
 ```{r Chunk 3, eval = TRUE}
 # This sources "code/4.2GLUErun_part2_func_BCI.R"
 source("code/4.3.GLUErun_part2_BCI.R")
-# splevel = "on"; goodness.fit = 0.3; drop.months = "Mar"
+# splevel = "off"; goodness.fit = 0.3; drop.months = "Mar"
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "None")
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "Jan")
 GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "Feb")
 GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "Mar")
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "JanFeb")
 GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "FebMar")
+GLUE_run(splevel = "off", goodness.fit = 0.3, drop.months = "JanFebMar")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "None")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "Jan")
 GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "Feb")
 GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "Mar")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "JanFeb")
 GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "FebMar")
+GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "JanFebMar")
 ```
 
 <!-- ```{r Chunk 2.4.0, eval = TRUE} -->
@@ -107,7 +115,7 @@ source("code/4.7.summarising_udi_by_sp_size.R")
 summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Feb")
 summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "FebMar")
 # # splevel = "on"; dryseason = "off"; rsq.thresh = 0.5; root.selection = "exp"; iso.subset = "off"
-summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Jan")
+summarise.udi(splevel = "on", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Mar")
 
 summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "FebMar")
 summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.5, root.selection = "exp", iso.subset = "on", drop.months = "Feb")

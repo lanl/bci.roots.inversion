@@ -1,7 +1,7 @@
 ##-------------------------
 ## Date : 22 Jul 2018
 ## Author : Rutuja
-## Title : Uptake depth and hydrualic traits
+## Title : Uptake depth and hydraulic traits
 ##-------------------------
 ## Do species with shallow uptake depth have greater drought tolerance? (more -ve TLP)
 
@@ -136,7 +136,6 @@ ggsave(file.path(paste0(figures.folder, "/udi_vs_panama.traits",
 p1 <- p0 %+% subset(plot.dst, !is.na(stars) & !trait %in% c("Chl", "root.95"))
 ggsave(file.path(paste0(figures.folder ,"/udi_vs_panama.traits",
                         "splevel_large_signif.jpeg")), plot = p1, height = 9, width = 12, units ='in')
-
 
 hyd <- read.csv("data-raw/traits/HydraulicTraits_BrettWolfe/ht1_20200103.csv") #  # Brett's data
 hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%

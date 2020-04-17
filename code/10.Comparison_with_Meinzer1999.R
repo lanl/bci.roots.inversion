@@ -90,6 +90,7 @@ iso.compare <- function(goodness.fit = goodness.fit,
 
   iso.sp <- iso$sp #[!is.na(iso$Xylem_sap_deltaD_permil)]
   save(iso.sp, file = "results/sp_with_isotopic_record.Rdata")
+  load("results/sp_with_isotopic_record.Rdata")
   write.csv(iso, file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4_sp_code.csv")), row.names = FALSE)
 
   ### More data from March1997 from Fig 5B (includes data in Fig 5A)

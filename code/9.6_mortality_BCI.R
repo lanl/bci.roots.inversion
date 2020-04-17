@@ -137,7 +137,12 @@ demo.graphs <- function(level.folder = level.folder, n.threshold = n.threshold,
   #   geom_smooth(method = "loess", color = "black") +
   #   ylab(expression("Mean Mortality Rate (per year)")) + xlab("Water Uptake Depth Index (m)")
   # ggsave(file.path(paste0("figures/mortality/", growth.type, "/sp_Mortality_rate_by_period_udi_by_size_aboveN", n.threshold, "_tlpcommn.jpeg")), height = 7, width = 12, units='in')
-  ## restricting analysis to only canopy and large canopy species
+
+  ## Restricting analysis to only canopy and large canopy species---------
+  # Metadata Panama Traits Definitions.doc:
+  # GRWFRM2$ - Values are as in GRWFRM1 except free-standing species can have multiple values if maximum size varies widely within Panama
+  # GRWFRM1$ - Values are Climber, HERB, S, U, M and T. S, U, M and T are free-standing species with maximum heights of 5, 10, 20 and > 30 m, respectively.
+
   bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
     rename(form1 = GRWFRM1., form2 = GRWFRM2., sp = SP.) %>% mutate(sp = tolower(sp))
 

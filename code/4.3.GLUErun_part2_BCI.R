@@ -27,72 +27,91 @@ GLUE_run <- function(splevel, goodness.fit, drop.months) {
            growth_by_si.info$growth.selection, "_",
            growth_by_si.info$dbh.residuals, "_",
            info$intervals, ".Rdata")
-  ###-----------------
-  ###---------GLUE.rsq----
-  ###-----------------
-  # beg <- Sys.time()
-  # beg
-  # # Function from source(file.path("code/4.2.GLUErun_part2_func_BCI.R"))
-  # GLUE.rsq <-
-  #   growth_by_si.func(
-  #     fun.version = "rsq",
-  #     growth_by_si.info = growth_by_si.info,
-  #     statistic = "rsq",
-  #     splevel = splevel,
-  #     goodness.fit = goodness.fit,
-  #     drop.months = drop.months
-  #   )
-  # # fun.version = "rsq"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
-  # # goodness.fit = goodness.fit; drop.months = drop.months
-  # end = Sys.time()
-  # (end - beg) * nrow(growth_by_si.info$growth) / 60 / 60 / 100
-  # end - beg
-  # # 24 min on macbook
-  # # 26 secs at both levels ; 47.21 sec for parallel at lower levels # 10 n.ensembles & 12 growth
-  # ## took 15 hours on the server for 1k n.ensembles and nrow(growth) = 158107
-  # # takes 11 min on server for ~580 growth ts n.ensembles = 10000 n.best = 100
-  # save(GLUE.rsq,
-  #      file = paste0("results/", level.folder, "/GLUE.rsq_", file.suffix))
-  # rm(GLUE.rsq)
-  # ##---------------------------------------------------------------------------------
-  # ##---------GLUE.matches----No. of growth predictions that are within 95% CI of median growth
-  # ##---------------------------------------------------------------------------------
-  # # Function from source(file.path("code/4.2.GLUErun_part2_func2_BCI.R"))
-  #
-  # GLUE.matches <-
-  #   growth_by_si.func(
-  #     fun.version = "within.ci",
-  #     growth_by_si.info = growth_by_si.info,
-  #     statistic = "rsq", ## this is actually needed for GLUE.rsq
-  #     splevel = splevel,
-  #     goodness.fit = goodness.fit,
-  #     drop.months = drop.months
-  #   )
-  # # fun.version = "within.ci"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
-  # # goodness.fit = goodness.fit; drop.months = drop.months
-  # save(GLUE.matches,
-  #      file = paste0("results/", level.folder, "/GLUE.matches_", file.suffix))
-  # rm(GLUE.matches)
+  ##---------------------
+  ##---------GLUE.rsq----
+  ##---------------------
+  beg <- Sys.time()
+  beg
+  # Function from source(file.path("code/4.2.GLUErun_part2_func_BCI.R"))
+  GLUE.rsq <-
+    growth_by_si.func(
+      fun.version = "rsq",
+      growth_by_si.info = growth_by_si.info,
+      statistic = "rsq",
+      splevel = splevel,
+      goodness.fit = goodness.fit,
+      drop.months = drop.months
+    )
+  # fun.version = "rsq"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
+  # goodness.fit = goodness.fit; drop.months = drop.months
+  end = Sys.time()
+  (end - beg) * nrow(growth_by_si.info$growth) / 60 / 60 / 100
+  end - beg
+  # 24 min on macbook
+  # 26 secs at both levels ; 47.21 sec for parallel at lower levels # 10 n.ensembles & 12 growth
+  ## took 15 hours on the server for 1k n.ensembles and nrow(growth) = 158107
+  # takes 11 min on server for ~580 growth ts n.ensembles = 10000 n.best = 100
+  save(GLUE.rsq,
+       file = paste0("results/", level.folder, "/GLUE.rsq_", file.suffix))
+  rm(GLUE.rsq)
   ##---------------------------------------------------------------------------------
-  ##---------GLUE.ll----Likelihood of the data given model
+  ##---------GLUE.matches----No. of growth predictions that are within 95% CI of median growth
   ##---------------------------------------------------------------------------------
   # Function from source(file.path("code/4.2.GLUErun_part2_func2_BCI.R"))
 
-  GLUE.ll <-
+  GLUE.matches <-
     growth_by_si.func(
-      fun.version = "likelihood",
+      fun.version = "within.ci",
       growth_by_si.info = growth_by_si.info,
       statistic = "rsq", ## this is actually needed for GLUE.rsq
       splevel = splevel,
       goodness.fit = goodness.fit,
       drop.months = drop.months
     )
-  # fun.version = "likelihood"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
+  # fun.version = "within.ci"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
   # goodness.fit = goodness.fit; drop.months = drop.months
-  save(GLUE.ll,
-       file = paste0("results/", level.folder, "/GLUE.ll_", file.suffix))
-  rm(GLUE.ll)
-  }
+  save(GLUE.matches,
+       file = paste0("results/", level.folder, "/GLUE.matches_", file.suffix))
+  rm(GLUE.matches)
+  #---------------------------------------------------------------------------------
+  #---------GLUE.ll----Likelihood of the data given model
+  #---------------------------------------------------------------------------------
+  # Function from source(file.path("code/4.2.GLUErun_part2_func2_BCI.R"))
+
+  GLUE.negLL <-
+    growth_by_si.func(
+      fun.version = "neg.likelihood",
+      growth_by_si.info = growth_by_si.info,
+      statistic = "rsq", ## this is actually needed for GLUE.rsq
+      splevel = splevel,
+      goodness.fit = goodness.fit,
+      drop.months = drop.months
+    )
+  # fun.version = "neg.likelihood"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
+  # goodness.fit = goodness.fit; drop.months = drop.months
+  save(GLUE.negLL,
+       file = paste0("results/", level.folder, "/GLUE.negLL_", file.suffix))
+  rm(GLUE.negLL)
+  ##---------------------------------------------------------------------------------
+  ##---------GLUE.resid----residuals
+  ##---------------------------------------------------------------------------------
+  # Function from source(file.path("code/4.2.GLUErun_part2_func2_BCI.R"))
+
+  GLUE.resid <-
+    growth_by_si.func(
+      fun.version = "residuals",
+      growth_by_si.info = growth_by_si.info,
+      statistic = "rsq", ## this is actually needed for GLUE.rsq
+      splevel = splevel,
+      goodness.fit = goodness.fit,
+      drop.months = drop.months
+    )
+  # fun.version = "residual"; growth_by_si.info = growth_by_si.info; statistic = "rsq"; splevel = splevel;
+  # goodness.fit = goodness.fit; drop.months = drop.months
+  save(GLUE.resid,
+       file = paste0("results/", level.folder, "/GLUE.resid_", file.suffix))
+  rm(GLUE.resid)
+}
 
 # for profiling:
 # Rprof(append = FALSE)

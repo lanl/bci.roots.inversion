@@ -1,4 +1,4 @@
-## Finding best fit water-stress/growth model parameters for species growth time series
+
 
 # .rs.restartR()
 # for 50 ha obs species groups

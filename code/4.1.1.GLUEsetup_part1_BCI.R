@@ -1,4 +1,9 @@
-# This file imports the data and sets up the 'Extra' variable
+
+#------------------------------------------------------------------------------
+# Title: Collate swp data, rooting profiles, generated btran and census dates
+# Author : Rutuja Chitra-Tarak
+# Original date: December 18, 2019
+#------------------------------------------------------------------------------
 
 rm(list=ls())
 for (i in 1:5) {gc()}

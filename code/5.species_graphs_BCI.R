@@ -1,4 +1,9 @@
-##
+#---------------------------------------------------------
+# Title:  Plots species-size level UDI and rooting profiles
+# Author : Rutuja Chitra-Tarak
+# Original date: December 18, 2019
+#---------------------------------------------------------
+
 rm(list = ls())
 gc()
 if (!require("pacman")) install.packages("pacman"); library(pacman)

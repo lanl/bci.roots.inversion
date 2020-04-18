@@ -1,3 +1,9 @@
+#-----------------------------------------------------
+# Title: Analysing mortality by Uptake Depth Index
+# Author : Rutuja Chitra-Tarak
+# Original date: Mar 20, 2020
+#-----------------------------------------------------
+
 rm(list=ls())
 gc()
 # load("/Library/Frameworks/R.framework/Versions/3.4/Resources/library/CTFSRPackage/CTFSRPackage.Rdata")

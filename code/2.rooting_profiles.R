@@ -1,5 +1,9 @@
-## Estimating parameter b (fates_rootb_par) range for rooting profiles
 
+#-------------------------------
+# Title: Generate Rooting profiles
+# Author : Rutuja Chitra-Tarak
+# Original date: 2019-12-20
+#-------------------------------
 
 rm(list=ls())
 

@@ -1,3 +1,8 @@
+#---------------------------------
+# Title: Preparing growth data for inverse modeling
+# Author : Rutuja Chitra-Tarak
+# Original date: December 11, 2019
+#---------------------------------
 
 # for 50 ha obs species groups
 rm(list = ls())

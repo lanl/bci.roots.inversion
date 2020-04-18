@@ -1,3 +1,10 @@
+#------------------------------------------------------------------------------
+# Title: Old script to prepare data for inversion
+# Tries to match data preparation with Condit et al 2017, including modulus transformation of growth rates
+# Author : Rutuja Chitra-Tarak
+# Original date: February 2, 2019
+#------------------------------------------------------------------------------
+
 # for 50 ha obs species groups
 rm(list = ls())
 source(file = "R/utilities.R")

@@ -1,8 +1,10 @@
-###------------------------------
-### Find out distribution of growth rates and residuals of water-stress on growth
+
+###-------------------------------
+### Find out distribution of growth rates, residuals of inverse model, UDI
 ### Author: Rutuja
-### Date: April 16, 2020
-###------------------------------
+### Original Date: April 16, 2020
+###-------------------------------
+
 rm(list = ls())
 
 gc()

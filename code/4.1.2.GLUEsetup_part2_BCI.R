@@ -1,5 +1,9 @@
-## Best-fit_param_BCI_fun
-## load btran
+#----------------------------------------------
+# Title: Collate growth and btran data and metadata
+# Author : Rutuja Chitra-Tarak
+# Original date: Feb 18, 2019
+#----------------------------------------------
+
 rm(list = ls())
 gc()
 graphics.off()

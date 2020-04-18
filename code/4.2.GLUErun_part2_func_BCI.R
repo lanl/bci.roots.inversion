@@ -1,4 +1,12 @@
-## function to calculate rsq between observed growth vs. simulated SI matrix
+
+#---------------------------------
+# Title: Function to calculate various goodness of fit
+# stats between observed growth and simulated btran
+# This is sourced in GLUErun_part2_BCI.R
+# Author : Rutuja Chitra-Tarak
+# Original date: December 21, 2019
+#---------------------------------
+
 growth_by_si.func <- function(fun.version = fun.version,
                               growth_by_si.info = growth_by_si.info,
                               splevel = splevel,

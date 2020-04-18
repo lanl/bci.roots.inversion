@@ -1,3 +1,11 @@
+
+#-----------------------------------------------------
+# Title: Runs function to calculate various goodness of fit
+# stats between observed growth and simulated btran
+# Author : Rutuja Chitra-Tarak
+# Original date: February 18, 2019
+#-----------------------------------------------------
+
 rm(list = ls())
 gc()
 if (!require("pacman"))

@@ -1,4 +1,9 @@
-## Finding best fit water-stress/growth model parameters for species growth time series
+
+#----------------------------------------------
+# Title: Calculate UDI & SDI for all ensembles
+# Author : Rutuja Chitra-Tarak
+# Original date: January 22, 2020
+#----------------------------------------------
 
 # .rs.restartR()
 # for 50 ha obs species groups
@@ -21,7 +26,6 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   dbh.residuals <- growth_by_si.info$dbh.residuals
   si.type <- growth_by_si.info$si.type
   si.param.rel <- growth_by_si.info$si.param.rel[[drop.months]]
-  goodness.fit <- 0.3 # rsq0.3
   ncor <- detectCores() - 1
 
   if (splevel == "on") {
@@ -36,7 +40,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   n.rf.sam <- length(rf.sam.vec)
   rm(info); rm(growth_by_si.info)
   ## sdt is chosen based on dryseason on/off
-  file.extension.base1 <- paste0("drop.months", drop.months, "_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_",
+  file.extension.base1 <- paste0("drop.months", drop.months, "_cor", rsq.thresh, "_", si.type, "_", n.ensembles, "_",
                                  growth.type, "_", growth.selection, "_", dbh.residuals, "_",
                                  intervals)
   file.extension.base2 <- paste0(file.extension.base1, "_dryseason_", dryseason)
@@ -81,6 +85,8 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   GLUE.rsq.thresh <- as.matrix(GLUE.rsq)
   GLUE.rsq.thresh <- as.matrix(ifelse(GLUE.rsq.thresh < rsq.thresh, NA, GLUE.rsq.thresh))
   GLUE.rsq.thresh <- as.matrix(ifelse(GLUE.matches < n.ci.thresh, NA, GLUE.rsq.thresh))
+  # this cutoff could have been placed after UDI are calculated for all simulations,
+  # but applied here this subsetting highly speeds up the code
 
   beg <- Sys.time()
   if (splevel == "on") { ## foreach at splevel exhausts memory, hence a for loop

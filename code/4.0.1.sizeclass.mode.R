@@ -1,3 +1,9 @@
+#-----------------------------
+# Title: Canopy class of species based on Johson, Dan et al.
+# Author : Rutuja Chitra-Tarak
+# Original date: Mar 5, 2020
+#-----------------------------
+
 rm(list = ls())
 gc()
 if (!require("pacman")) install.packages("pacman"); library(pacman)

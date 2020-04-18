@@ -1,4 +1,9 @@
 
+###-------------------------------
+### Prepares SWP based growth factor for a specific period for which to calcualte UDI
+### Author: Rutuja
+### Original Date: December 21, 2019
+###-------------------------------
 
 # .rs.restartR()
 # for 50 ha obs species groups

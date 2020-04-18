@@ -1,3 +1,10 @@
+
+#---------------------------------
+# Title: Calculates summary UDI & SDI and rooting profiles by sp_size
+# Author : Rutuja Chitra-Tarak
+# Original date: January 22, 2020
+#--------------------------------
+
 rm(list = ls())
 gc()
 if (!require("pacman")) install.packages("pacman"); library(pacman)
@@ -16,7 +23,6 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
   si.type <- growth_by_si.info$si.type
   growth.selection <- growth_by_si.info$growth.selection
   dbh.residuals <- growth_by_si.info$dbh.residuals
-  goodness.fit <- 0.3 # rsq0.3
   rsq.thresh <-  rsq.thresh
   if (splevel == "on") {
     level.folder <- "splevel"
@@ -25,7 +31,7 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
     level.folder <- "commlevel"
   }
 
-  file.extension.base3 <- paste0("drop.months", drop.months, "_cor", goodness.fit, "_",
+  file.extension.base3 <- paste0("drop.months", drop.months, "_cor", rsq.thresh, "_",
                                  si.type, "_", n.ensembles, "_", growth.type, "_",
                                  growth.selection, "_", dbh.residuals, "_", intervals,
                                  "_dryseason_", dryseason, "_iso.subset_", iso.subset)
@@ -42,21 +48,24 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
     arrange(sp_size, rsq) %>%
     # need to find uncertainty in top n.rank avaiable udi
       ## but UDI is not normally distributed but lognormally distributed
-    mutate(rsq.rank = rank(-rsq, ties.method = "average"),
-           ll.rank = rank(neg.likelihood, ties.method = "average"),
+      ## the way UDI is only calculated when rsq > rsq.thresh and matches >= 3
+    mutate(rsq.for.ranking = ifelse(!is.na(udi), rsq, NA),
+           negLL.for.ranking = ifelse(!is.na(udi), neg.likelihood, NA),
+           rsq.rank = rank(-rsq.for.ranking, ties.method = "average"),
+           ll.rank = rank(negLL.for.ranking, ties.method = "average"),
            udi.best.rsq = ifelse(rsq.rank == 1, udi, NA),
            sdi.best.rsq = ifelse(rsq.rank == 1, sdi, NA),
            udi.best.ll = ifelse(ll.rank == 1, udi, NA),
            sdi.best.ll = ifelse(ll.rank == 1, sdi, NA),
-           udi.tops.rsq = ifelse(rsq < rsq.thresh | rsq.rank > n.rank, NA, udi),
-           sdi.tops.rsq = ifelse(rsq < rsq.thresh | rsq.rank > n.rank, NA, sdi),
-           rsq.tops.rsq = ifelse(rsq < rsq.thresh | rsq.rank > n.rank, NA, rsq),
+           udi.tops.rsq = ifelse(rsq.rank > n.rank, NA, udi),
+           sdi.tops.rsq = ifelse(rsq.rank > n.rank, NA, sdi),
+           rsq.tops.rsq = ifelse(rsq.rank > n.rank, NA, rsq),
            udi.tops.ll = ifelse(ll.rank > n.rank, NA, udi),
            sdi.tops.ll = ifelse(ll.rank > n.rank, NA, sdi),
            rsq.tops.ll = ifelse(ll.rank > n.rank, NA, rsq),
-           root.95.tops.rsq = ifelse(rsq < rsq.thresh | rsq.rank > n.rank, NA, root.95),
-           root.75.tops.rsq = ifelse(rsq < rsq.thresh | rsq.rank > n.rank, NA, root.75),
-           max.root.tops.rsq = ifelse(rsq < rsq.thresh | rsq.rank > n.rank, NA, max.root),
+           root.95.tops.rsq = ifelse(rsq.rank > n.rank, NA, root.95),
+           root.75.tops.rsq = ifelse(rsq.rank > n.rank, NA, root.75),
+           max.root.tops.rsq = ifelse(rsq.rank > n.rank, NA, max.root),
            root.95.tops.ll = ifelse(ll.rank > n.rank, NA, root.95),
            root.75.tops.ll = ifelse(ll.rank > n.rank, NA, root.75),
            max.root.tops.ll = ifelse(ll.rank > n.rank, NA, max.root)) %>%

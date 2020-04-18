@@ -9,8 +9,8 @@
 !/code/**
 # You can be specific with these rules
 !.gitignore
-!*.rmd
-
+!*.md
+.Rmd
 # https://stackoverflow.com/questions/44568184/gitignore-everything-except-a-subfolder-with-every-content
 .Rproj.user
 .Rhistory

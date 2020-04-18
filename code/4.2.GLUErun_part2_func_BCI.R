@@ -58,75 +58,53 @@ growth_by_si.func <- function(fun.version = fun.version,
 
   Sys.time()
   beg <- Sys.time()
-  # if (fun.version == "rsq") {
-  #   GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
-  #     obs <- growth[[jj]]
-  #     if(splevel == "on") {
-  #       si.matrix <- sp.si.match[[jj]]
-  #     } else {
-  #       si.matrix <- si
-  #     }
-  #     GLUE.sub <- apply(si.matrix, 1, function (x) {
-  #       sim <- x[obs$interval - location.adj]
-  #       cor.val <- cor(obs$median, sim, method = "pearson", use = "complete.obs")
-  #       if (!is.na(cor.val) & (abs(cor.val) > (goodness.fit - 0.01))) {
-  #         if (statistic == "rsq") {
-  #           value <- cor.val^2 } else {
-  #             value <- cor.val
-  #           }
-  #       } else {
-  #         value <- NA
-  #       }
-  #       # list(cor = cor, rsq = rsq)
-  #       # model <- lm(y ~ obs)
-  #       # summary(model)$r.squared
-  #       # list(model = model, rsq = rsq)
-  #     }
-  #     )
-  #     GLUE.list[[jj]] <- unlist(GLUE.sub)
-  #   }
-  # } else if (fun.version == "within.ci") {
-  #   GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
-  #     obs <- growth[[jj]]
-  #     if(splevel == "on") {
-  #       si.matrix <- sp.si.match[[jj]]
-  #     } else {
-  #       si.matrix <- si
-  #     }
-  #     GLUE.sub <- apply(si.matrix, 1, function (x) {
-  #       sim <- x[obs$interval - location.adj]
-  #       model <- lm.fit(matrix(sim), matrix(obs$median))
-  #       within.ci <- data.table::between(model$fitted.values, obs$lwr, obs$upr)
-  #       # return(all(data.table::between(model$fitted.values, obs$lwr, obs$upr), na.rm = FALSE))
-  #       # returns no. of data points(censuses) out of the total data points(censuses) in a time series
-  #       # that fell within the CI
-  #       return(sum(within.ci, na.rm = TRUE))
-  #     })
-  #     GLUE.list[[jj]] <- unlist(GLUE.sub)
-  #   }
-  # } else if (fun.version == "likelihood") {
-  #   GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
-  #     obs <- growth[[jj]]
-  #     if(splevel == "on") {
-  #       si.matrix <- sp.si.match[[jj]]
-  #     } else {
-  #       si.matrix <- si
-  #     }
-  #     GLUE.sub <- apply(si.matrix, 1, function (x) {
-  #       sim <- x[obs$interval - location.adj]
-  #       # Fit a linear model
-  #       model <- .lm.fit(x = matrix(sim), y = matrix(obs$median))
-  #       # Calculate the log likelihood for the residuals (with mu and sigma as parameters)
-  #       Rd <- suppressWarnings(dnorm(as.numeric(model$residuals), 0, 1, log = TRUE))
-  #       # Sum the log likelihoods for all of the data points
-  #       return(-sum(Rd, na.rm = TRUE))
-  #       ## This is the negative LL that needs to be minimised
-  #     })
-  #     GLUE.list[[jj]] <- unlist(GLUE.sub)
-  #   }
-  # }
-
-  if (fun.version == "residuals") {
+  if (fun.version == "rsq") {
+    GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
+      obs <- growth[[jj]]
+      if(splevel == "on") {
+        si.matrix <- sp.si.match[[jj]]
+      } else {
+        si.matrix <- si
+      }
+      GLUE.sub <- apply(si.matrix, 1, function (x) {
+        sim <- x[obs$interval - location.adj]
+        cor.val <- cor(obs$median, sim, method = "pearson", use = "complete.obs")
+        if (!is.na(cor.val) & (abs(cor.val) > (goodness.fit - 0.01))) {
+          if (statistic == "rsq") {
+            value <- cor.val^2 } else {
+              value <- cor.val
+            }
+        } else {
+          value <- NA
+        }
+        # list(cor = cor, rsq = rsq)
+        # model <- lm(y ~ obs)
+        # summary(model)$r.squared
+        # list(model = model, rsq = rsq)
+      }
+      )
+      GLUE.list[[jj]] <- unlist(GLUE.sub)
+    }
+  } else if (fun.version == "within.ci") {
+    GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
+      obs <- growth[[jj]]
+      if(splevel == "on") {
+        si.matrix <- sp.si.match[[jj]]
+      } else {
+        si.matrix <- si
+      }
+      GLUE.sub <- apply(si.matrix, 1, function (x) {
+        sim <- x[obs$interval - location.adj]
+        model <- lm.fit(matrix(sim), matrix(obs$median))
+        within.ci <- data.table::between(model$fitted.values, obs$lwr, obs$upr)
+        # return(all(data.table::between(model$fitted.values, obs$lwr, obs$upr), na.rm = FALSE))
+        # returns no. of data points(censuses) out of the total data points(censuses) in a time series
+        # that fell within the CI
+        return(sum(within.ci, na.rm = TRUE))
+      })
+      GLUE.list[[jj]] <- unlist(GLUE.sub)
+    }
+  } else if (fun.version == "residuals") {
     GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
       obs <- growth[[jj]]
       if(splevel == "on") {
@@ -143,6 +121,27 @@ growth_by_si.func <- function(fun.version = fun.version,
       })
       GLUE.list[[jj]] <- as.vector(GLUE.sub)
     }
+  } else if (fun.version == "neg.likelihood") {
+    GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
+      obs <- growth[[jj]]
+      if(splevel == "on") {
+        si.matrix <- sp.si.match[[jj]]
+      } else {
+        si.matrix <- si
+      }
+      GLUE.sub <- apply(si.matrix, 1, function (x) {
+        sim <- x[obs$interval - location.adj]
+        # Fit a linear model
+        model <- .lm.fit(x = matrix(sim), y = matrix(obs$median))
+        # Calculate the log likelihood for the residuals (with mu and sigma as parameters)
+        Rd <- suppressWarnings(dnorm(as.numeric(model$residuals), mean = 0,
+                                     sd = sd(as.numeric(model$residuals)), log = TRUE))
+        # Sum the log likelihoods for all of the data points
+        return(-sum(Rd, na.rm = TRUE))
+        ## This is the negative LL that needs to be minimised
+      })
+      GLUE.list[[jj]] <- unlist(GLUE.sub)
+    }
   }
   Sys.time()
   end <- Sys.time()
@@ -155,19 +154,4 @@ growth_by_si.func <- function(fun.version = fun.version,
 }
 
 
-GLUE.list <- foreach(jj = 1:length(sp_size)) %dopar% {
-  obs <- growth[[jj]]
-  if(splevel == "on") {
-    si.matrix <- sp.si.match[[jj]]
-  } else {
-    si.matrix <- si
-  }
-  GLUE.sub <- apply(head(si.matrix), 1, function (x) {
-    sim <- x[obs$interval - location.adj]
-    # Fit a linear model
-    model <- .lm.fit(x = matrix(sim), y = matrix(obs$median))
-    return(as.numeric(model$residuals))
-    ## This is the negative LL that needs to be minimised
-  })
-  GLUE.list[[jj]] <- as.vector(GLUE.sub)
-}
+

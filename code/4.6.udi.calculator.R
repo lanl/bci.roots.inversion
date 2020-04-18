@@ -44,6 +44,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
 
   load(file = paste0("results/", level.folder, "/GLUE.rsq_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
   load(file = paste0("results/", level.folder, "/GLUE.matches_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  load(file = paste0("results/", level.folder, "/GLUE.negLL_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
 
   if (iso.subset == "on") {
     load(file = "results/sp_with_isotopic_record.Rdata")
@@ -198,11 +199,11 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   save(best10.type.sdi, file = paste0("results/", level.folder, "/best10.type.sdi_", file.extension.base3, ".Rdata"))
   save(best10.type.udi, file = paste0("results/", level.folder, "/best10.type.udi_", file.extension.base3, ".Rdata"))
   # if (splevel == "on") {
-  #   load(file = paste0("results/splevel/best10.type.sdi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
-  #   load(file = paste0("results/splevel/best10.type.udi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/splevel/best10.type.sdi_", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/splevel/best10.type.udi_", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
   # } else {
-  #   load(file = paste0("results/commlevel/best10.type.sdi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
-  #   load(file = paste0("results/commlevel/best10.type.udi", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/commlevel/best10.type.sdi_", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
+  #   load(file = paste0("results/commlevel/best10.type.udi_", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
   # }
 
   ##++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -230,6 +231,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
       mutate(par.sam = si.param.rel$par.sam,
              rsq = as.numeric(GLUE.rsq[ii,]),
              matches = as.numeric(GLUE.matches[ii,]),
+             neg.likelihood = as.numeric(GLUE.negLL[ii,]),
              sdi = as.numeric(best10.type.sdi[ii,]),
              udi = as.numeric(best10.type.udi[ii,]),
              sp = sp[ii],

@@ -50,9 +50,9 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
       ## but UDI is not normally distributed but lognormally distributed
       ## the way UDI is only calculated when rsq > rsq.thresh and matches >= 3
     mutate(rsq.for.ranking = ifelse(!is.na(udi), rsq, NA),
-           negLL.for.ranking = ifelse(!is.na(udi), neg.likelihood, NA),
-           rsq.rank = rank(-rsq.for.ranking, ties.method = "average"),
-           ll.rank = rank(negLL.for.ranking, ties.method = "average"),
+           negLL.for.ranking = ifelse(!is.na(udi), neg.loglikelihood, NA),
+           rsq.rank = rank(-rsq.for.ranking, ties.method = "average", na.last = "keep"),
+           ll.rank = rank(negLL.for.ranking, ties.method = "average", na.last = "keep"),
            udi.best.rsq = ifelse(rsq.rank == 1, udi, NA),
            sdi.best.rsq = ifelse(rsq.rank == 1, sdi, NA),
            udi.best.ll = ifelse(ll.rank == 1, udi, NA),
@@ -117,7 +117,6 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
     subset(!is.na(udi))
   head(ds.bestfit.longer)
   summary(ds.bestfit.longer)
-
 
   ds.bestfit.select <- ds.bestfit.select %>% mutate(udi.tops.rsq = list(udi.tops.rsq),
                                                     udi.tops.ll = list(udi.tops.ll))

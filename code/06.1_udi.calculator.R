@@ -237,7 +237,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
       mutate(par.sam = si.param.rel$par.sam,
              rsq = as.numeric(GLUE.rsq[ii,]),
              matches = as.numeric(GLUE.matches[ii,]),
-             neg.likelihood = as.numeric(GLUE.negLL[ii,]),
+             neg.loglikelihood = as.numeric(GLUE.negLL[ii,]),
              sdi = as.numeric(best10.type.sdi[ii,]),
              udi = as.numeric(best10.type.udi[ii,]),
              sp = sp[ii],

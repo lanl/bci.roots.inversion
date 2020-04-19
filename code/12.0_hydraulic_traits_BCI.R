@@ -27,7 +27,7 @@ rev_sqrt_trans <- function() {
 }
 ## adding uptake depth index
 load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-load("results/4.1GLUEsetup_part2_BCI.RData") # has n.ensembles and growth and si matrix
+load("results/GLUEsetup_part2_BCI.RData") # has n.ensembles and growth and si matrix
 load("results/demo.sp_size.RData")
 load("results/demo.sp.RData") ## Mortality rate only for those cases for which avg.abundance greater than 10
 intervals <- info$intervals

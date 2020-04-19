@@ -14,7 +14,7 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
                           root.selection = root.selection, iso.subset = iso.subset,
                           n.rank = n.rank, drop.months = drop.months) {
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-  load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
+  load(file.path("results/GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
 
   intervals <- info$intervals
   rm(info)
@@ -69,7 +69,6 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
            root.95.tops.ll = ifelse(ll.rank > n.rank, NA, root.95),
            root.75.tops.ll = ifelse(ll.rank > n.rank, NA, root.75),
            max.root.tops.ll = ifelse(ll.rank > n.rank, NA, max.root)) %>%
-      subset(!is.na(rsq.tops.rsq)) %>%
       arrange(sp_size, ll.rank, rsq.rank)
     ds.bestfit <- ds.bestfit.select %>%
     summarise(udi.best.rsq = mean(udi.best.rsq, na.rm = TRUE),

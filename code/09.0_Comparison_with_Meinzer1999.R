@@ -25,7 +25,7 @@ iso.compare <- function(goodness.fit = goodness.fit,
 
   # load interval and working.iter
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-  load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
+  load(file.path("results/GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
 
   soil.depths <- unique(info$root.param.long$depth)
   intervals <- info$intervals

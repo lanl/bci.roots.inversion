@@ -55,7 +55,7 @@ demo.graphs <- function(level.folder = level.folder, n.threshold = n.threshold,
 
   ## adding uptake depth index
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-  load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
+  load(file.path("results/GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
 
   intervals <- info$intervals
   n.ensembles <- growth_by_si.info$n.ensembles

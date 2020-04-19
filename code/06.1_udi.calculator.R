@@ -17,7 +17,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
                            n.ci.thresh = n.ci.thresh, iso.subset = iso.subset, drop.months = drop.months) {
   # load interval and n.ensembles
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-  load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
+  load(file.path("results/GLUEsetup_part2_BCI.RData")) # has n.ensembles and growth and si matrix
 
   intervals <- info$intervals
   n.ensembles <- growth_by_si.info$n.ensembles

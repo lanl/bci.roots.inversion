@@ -36,7 +36,7 @@ if(!dir.exists(file.path.spatial)) {dir.create(file.path.spatial)}
 load("data-raw/CTFScensuses/BCI.tree8.Rdata")
 # load interval and working.iter
 load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
+load(file.path("results/GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
 
 intervals <- info$intervals
 n.ensembles <- growth_by_si.info$n.ensembles

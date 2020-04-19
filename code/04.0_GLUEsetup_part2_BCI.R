@@ -69,6 +69,6 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
       drop.months.vec = info.3$drop.months.vec,
       si.type = info$si.type
     )
-    save(file = "results/4.1GLUEsetup_part2_BCI.RData", growth_by_si.info)
-    # load(file.path("results/4.1GLUEsetup_part2_BCI.RData"))
+    save(file = "results/GLUEsetup_part2_BCI.RData", growth_by_si.info)
+    # load(file.path("results/GLUEsetup_part2_BCI.RData"))
 }

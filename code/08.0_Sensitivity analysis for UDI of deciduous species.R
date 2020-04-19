@@ -18,7 +18,7 @@ tlp <- read.csv(file.path("data-raw/traits/HydraulicTraits_Kunert/tlp_sp_mean.cs
 
 # load interval and working.iter
 load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
-load(file.path("results/4.1GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
+load(file.path("results/GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
 
 soil.depths <- unique(info$root.param.long$depth)
 intervals <- info$intervals
@@ -43,7 +43,7 @@ for (j in 1: length(level.folder)){
   for (i in 1: length(drop.months.vec)) {
     file.extension.base1 <- paste0("drop.months", drop.months.vec[i], "_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_",
                                    growth.type, "_", growth.selection, "_", dbh.residuals, "_", intervals)
-    rm(GLUE.negLL); rm(GLUE.rsq)
+    if( !(j == 1 & i == 1)) {rm(GLUE.negLL); rm(GLUE.rsq)}
     load(file = paste0("results/", level.folder[j], "/GLUE.negLL_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
     load(file = paste0("results/", level.folder[j], "/GLUE.rsq_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
     load(file = paste0("results/", level.folder[j], "/GLUE.matches_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)

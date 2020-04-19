@@ -17,9 +17,9 @@ load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
 intervals <- info$intervals
 load("results/GLUEsetup_part1.2_BCI.RData")
 load("results/GLUEsetup_part1.3_BCI.RData")
-load(file.path("results/4.1GLUEsetup_part2_BCI.RData"))
+load(file.path("results/GLUEsetup_part2_BCI.RData"))
 n.ensembles <- growth_by_si.info$n.ensembles
-source(file.path("code/4.2.GLUErun_part2_func_BCI.R"))
+source(file.path("code/05.0_GLUErun_part2_func_BCI.R"))
 
 GLUE_run <- function(splevel, goodness.fit, drop.months) {
 

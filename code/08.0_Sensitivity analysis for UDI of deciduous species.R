@@ -10,6 +10,10 @@ rm(list=ls())
 gc()
 
 pacman::p_load(tidyverse, readxl)
+sensitivity.analysis <- function(goodness.fit = goodness.fit,
+                        dryseason = dryseason,
+                        root.selection =  root.selection,
+                        iso.subset = iso.subset, drop.months = drop.months){
 
 deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osvaldo Calderon & JoeWright_expert_opinion.xlsx")) %>%
   mutate(sp = tolower(sp6)) %>% select(sp, deciduous, tree)
@@ -27,17 +31,14 @@ growth.type <- growth_by_si.info$growth.type
 growth.selection <- growth_by_si.info$growth.selection
 dbh.residuals <- growth_by_si.info$dbh.residuals
 si.type <- growth_by_si.info$si.type
-goodness.fit <- 0.3 # rsq0.3
-n.best.fit <- 100
-dryseason = "on"
-iso.subset = "off"
-root.selection = "exp"
+goodness.fit <- 0.3
 ##
 level.folder <- c("splevel", "commlevel")
 
 max.ll.list <- vector(mode = "list", length = length(level.folder))
 names(max.ll.list) <- level.folder
-drop.months.vec <- names(growth_by_si.info$si)
+load(file.path("results/GLUEsetup_part1.2_BCI.RData"))
+drop.months.vec <- names(info.2$sp.si)
 
 for (j in 1: length(level.folder)){
   for (i in 1: length(drop.months.vec)) {
@@ -102,6 +103,35 @@ max.ll <- max.ll %>%
   unite(col = tlp_sp, tlp_deci, sp, remove = FALSE) %>%
   mutate(tlp_sp = fct_relevel(tlp_sp, function(x) {sort(x, decreasing = TRUE)}))
 
+file.extension.base5 <- paste0("_cor", goodness.fit, "_", si.type, "_", n.ensembles, "_", growth.type,
+                               "_", growth.selection, "_", dbh.residuals, "_", intervals,
+                               "_dryseason_", dryseason, "_iso.subset_", iso.subset, "_root.selection_", root.selection)
+
+save(max.ll, file = paste0("results/max.ll_", file.extension.base5, ".Rdata"))
+
+### For figures, creating folders if not present
+
+load(file.path("results/GLUEsetup_part2_BCI.RData")) # has working.iter and growth and si matrix
+
+growth.type <- growth_by_si.info$growth.type
+growth.selection <- growth_by_si.info$growth.selection
+dbh.residuals <- growth_by_si.info$dbh.residuals
+
+if(!dir.exists(file.path("figures"))) {dir.create(file.path("figures"))}
+if(!dir.exists(file.path("figures", "UDI_confidence"))) {dir.create(file.path("figures","UDI_confidence"))}
+if(!dir.exists(file.path("figures", "UDI_confidence", growth.type))) {dir.create(file.path("figures","UDI_confidence", growth.type))}
+if(!dir.exists(file.path("figures", "UDI_confidence", growth.type, growth.selection))) {
+  dir.create(file.path("figures","UDI_confidence", growth.type, growth.selection))}
+if(!dir.exists(file.path("figures", "UDI_confidence", growth.type, growth.selection,  paste0("dbh.residuals_", dbh.residuals)))) {
+  dir.create(file.path("figures","UDI_confidence", growth.type, growth.selection,  paste0("dbh.residuals_", dbh.residuals)))}
+if(!dir.exists(file.path("figures", "UDI_confidence", growth.type, growth.selection,  paste0("dbh.residuals_", dbh.residuals), paste0("dryssn_", dryseason, "_root.selection_", root.selection)))) {
+  dir.create(file.path("figures","UDI_confidence", growth.type, growth.selection,  paste0("dbh.residuals_", dbh.residuals), paste0("dryssn_", dryseason, "_root.selection_", root.selection)))}
+if(!dir.exists(file.path("figures", "UDI_confidence", growth.type, growth.selection,  paste0("dbh.residuals_", dbh.residuals), paste0("dryssn_", dryseason, "_root.selection_", root.selection), "sensitivity_analysis"))) {
+  dir.create(file.path("figures","UDI_confidence", growth.type, growth.selection,  paste0("dbh.residuals_", dbh.residuals), paste0("dryssn_", dryseason, "_root.selection_", root.selection), "sensitivity_analysis"))}
+
+file.path.ll <- file.path("figures","UDI_confidence", growth.type, growth.selection,
+                          paste0("dbh.residuals_", dbh.residuals), paste0("dryssn_", dryseason, "_root.selection_", root.selection), "sensitivity_analysis")
+
 ## maximum likelihood sensitivity-------
 heat.ll <- ggplot(max.ll %>% subset(size == "large") %>% droplevels(),
                      aes(y = deciduous_sp, x = as.factor(drop.months))) +
@@ -112,18 +142,19 @@ heat.ll <- ggplot(max.ll %>% subset(size == "large") %>% droplevels(),
 
 heat.ll.abs <- heat.ll + geom_tile(aes(fill = max.likelihood)) +
   ggtitle("Absolute Maximum Likelihood")
+scale_fill_viridis_c("Absolute\nMaximum\nLikelihood", direction = -1, option = "plasma")
 ggsave("max.likelihood_within_sp_across_drop.months_absolute.jpeg", plot = heat.ll.abs, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 heat.ll.one <- heat.ll + geom_tile(aes(fill = max.likelihood.norm)) +
   ggtitle("Maximum likelihood normalised\ntogether for both tlplevels")
 ggsave("norm.likelihood_within_sp_across_drop.months_together_norm_tlplevel.jpeg", plot = heat.ll.one, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 heat.ll.two <- heat.ll + geom_tile(aes(fill = max.likelihood.norm.tlp)) +
-  ggtitle("Maximum likelihood normalised\n separately for the two tlplevels")
+  ggtitle("Maximum likelihood normalised\nseparately for the two tlplevels")
 ggsave("norm.likelihood_within_sp_across_drop.months_separately_norm_tlplevel.jpeg", plot = heat.ll.two, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 ## Rsq-------
 heat.rsq <- ggplot(max.ll %>% subset(size == "large") %>% droplevels(),
                   aes(y = deciduous_sp, x = as.factor(drop.months))) +
@@ -134,20 +165,20 @@ heat.rsq <- ggplot(max.ll %>% subset(size == "large") %>% droplevels(),
 heat.rsq.one <- heat.rsq + geom_tile(aes(fill = max.rsq.norm)) +
   ggtitle("Maximum Rsq normalised together\nfor both tlplevels")
 ggsave("rsq_within_sp_across_drop.months_together_norm_tlplevel.jpeg", plot = heat.rsq.one, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 heat.rsq.two <- heat.rsq + geom_tile(aes(fill = max.rsq.norm.tlp)) +
   ggtitle("Maximum Rsq normalised separately\nfor the tlplevels")
 ggsave("rsq_within_sp_across_drop.months_separately_norm_tlplevel.jpeg", plot = heat.rsq.two, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 heat.rsq.abs <- heat.rsq + geom_tile(aes(fill = max.rsq)) +
   ggtitle("Absolute Maximum Rsq")
 ggsave("rsq_within_sp_across_drop.months_absolute_rsq.jpeg", plot = heat.rsq.abs, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 heat.rsq.abs <- heat.rsq + geom_tile(aes(fill = rsq.at.max.likelihood)) +
   ggtitle("Absolute Rsq at Maximum likelihood")
 ggsave("rsq_within_sp_across_drop.months_absolute_rsq at max likelihood.jpeg", plot = heat.rsq.abs, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 ## UDI sensitivity to dropped months------
 heat.udi <- ggplot(max.ll %>% subset(size == "large") %>% droplevels(),
@@ -160,24 +191,26 @@ heat.udi <- ggplot(max.ll %>% subset(size == "large") %>% droplevels(),
 best.udi.ll <- heat.udi + geom_tile(aes(fill = udi.best.ll)) +
   ggtitle("UDI for model with maximum likelihood")
 ggsave("best.UDI_within_sp_across_drop.months_max.likelihood.jpeg", plot = best.udi.ll, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 best.udi.rsq <- heat.udi + geom_tile(aes(fill = udi.best.rsq)) +
   ggtitle("UDI for model with maximum R-squared")
 ggsave("best.UDI_within_sp_across_drop.months_max.rsq.jpeg", plot = best.udi.rsq, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 top.udi.ll <- heat.udi + geom_tile(aes(fill = udi.med.ll)) +
   ggtitle("Median UDI for top ranking models\nbased on maximum likelihood")
 ggsave("med.top.UDI_within_sp_across_drop.months_max.likelihood.jpeg", plot = top.udi.ll, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 top.udi.ll.upr <- heat.udi + geom_tile(aes(fill = udi.upr.ll)) +
   ggtitle("97.5 quantile UDI for top ranking models\nbased on maximum likelihood")
 ggsave("upr.top.UDI_within_sp_across_drop.months_max.likelihood.jpeg", plot = top.udi.ll.upr, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
 
 top.udi.rsq <- heat.udi + geom_tile(aes(fill = udi.med.rsq)) +
   ggtitle("Median UDI for top ranking models\nbased on maximum R-squared")
 ggsave("med.top.UDI_within_sp_across_drop.months_max.rsq.jpeg", plot = top.udi.rsq, path =
-         file.path("figures/UDI_confidence/sensitivity_analysis"), height = 8.94, width = 8.94, units='in')
+         file.path(file.path.ll), height = 8.94, width = 8.94, units='in')
+}
+

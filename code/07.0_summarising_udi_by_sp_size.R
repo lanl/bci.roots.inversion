@@ -30,7 +30,6 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
 
     level.folder <- "commlevel"
   }
-
   file.extension.base3 <- paste0("drop.months", drop.months, "_cor", rsq.thresh, "_",
                                  si.type, "_", n.ensembles, "_", growth.type, "_",
                                  growth.selection, "_", dbh.residuals, "_", intervals,
@@ -38,6 +37,7 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
   file.extension.base4 <- paste0(file.extension.base3, "_root.selection_", root.selection)
 
   load(file = paste0("results/", level.folder, "/ds.bestfit.all_", file.extension.base3, ".Rdata"))
+
 
   if (root.selection == "on") {
     select.rf.sam <- read.csv(file = file.path("results/rf.sam_power.threshold_0.5.csv"), header = TRUE)
@@ -48,9 +48,8 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
     arrange(sp_size, rsq) %>%
     # need to find uncertainty in top n.rank avaiable udi
       ## but UDI is not normally distributed but lognormally distributed
-      ## the way UDI is only calculated when rsq > rsq.thresh and matches >= 3
-    mutate(likelihood = exp(-neg.loglikelihood), # neg.loglikelihood = -log(likelihood); likelihood = exp(-neg.loglikelihood)
-           rsq.for.ranking = ifelse(!is.na(udi), rsq, NA),
+      ## UDI is only calculated when rsq > rsq.thresh and matches >= 3
+    mutate(rsq.for.ranking = ifelse(!is.na(udi), rsq, NA),
            likelihood.for.ranking = ifelse(!is.na(udi), likelihood, NA),
            rsq.rank = rank(-rsq.for.ranking, ties.method = "average", na.last = "keep"),
            ll.rank = rank(-likelihood.for.ranking, ties.method = "average", na.last = "keep"),
@@ -103,30 +102,30 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
     separate(sp_size, c("sp", "size"), remove = FALSE) %>%
     mutate(size = factor(size, levels = c("tiny", "small", "medium", "large")))
 
-  ds.bestfit.longer <- ds.bestfit.select %>%
-    ungroup(sp_size) %>%
-    mutate(depth.0.00 = 0) %>%
-    pivot_longer(cols = starts_with("depth."), names_to = "depth",
-                 names_prefix = "depth.", values_to = "root.frac") %>%
-    mutate(depth = as.numeric(depth),
-           sp_size_par.sam_rf.sam = paste(sp_size, par.sam, rf.sam, sep = "_")) %>%
-    group_by(sp_size_par.sam_rf.sam) %>%
-    arrange(sp_size_par.sam_rf.sam, depth) %>%
-    mutate(cum.root.frac = cumsum(root.frac)) %>%
-    ungroup(sp_size_par.sam_rf.sam) %>%
-    subset(!is.na(udi))
-  head(ds.bestfit.longer)
-  summary(ds.bestfit.longer)
-
-  ds.bestfit.select <- ds.bestfit.select %>% mutate(udi.tops.rsq = list(udi.tops.rsq),
-                                                    udi.tops.ll = list(udi.tops.ll))
-    if (splevel == "on") {
-      ds.bestfit$tlplevel <- ds.bestfit.longer$tlplevel <- "sp"
-    } else {
-      ds.bestfit$tlplevel <- ds.bestfit.longer$tlplevel <- "comm"
-    }
+  # ds.bestfit.longer <- ds.bestfit.select %>%
+  #   ungroup(sp_size) %>%
+  #   mutate(depth.0.00 = 0) %>%
+  #   pivot_longer(cols = starts_with("depth."), names_to = "depth",
+  #                names_prefix = "depth.", values_to = "root.frac") %>%
+  #   mutate(depth = as.numeric(depth),
+  #          sp_size_par.sam_rf.sam = paste(sp_size, par.sam, rf.sam, sep = "_")) %>%
+  #   group_by(sp_size_par.sam_rf.sam) %>%
+  #   arrange(sp_size_par.sam_rf.sam, depth) %>%
+  #   mutate(cum.root.frac = cumsum(root.frac)) %>%
+  #   ungroup(sp_size_par.sam_rf.sam) %>%
+  #   subset(!is.na(udi))
+  # head(ds.bestfit.longer)
+  # summary(ds.bestfit.longer)
+  #
+  # ds.bestfit.select <- ds.bestfit.select %>% mutate(udi.tops.rsq = list(udi.tops.rsq),
+  #                                                   udi.tops.ll = list(udi.tops.ll))
+    # if (splevel == "on") {
+    #   ds.bestfit$tlplevel <- ds.bestfit.longer$tlplevel <- "sp"
+    # } else {
+    #   ds.bestfit$tlplevel <- ds.bestfit.longer$tlplevel <- "comm"
+    # }
   save(ds.bestfit, file = paste0("results/", level.folder, "/ds.bestfit_", file.extension.base4, ".Rdata"))
-  save(ds.bestfit.longer, file = paste0("results/", level.folder, "/ds.bestfit.longer_", file.extension.base4, ".Rdata"))
+  # save(ds.bestfit.longer, file = paste0("results/", level.folder, "/ds.bestfit.longer_", file.extension.base4, ".Rdata"))
   # load(file = paste0("results/splevel/ds.bestfit_", file.extension.base4, ".Rdata"))
   # load(file = paste0("results/splevel/ds.bestfit.longer_", file.extension.base4, ".Rdata"))
 }

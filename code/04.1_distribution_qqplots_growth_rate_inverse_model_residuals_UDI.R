@@ -13,7 +13,7 @@ p_load(tidyverse, gridExtra)
 
 ### Growth rates of dbh residuals
 
-load(file.path("results/4.1GLUEsetup_part2_BCI.RData"))
+load(file.path("results/GLUEsetup_part2_BCI.RData"))
 growth.rate <- as.vector(unlist(growth_by_si.info$growth))
 qex <- function(x) qexp((rank(x)-.375)/(length(x)+.25))
 
@@ -26,9 +26,10 @@ plot(qex(growth.rate), growth.rate)
 qqnorm(log(growth.rate), main = "Normal Q-Q plot: log(Growth Rate)")
 plot(qex(growth.rate), log(growth.rate))
 dev.off()
+ks.test(growth.rate, "plnorm", alternative = c("two.sided"), exact = FALSE)
+shapiro.test(sample(log(growth.rate), 5000))
 
-load("/Users/rutuja/Work_at_LANL/Projects/bci.roots.inversion/results/splevel/
-     GLUE.resid_drop.monthsNone_cor0.3_2019-10-14_5000_0_med_size_class_predefined_cc_scaled_on_5.Rdata")
+load("/Users/rutuja/Work_at_LANL/Projects/bci.roots.inversion/results/splevel/GLUE.resid_drop.monthsNone_cor0.3_2019-10-14_5000_0_med_size_class_predefined_cc_scaled_on_5.Rdata")
 resid.growth.all <- as.numeric(unlist(GLUE.resid))
 resid.growth <- sample(resid.growth.all, 10000)
 jpeg("figures/residual_growth_rates_distribution.jpeg", width = 960, height = 960, units = "px", pointsize = 24,
@@ -40,6 +41,8 @@ qqnorm(log(resid.growth), main = "Normal Q-Q plot: log(Residuals)")
 plot(qex(resid.growth), log(resid.growth))
 dev.off()
 
+shapiro.test(sample(resid.growth.all, 5000))
+ks.test(sample(resid.growth.all, 5000), "pnorm",alternative = c("two.sided"), exact = FALSE)
 ### load udi as well
 # rm(ds.bestfit);
 file.extension.base3 <- "drop.monthsFebMar_cor0.3_2019-10-14_5000_0_med_size_class_predefined_cc_scaled_on_5_dryseason_on_iso.subset_off"
@@ -58,3 +61,10 @@ qqnorm(log(udi.sp), main = "Normal Q-Q plot: log(Uptake Depth Index)")
 plot(qex(udi.sp), log(udi.sp))
 }
 dev.off()
+
+for (i in 1:10) {
+  ind <- apply(udi, 1, function(x) all(is.na(x)))
+  udi.sp <- as.numeric(udi[!ind,][i, ])
+  shapiro.test(sample(udi.sp, 5000))
+  ks.test(sample(udi.sp, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
+}

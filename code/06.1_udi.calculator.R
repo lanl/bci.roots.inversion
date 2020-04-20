@@ -51,9 +51,11 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   load(file = paste0("results/", level.folder, "/GLUE.negLL_", file.extension.base1 , ".Rdata"), envir = parent.frame(), verbose = FALSE)
 
   if (iso.subset == "on") {
-    load(file = "results/sp_with_isotopic_record.Rdata")
+    load(file = "results/all_sp_with_isotopic_record.Rdata")
     sp_size.on <- c(paste0(iso.sp, "_large"), paste0(iso.sp, "_medium"))
     GLUE.rsq <- GLUE.rsq %>% subset(rownames(GLUE.rsq) %in% sp_size.on)
+    GLUE.matches <- GLUE.matches %>% subset(rownames(GLUE.matches) %in% sp_size.on)
+    GLUE.negLL <- GLUE.negLL %>% subset(rownames(GLUE.negLL) %in% sp_size.on)
   }
   sp_size <- row.names(GLUE.rsq)
   sp <- stringr::str_split(sp_size, "_", simplify = TRUE)[, 1]
@@ -256,6 +258,9 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   ds.bestfit.all <- do.call(rbind, ds.bestfit.list) %>%
     select(par.sam, sp_size, rsq, udi, root.95, root.75, max.root, everything()) %>%
     subset(!is.na(rsq)) %>% droplevels()
+  ds.bestfit.all <- data.table(ds.bestfit.all)
+  ds.bestfit.all[, ':='(likelihood =  exp(-neg.loglikelihood))] # neg.loglikelihood = -log(likelihood); likelihood = exp(-neg.loglikelihood)
+  ds.bestfit.all <- data.frame(ds.bestfit.all)
   head(ds.bestfit.all)
   if (splevel == "on") {
     ds.bestfit.all$tlplevel <- "sp"

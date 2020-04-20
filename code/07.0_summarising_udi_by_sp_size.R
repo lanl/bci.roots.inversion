@@ -49,10 +49,11 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
     # need to find uncertainty in top n.rank avaiable udi
       ## but UDI is not normally distributed but lognormally distributed
       ## the way UDI is only calculated when rsq > rsq.thresh and matches >= 3
-    mutate(rsq.for.ranking = ifelse(!is.na(udi), rsq, NA),
-           negLL.for.ranking = ifelse(!is.na(udi), neg.loglikelihood, NA),
+    mutate(likelihood = exp(-neg.loglikelihood), # neg.loglikelihood = -log(likelihood); likelihood = exp(-neg.loglikelihood)
+           rsq.for.ranking = ifelse(!is.na(udi), rsq, NA),
+           likelihood.for.ranking = ifelse(!is.na(udi), likelihood, NA),
            rsq.rank = rank(-rsq.for.ranking, ties.method = "average", na.last = "keep"),
-           ll.rank = rank(negLL.for.ranking, ties.method = "average", na.last = "keep"),
+           ll.rank = rank(-likelihood.for.ranking, ties.method = "average", na.last = "keep"),
            udi.best.rsq = ifelse(rsq.rank == 1, udi, NA),
            sdi.best.rsq = ifelse(rsq.rank == 1, sdi, NA),
            udi.best.ll = ifelse(ll.rank == 1, udi, NA),

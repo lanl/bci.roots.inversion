@@ -52,7 +52,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
 
   if (iso.subset == "on") {
     load(file = "results/all_sp_with_isotopic_record.Rdata")
-    sp_size.on <- c(paste0(iso.sp, "_large"), paste0(iso.sp, "_medium"))
+    sp_size.on <- c(paste0(all.iso.sp, "_large"), paste0(all.iso.sp, "_medium"))
     GLUE.rsq <- GLUE.rsq %>% subset(rownames(GLUE.rsq) %in% sp_size.on)
     GLUE.matches <- GLUE.matches %>% subset(rownames(GLUE.matches) %in% sp_size.on)
     GLUE.negLL <- GLUE.negLL %>% subset(rownames(GLUE.negLL) %in% sp_size.on)

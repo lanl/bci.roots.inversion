@@ -158,7 +158,7 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
 
   Sys.time()
   beg <- Sys.time()
-  drop.months.vec <- list("Feb", "Mar", c("Feb", "Mar"))
+  drop.months.vec <- list("None", "Jan", "Feb", "Mar", c("Jan", "Feb"), c("Feb", "Mar"), c("Jan","Feb", "Mar"))
   btran.nsam.int <- vector(mode = "list", length = length(drop.months.vec))
   names(btran.nsam.int) <- lapply(drop.months.vec, paste, collapse = "")
   for (k in 1: length(drop.months.vec)){

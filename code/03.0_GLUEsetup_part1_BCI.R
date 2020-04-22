@@ -11,7 +11,7 @@ graphics.off()
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, doParallel, foreach, data.table)
 
-GLUEsetup_part1 <- function(current.folder = current.folder, intervals = intervals) {
+GLUEsetup_part1 <- function(current.folder = current.folder, intervals = intervals, nsam = nsam) {
   # current.folder = "2019-10-14_5000"; intervals = 5
   if(!dir.exists(file.path("results"))) {dir.create(file.path("results"))}
   if(!dir.exists(file.path("results", current.folder))) {dir.create(file.path("results", current.folder))}
@@ -74,7 +74,22 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   ##-------------------------------------
   #root.nsam.long <- read.csv(file = file.path("data", current.folder, "params.root_fraction_by_depth_long.csv"), header = TRUE)
   # Generated from R/3.090_root_parameters_b.R
-  pro.df <- read.csv(file = file.path("results/rf.sam_exponentially_decreasing.csv"), header = TRUE)
+  # pro.df <- read.csv(file = file.path("results/rf.sam_exponentially_decreasing.csv"), header = TRUE)
+
+  ### The below ones follow form as in Zeng et al.
+
+  # FATES uses equation (2) in Zeng et al.
+  ## y = 1 - 0.5*(exp(-a*d) + exp(-b*d)) ....(eq 1)
+  # where d = depth and Y = root fraction, a = fates_roota_par, b = fates_rootb_par
+
+  # `a`` min, max are that from Zeng et al. for Broadleaf Deciduous and Evergreen.
+  # `b` min max are such that Y = 99 at d = soil.depths[5] (~0.2 m) and soil.depths[13] (~ 13 m)
+  all.info <- list(par.names = c("a", "b"),
+                   min.param = c(5.9, 0.3009248),
+                   max.param =  c(19, 30.96))
+  ab.tag <- paste0("ab_min_", paste0(all.info$min.param, collapse = "_"), "_max_", paste0(all.info$max.param, collapse = "_"))
+
+  pro.df <- read.csv(file = file.path(paste0("results/rf.sam_zeng_form_", ab.tag, "_", nsam, ".csv")), header = TRUE)
 
   root.nsam.long.sub <- pro.df %>% select(rf.sam, depth, root.frac) %>%
     mutate(depth = signif(round(depth, 2), 2))
@@ -93,10 +108,7 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   ##--------------
   ## common code
   ##--------------
-  nsam <- nrow(root.nsam)
-  ncor <- detectCores() - 2
-  cl <- parallel::makeForkCluster(ncor)
-  doParallel::registerDoParallel(cl)
+
   rdt <- data.table(root.nsam.long.sub, key = "depth")
 
   ##*************************************
@@ -153,12 +165,16 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   ## creating a list of nsam with a list of n.best with a matrix to store btran by interval
   sdt <- data.table(hydro.output.chosen, key = "depth")
   ncor <- detectCores() - 1
+  drop.months.vec <- list("None", "Jan", "Feb", "Mar", "Apr",
+                          c("Jan", "Feb"), c("Feb", "Mar"), c("Mar", "Apr"),
+                          c("Jan", "Feb", "Mar"), c("Feb", "Mar", "Apr"),
+                          c("Jan","Feb", "Mar", "Apr"))
+
   cl <- parallel::makeForkCluster(ncor)
   doParallel::registerDoParallel(cl)
 
   Sys.time()
   beg <- Sys.time()
-  drop.months.vec <- list("None", "Jan", "Feb", "Mar", c("Jan", "Feb"), c("Feb", "Mar"), c("Jan","Feb", "Mar"))
   btran.nsam.int <- vector(mode = "list", length = length(drop.months.vec))
   names(btran.nsam.int) <- lapply(drop.months.vec, paste, collapse = "")
   for (k in 1: length(drop.months.vec)){
@@ -230,8 +246,10 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
     select(sp, Deciduousness)
   tlp.deci <- tlp %>% subset(sp %in% unique(deci$sp)) %>% droplevels()
 
-  sp.vec <- list(tlp$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp)
-  tlp.vec <- list(tlp$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp)
+  sp.vec <- list(tlp$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp,
+                 tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp)
+  tlp.vec <- list(tlp$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp,
+                  tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp)
 
   Sys.time()
   beg <- Sys.time()

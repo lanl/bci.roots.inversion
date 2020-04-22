@@ -31,7 +31,6 @@ growth.type <- growth_by_si.info$growth.type
 growth.selection <- growth_by_si.info$growth.selection
 dbh.residuals <- growth_by_si.info$dbh.residuals
 si.type <- growth_by_si.info$si.type
-goodness.fit <- 0.3
 ##
 level.folder <- c("splevel", "commlevel")
 

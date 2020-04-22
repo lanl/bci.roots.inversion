@@ -16,6 +16,7 @@ theme_update(text = element_text(size = 14),
              strip.background = element_blank()
 )
 iso <- read.csv("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
+tlp <- read.csv("data-raw/traits/HydraulicTraits_Kunert/tlp_sp_mean.csv", na.strings = c("NA",""), header = T, row.names = NULL, check.names = F)
 
 head(iso)
 # adding species codes
@@ -48,11 +49,13 @@ iso$sp
 iso$sp[which(iso$sp == "quara1")] <- "quaras"
 ## adding phonology score
 
-iso$PhenoRank <- recode(iso$Phenology, `Evergreen` = 1, `Facultatively deciduous` = 2,
-                        Brevideciduous = 3,  `Partially deciduous` = 4,  `Deciduous` = 5)
-
-iso$Phenology <- factor(iso$Phenology, levels = c("Evergreen", "Facultatively deciduous",
-                                                  "Brevideciduous", "Partially deciduous", "Deciduous"))
+iso <- iso %>% mutate(se = SE,
+                      source = "Meinzer et al.1999 Fig. 4",
+                      location = "BCI",
+              PhenoRank = recode(Phenology, `Evergreen` = 1, `Facultatively deciduous` = 2,
+                        Brevideciduous = 3,  `Partially deciduous` = 4,  `Deciduous` = 5),
+              Phenology = factor(Phenology, levels = c("Evergreen", "Facultatively deciduous",
+                                                  "Brevideciduous", "Partially deciduous", "Deciduous")))
 
 iso.sp <- iso$sp #[!is.na(iso$Xylem_sap_deltaD_permil)]
 save(iso.sp, file = "results/sp_with_isotopic_record.Rdata")
@@ -63,16 +66,19 @@ write.csv(iso, file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xyl
 iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
 iso.change <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7AB.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
 
+iso.2.raw <- iso.2.raw %>% mutate(source = "Meinzer et al.1999 Fig. 5A", location = "BCI")
+iso.change <- iso.change %>% mutate(source = "Meinzer et al.1999 Fig. 7AB", location = "BCI")
 head(iso.2.raw)
-iso.2 <- iso.2.raw %>% group_by(sp) %>%
+iso.2 <- iso.2.raw %>%
+  group_by(sp, source) %>%
   summarise(Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
             n = n(),
             SD = sd(Xylem_sap_deltaD_permil, na.rm = TRUE),
             SE = SD/sqrt(n),
-            DBH = mean(DBH, na.rm = TRUE),
-            source = "Meinzer et al.1999 Fig. 5A")
+            DBH = mean(DBH, na.rm = TRUE))
+
 iso.2 <- iso.2 %>% left_join(iso %>% select(sp, Phenology), by = "sp") %>%
-  left_join(iso.change %>% mutate(change.source = "Meinzer et al.1999 Fig. 7AB"), by = "sp") %>%
+  left_join(iso.change, by = "sp") %>%
   arrange(Phenology)
 View(iso.2)
 
@@ -124,7 +130,8 @@ xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 change.xylem.label <- expression('Change in Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 
 iso.2.raw <- iso.2.raw %>% left_join(iso %>% select(sp, Phenology), by = "sp") %>%
-  left_join(iso.change, by = "sp") %>% left_join(tlp, by = "sp")
+  left_join(iso.change, by = "sp") %>% left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp")
+
 
 ggplot(iso.2.raw, aes(y =  Xylem_sap_deltaD_permil, x = DBH, color = tlp)) +
   geom_text(aes(y =  Xylem_sap_deltaD_permil + 1.5, x = DBH, label = sp),
@@ -160,11 +167,29 @@ ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_b
 
 
 iso.3 <- read.csv("data-raw/traits/isotopes/Oecologia 1995 Jackson _Fig3_Fig4.csv", na.strings = c("NA",""), header = T, row.names = NULL, check.names = F)
+iso.3 <- iso.3 %>% arrange(Xylem_sap_deltaD_permil) %>%
+  left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp") %>%
+  mutate(source = "Jackson et al. 1995")
+
 iso.udi <- left_join(iso.3, udi, by = "sp")
 iso.sp <- unique(iso.udi$sp[!is.na(iso.udi$udi.med.rsq) & !is.na(iso.udi$Xylem_sap_deltaD_permil)])
 iso.udi <- iso.udi[order(iso.udiudi.med.rsq), ]
 
-all.iso.sp <- unique(c(as.character(iso$sp), as.character(iso.2$sp), as.character(iso.3$sp)))
+## Combine all isotopic records:
+View(iso)
+
+iso.all.list <- list(iso, iso.2.raw, iso.3, iso.change)
+names(iso.all.list) <- c(iso$source[1], iso.2.raw$source[1], iso.3$source[1], iso.change$source[1])
+
+iso.all <- iso %>% select(sp, location, source, Xylem_sap_deltaD_permil, se) %>%
+  rbind(iso.3 %>% select(sp, location, source, Xylem_sap_deltaD_permil, se)) %>%
+  rbind(iso.2.raw %>% mutate(se = NA) %>% select(sp, location, source, Xylem_sap_deltaD_permil, se)) %>%
+  left_join(iso.change %>% select(-source, -location), by = "sp")
+View(iso.all)
+save(iso.all, file = "results/all_isotopic_record.Rdata")
+
+all.iso.sp <- unique(as.character(iso.all$sp))
 all.iso.sp <- all.iso.sp[!is.na(all.iso.sp)]
 
 save(all.iso.sp, file = "results/all_sp_with_isotopic_record.Rdata")
+

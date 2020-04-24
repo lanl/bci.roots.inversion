@@ -222,7 +222,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   load("results/GLUEsetup_part1_BCI.RData") # has model info and data on obs
   root.param <- info$root.param
 
-  pro.df <- read.csv(file = file.path("results/rf.sam_exponentially_decreasing.csv"), header = TRUE)
+  pro.df <- info$root.param.long
 
   root.param$root.75 <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac >= 0.75])))
   root.param$root.95 <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac >= 0.95])))

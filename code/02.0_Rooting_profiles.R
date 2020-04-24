@@ -27,7 +27,7 @@ theme_update(text = element_text(size=14),
 )
 
 file.path.figures <- file.path("figures", "rooting_profiles")
-if(!dir.exists(file.path.figures )) {dir.create(file.path.figures )}
+if(!dir.exists(file.path.figures)) {dir.create(file.path.figures)}
 ####--------------------------------------------
 ####      Rooting profiles for inversion
 ####--------------------------------------------

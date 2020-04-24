@@ -6,13 +6,13 @@
 #------------------------------------------------------------------------------
 
 rm(list=ls())
-for (i in 1:5) {gc()}
+for (i in 1:10) {gc(reset = TRUE)}
 graphics.off()
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, doParallel, foreach, data.table)
 
 GLUEsetup_part1 <- function(current.folder = current.folder, intervals = intervals, nsam = nsam) {
-  # current.folder = "2019-10-14_5000"; intervals = 5
+  # current.folder = "2019-10-14_5000"; intervals = 5; nsam = 200
   if(!dir.exists(file.path("results"))) {dir.create(file.path("results"))}
   if(!dir.exists(file.path("results", current.folder))) {dir.create(file.path("results", current.folder))}
 
@@ -114,6 +114,7 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   ##*************************************
   ## 3.b  With community level tlp
   ##*************************************
+
   load(file = file.path("data-raw/psi.rda"))
 
   traits.indi <- read.csv("data-raw/traits/HydraulicTraits_Kunert/hydraulic_traits_panama_kunert.csv") # Nobby's data
@@ -165,10 +166,9 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   ## creating a list of nsam with a list of n.best with a matrix to store btran by interval
   sdt <- data.table(hydro.output.chosen, key = "depth")
   ncor <- detectCores() - 1
-  drop.months.vec <- list("None", "Jan", "Feb", "Mar", "Apr",
-                          c("Jan", "Feb"), c("Feb", "Mar"), c("Mar", "Apr"),
-                          c("Jan", "Feb", "Mar"), c("Feb", "Mar", "Apr"),
-                          c("Jan","Feb", "Mar", "Apr"))
+  drop.months.vec <- list("None", "Jan", "Feb", "Mar",
+                          c("Jan", "Feb"), c("Feb", "Mar"),
+                          c("Jan", "Feb", "Mar"))
 
   cl <- parallel::makeForkCluster(ncor)
   doParallel::registerDoParallel(cl)
@@ -230,11 +230,13 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
                  si.param.rel = si.param.rel,
                  drop.months.vec = drop.months.vec)
   save(file = "results/GLUEsetup_part1.3_BCI.RData", info.3)
-  # load("results/GLUEsetup_part1.3_BCI.RData")
+
+  load("results/GLUEsetup_part1.3_BCI.RData")
 
   ##*************************************
   ## 3.b  With species level tlp -----
   ##*************************************
+
   ## IN Kunert's tlp data: swp ranges from -1.13 to -2.42 MPa
   # at -2.42 MPa f(swp) = 0
   # from 0 to 0.5 f(swp) = 1,
@@ -246,10 +248,8 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
     select(sp, Deciduousness)
   tlp.deci <- tlp %>% subset(sp %in% unique(deci$sp)) %>% droplevels()
 
-  sp.vec <- list(tlp$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp,
-                 tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp)
-  tlp.vec <- list(tlp$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp,
-                  tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp)
+  sp.vec <- list(tlp$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp)
+  tlp.vec <- list(tlp$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp)
 
   Sys.time()
   beg <- Sys.time()
@@ -283,6 +283,12 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   names(sp.hydro.output.chosen) <- lapply(drop.months.vec, paste, collapse = "")
   save(file = "results/sp.hydro.output.chosen.RData", sp.hydro.output.chosen)
   load("results/sp.hydro.output.chosen.RData")
+  ## 49 GB when loaded in R
+
+  rm(hydro.output); rm(hydro.output.chosen); rm(sdt); rm(psi); rm(info)
+
+  for (i in 1: 10) { gc(reset = TRUE) }
+
   # 2.2 min
   # 2 min for root.nsam = 599
   # saving sp.swp.gfac first crashes system as ~20 GB # also parallel too slow
@@ -292,12 +298,20 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
 
   ##-------------------------------------------------------------
   ## summarise Btran by census interval for each best-fit par.sam-----
-  ##--------------------------------------------------------------
-  cl <- parallel::makeForkCluster(ncor)
-  doParallel::registerDoParallel(cl)
+  # ##--------------------------------------------------------------
+  # cl <- parallel::makeForkCluster(ncor)
+  # doParallel::registerDoParallel(cl)
 
   Sys.time()
   beg <- Sys.time()
+  sp.vec <- list(tlp$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp, tlp.deci$sp)
+  tlp.vec <- list(tlp$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp, tlp.deci$tlp)
+
+  # To split the job:
+  # sp.vec <- sp.vec[1:3]
+  # tlp.vec <- tlp.vec[1:3]
+  # drop.months.vec <- drop.months.vec[1:3]
+  # sp.hydro.output.chosen <- sp.hydro.output.chosen[1:3]
 
   sp.btran.matrix <- vector(mode = "list", length = length(drop.months.vec))
   names(sp.btran.matrix) <- lapply(drop.months.vec, paste, collapse = "")
@@ -305,18 +319,32 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
     for(jj  in 1 : length(sp.vec[[k]])) {
       sdt <- data.table(sp.hydro.output.chosen[[k]][[jj]], key = "depth")
       sp.btran.nsam.int <- list()
-      sp.btran.nsam.int <- foreach(ii  = 1 : nsam) %dopar% {
+      for (ii  in 1 : nsam) {
         hydro <- merge(sdt, rdt[rf.sam == ii])
         sp.btran.nsam.int[[ii]] <- hydro[, btran := root.frac*gfac][
           , keyby = .(par.sam, date, interval),
           .(btran.sum = sum(btran, na.rm = TRUE))][ # daily sums should range (0-1)
             , keyby = .(par.sam, interval),
             .(btran = mean(btran.sum, na.rm = TRUE))]
+        print(ii)
       }
+
+      # Parallelising has trangely started crasing Rstudio
+      # Even though number of rooting profiles ahave decreased not increased
+      # This did not use to happen before on the macbook.
+
+      # sp.btran.nsam.int <- foreach(ii  = 1 : nsam) %dopar% {
+      #   hydro <- merge(sdt, rdt[rf.sam == ii])
+      #   sp.btran.nsam.int[[ii]] <- hydro[, btran := root.frac*gfac][
+      #     , keyby = .(par.sam, date, interval),
+      #     .(btran.sum = sum(btran, na.rm = TRUE))][ # daily sums should range (0-1)
+      #       , keyby = .(par.sam, interval),
+      #       .(btran = mean(btran.sum, na.rm = TRUE))]
+      # }
       sp.btran.mat.list <- lapply(sp.btran.nsam.int, function(x) {
         btran.wide <- x %>% pivot_wider(names_from = interval, values_from = btran) %>%
           as.matrix()
-        btran.wide[,-1]
+        btran.wide[, -1]
       }
       )
       sp.btran.matrix[[k]][[jj]] <- do.call(rbind, sp.btran.mat.list)
@@ -324,19 +352,19 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
     }
     names(sp.btran.matrix[[k]]) <- sp.vec[[k]]
   }
-  parallel::stopCluster(cl)
+  # parallel::stopCluster(cl)
 
   Sys.time()
   end <- Sys.time()
   (end - beg)
-  ## 18 hrs for 4 dropped.months rf.sam = 599, 51 sp
+  ## 18 hrs for 4 dropped.months rf.sam = 599, 51 sp; 10-12 for rf.sam = 200
   # (end - beg) ## 13.4 sec for 1 sp and nsam = 18, so 5.6 hrs for 51 sp & 533 nsam
   duration <- end-beg
   save(file = "results/duration.RData", duration)
   parallel::stopCluster(cl)
-  info.2 <- list(sp.si = sp.btran.matrix)
+  # info.2 <- list(sp.si = sp.btran.matrix)
   save(file = "results/GLUEsetup_part1.2_BCI.RData", info.2)
-  # load("results/GLUEsetup_part1.2_BCI.RData")
+  load("results/GLUEsetup_part1.2_BCI.RData")
 }
 
 

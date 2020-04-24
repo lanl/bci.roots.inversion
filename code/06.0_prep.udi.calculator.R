@@ -26,9 +26,9 @@ prep.udi.calculator <- function(splevel, drop.months) {
   goodness.fit <- 0.3 # rsq0.3
   rm(growth_by_si.info)
 
-  ######----------------------------------------------
+  ######---------------------------------------------------------
   ###### Preparing data tables for uptake depth index calculation
-  ######----------------------------------------------
+  ######---------------------------------------------------------
 
   load(file = file.path("data-raw/paw.rda"))
   paw.df <- paw %>% data.table()

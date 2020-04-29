@@ -8,13 +8,15 @@ Model Setup
 
 #### Pre-requisite data
 
-*Growth data*
+**Growth data**
+
+Calculate species-size wise growth time series from forest inventory data. Calculate growth residuals after removing effect of size.
 
 ``` r
 source("code/01.0_Preparing_stem_growth_time_series.R")
 ```
 
-*Water Availability*
+**Water Availability**
 
 Soil Water Potential data -- best-fit 100 ensembles from ELM-FATES during the study period. This is sourced from data-package `bci.elm.fates.hydro` with library(bci.elm.fates.hydro)
 
@@ -91,7 +93,7 @@ GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "FebMar")
 GLUE_run(splevel = "on", goodness.fit = 0.3, drop.months = "JanFebMar")
 ```
 
-### Get water availability and btran during a specific period
+#### Get water availability and btran during a specific period
 
 `prep.udi.calculator() in 06.0_prep.udi.calculator.R`
 
@@ -198,8 +200,8 @@ summarise.udi(splevel = "off", dryseason = "on", rsq.thresh = 0.3, root.selectio
 # summarise.udi(splevel = "off", dryseason = "jan", rsq.thresh = 0.3, root.selection = "exp", iso.subset = "off", n.rank = 100, drop.months = "JanFebMar")
 ```
 
-Evaluation
-==========
+Model Evaluation
+================
 
 #### Sensitivity of UDI of deciduous species to inclusion of deciduous months
 

@@ -31,7 +31,8 @@ rev_sqrt_trans <- function() {
 }
 
 n.threshold = 50
-figures.folder <- paste0("figures/mortality/phenology")
+figures.folder <- paste0("figures/PhenoDemoTraitsPsi")
+if(!dir.exists(file.path("figures.folder"))) {dir.create(file.path("figures.folder"))}
 
 ## Deciduousness-----
 deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osvaldo Calderon & JoeWright_expert_opinion.xlsx"))
@@ -77,7 +78,6 @@ lwp.all <- lwp %>%
   transform(location = factor(location, levels = c("PA-PNM", "PA-BCI", "PA-SLZ"), ordered = TRUE)) %>%
   rename(time = Gasex_typeOrSequence) %>%
   unite("sp_date_time", sp, date, time, remove = FALSE)
-
 
 str(lwp.all)
 

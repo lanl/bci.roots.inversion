@@ -1,8 +1,8 @@
-#---------------------------------
+#______________________________
 # Title: Phenology, demography, water availability
 # Author : Rutuja Chitra-Tarak
 # Original date: April 25, 2020
-#---------------------------------
+#_______________________________
 
 ## 1. How is species phenology located on the fast-slow continuum?
 ## 1.a Are deciduous species fast while evergreen species slow?
@@ -32,8 +32,9 @@ rev_sqrt_trans <- function() {
 
 n.threshold = 50
 figures.folder <- paste0("figures/PhenoDemoTraitsPsi")
-if(!dir.exists(file.path("figures.folder"))) {dir.create(file.path("figures.folder"))}
-
+if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
+results.folder <- paste0("results/PhenoDemoTraitsPsi")
+if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder))}
 ## Deciduousness-----
 deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osvaldo Calderon & JoeWright_expert_opinion.xlsx"))
 deci.level_key <- c("Evg" = 1, "DF" = 2, "DB" = 3, "DO" = 4, "D" = "4") #c(a = "apple", b = "banana", c = "carrot")
@@ -222,6 +223,9 @@ plot.lwp.ts.sp.snl <- plot.lwp.ts.sp.pnm %+%
 ggsave(file.path(figures.folder, paste0("LWP_min_all_days_diurnal_sp_color.jpeg")),
        plot = arrangeGrob(plot.lwp.ts.sp.pnm, plot.lwp.ts.sp.snl), height = 5.5, width = 12, units ='in')
 
+save(lwp.diff, file = file.path(results.folder, "lwp.diff.Rdata"))
+save( lwp.min, file = file.path(results.folder, "lwp.min.Rdata"))
+
 ## Panama rainfall gradient preference------
 moist.pref <- read.csv("data-raw/Condit_et_al_2013/TreeCommunityDrySeasonSpeciesResponse.csv")
 moist.pref <- moist.pref %>% mutate(sp = paste0(tolower(str_sub(species, 1, 4)), str_sub(genus, 1, 2))) %>%
@@ -371,11 +375,9 @@ h3 <- h2 %+% subset(hyd.long, !trait %in% select.traits)
 ggsave(file.path(figures.folder, paste0("BrettWolfe_traits_vs_deciduousness_sp_bar_CWR.jpeg")),
        plot = h3, height = 7, width = 12, units ='in')
 
+save(hyd, file = file.path(results.folder, "hyd.traits.all.RData"))
+save(hyd.long, file = file.path(results.folder, "hyd.traits.key.long.RData"))
 ###
-
-## BCI traits
-bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
-  rename(form1 = GRWFRM1., sp = SP., WSG_Chave = WSG_CHAVE) %>% mutate(sp = tolower(sp))
 
 ## Nobert Kunert traits --------
 traits.indi <- read.csv("data-raw/traits/HydraulicTraits_Kunert/hydraulic_traits_panama_kunert.csv") # Nobby's data
@@ -386,6 +388,10 @@ traits <- traits.indi %>%
 traits <- traits %>%
   left_join(lwp.min.wide %>% select(sp, lwp.min_Predawn, lwp.min_Diurnal) %>%
               subset(location = "PA-BCI"), by = "sp")
+
+## BCI traits
+bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
+  rename(form1 = GRWFRM1., sp = SP., WSG_Chave = WSG_CHAVE) %>% mutate(sp = tolower(sp))
 
 leaf_cond.models <- read.csv("data-raw/traits/HydraulicTraits_Kunert/Panama_fits_leaf_K_p50_Kunert.csv")
 leaf.k.p80 <- leaf_cond.models %>% subset(model_type == "Exponential") %>%
@@ -519,6 +525,10 @@ t2 <- ggplot(traits.long.hyd) +
 ggsave(file.path(figures.folder, paste0("Kunert_traits_vs_deciduousness_sp_bar.jpeg")),
        plot = t2, height = 7, width = 14, units ='in')
 
+save(traits, file = file.path(results.folder, "kunert.traits.all.RData"))
+save(traits.long, file = file.path(results.folder, "kunert.traits.key.long.RData"))
+save(traits.long.hyd, file = file.path(results.folder, "kunert.traits.key.long_in_Wolfe_traits_species_list.RData"))
+
 ## Thus evergreen species have:
 # significantly higher median TLP than F. Deci,
 # significantly lower Leaf Kmax than F Deci and Obligate deci
@@ -530,6 +540,17 @@ ggsave(file.path(figures.folder, paste0("Kunert_traits_vs_deciduousness_sp_bar.j
 load("results/demo.sp.RData")
 load("results/demo.sp_size.RData")
 load("results/mrate.long.RData")
+load(file.path("results/GLUEsetup_part2_BCI.RData"))
+## growth rates when dbh.residuals = "on" are residuals from a dbh mixed effects model (for spp) of
+## growth. A median residual for each sp_size is caluclated only when at least data from
+# 3 trees are present across all census intervals.
+# Medians within sp_size are then centered and scaled. {residual - E(residual)/sd(residual)}
+
+if(growth_by_si.info$dbh.residuals == "on"){
+  growth <- growth_by_si.info$growth
+}
+
+grate.long <- dplyr::bind_rows(growth, .id = 'sp_size')
 
 census.years <- c(1982, 1985, 1990, 1995, 2000, 2005, 2010, 2015)
 
@@ -547,6 +568,20 @@ mrate.long <- mrate.long %>%
   left_join(demo.sp_size %>% mutate(mean.mrate = mrate, mean.grate = grate) %>%
               select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
   mutate(diff.mrate = mrate - mean.mrate) %>%
+  transform(deciduousness = factor(deciduousness,
+                                   levels = c("Evergreen", "Brevideciduous",
+                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE))
+grate.long <- grate.long %>%
+  separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
+  select(-"_") %>%
+  left_join(deci, by = "sp") %>%
+  mutate(censusint.m = recode(interval, `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15"),
+         size.num = recode_factor(size, !!!size.level_key),
+         size = factor(size, levels = c("tiny", "small", "medium", "large"))) %>%
+  left_join(demo.sp_size %>% mutate(mean.mrate = mrate, mean.grate = grate) %>%
+              select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
+  group_by(sp_size) %>%
+  ungroup(sp_size) %>%
   transform(deciduousness = factor(deciduousness,
                                    levels = c("Evergreen", "Brevideciduous",
                                               "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE))
@@ -601,17 +636,14 @@ m1 <- ggplot(mrate.long %>%
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 ggsave(file.path(paste0(figures.folder,
-                        "/sp_Mortality_rate_by_period_deci_by_size_aboveN",
-                        n.threshold, ".jpeg")), plot = m1, height = 8, width = 9, units='in')
+                        "/sp_Mortality_rate_by_period_deci_by_size.jpeg")), plot = m1, height = 8, width = 9, units='in')
 m2 <- m1 %+% subset(mrate.long, size == "large" & avg.abund >= n.threshold & !is.na(deciduousness))
 ggsave(file.path(paste0(figures.folder,
-                        "/sp_Mortality_rate_by_period_deci_by_size_aboveN",
-                        n.threshold, "_large.jpeg")), plot = m2, height = 5, width = 9, units='in')
+                        "/sp_Mortality_rate_by_period_deci_by_size_large.jpeg")), plot = m2, height = 5, width = 9, units='in')
 m2 <- m1 %+% subset(mrate.long, size == "large" & avg.abund >= n.threshold & !is.na(deciduousness)) +
   geom_jitter(width = 0.05, shape = 21, fill = "darkgray", color = "black", show.legend = FALSE, alpha = 0.7)
 ggsave(file.path(paste0(figures.folder,
-                        "/sp_Mortality_rate_by_period_deci_by_size_aboveN",
-                        n.threshold, "_large_points.jpeg")), plot = m2, height = 5, width = 9, units='in')
+                        "/sp_Mortality_rate_by_period_deci_by_size_large_points.jpeg")), plot = m2, height = 5, width = 9, units='in')
 
 hyd.wide <- hyd.long %>% pivot_wider(names_from = trait, values_from = value, -trait.plot)
 mrate.long.hyd <- subset(mrate.long, sp %in% hyd$sp) %>%
@@ -663,9 +695,91 @@ ggsave(file.path(paste0(figures.folder,
                         "/sp_Mortality_rate_by_period_evergreens.jpeg")),
        plot = m5, height = 4, width = 15, units='in')
 
+### Is leaf phenology linked to growth vulnerability to different drought intensity and duration?------
+
+g1 <- ggplot(grate.long %>%
+               subset(!is.na(size) & !is.na(deciduousness)),
+             aes(x = deciduousness, y = median)) +
+  scale_color_gradient(name = "Mean\nAbundance", trans = "rev_sqrt",
+                       low = "red", high = "blue", breaks = c(100, 1000, 5000, 10000, 20000, 30000)) +
+  facet_grid(size.num ~ censusint.m, scales = "free_y") +
+  geom_hline(aes(yintercept = 0), color = "blue", size = 0.5) +
+  geom_boxplot(aes(fill = deciduousness), stat = "boxplot", notch = TRUE) +
+  scale_fill_brewer(name = "", palette = "Greens", direction = -1) +
+  theme(legend.position = "top") +
+  ylab(expression("Growth Rate - Mean (% per year)")) + xlab("Deciduousness") +
+  ggtitle("Growth rates by Leaf Phenology") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_deci_by_size.jpeg")), plot = g1, height = 8, width = 9, units='in')
+g2 <- g1 %+% subset(grate.long, size == "large" & !is.na(deciduousness))
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_deci_by_size_large.jpeg")), plot = g2, height = 5, width = 9, units='in')
+g2 <- g1 %+% subset(grate.long, size == "large" & !is.na(deciduousness)) +
+  geom_jitter(width = 0.05, shape = 21, fill = "darkgray", color = "black", show.legend = FALSE, alpha = 0.7)
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_deci_by_size_large_points.jpeg")), plot = g2, height = 5, width = 9, units='in')
+
+hyd.wide <- hyd.long %>% pivot_wider(names_from = trait, values_from = value, -trait.plot)
+grate.long.hyd <- subset(grate.long, sp %in% hyd$sp) %>%
+  left_join(hyd.wide %>% select(sp, p88S, HSMTLP.88S, HSM88S), by = "sp") %>%
+  mutate(sp.plot = factor(sp, levels=unique(sp[order(HSMTLP.88S)]), ordered=TRUE))
+
+# show_col(viridis_pal()(4))
+g3.base <- ggplot(subset(grate.long.hyd, size == "large" & sp %in% c("cordal", "luehse", "tab1ro"))) +
+  facet_grid(size.num ~ censusint.m, scales = "free_y") +
+  theme(legend.position = "top") +
+  ylab(expression("Growth Rate - Mean (% per year)")) + xlab("Deciduousness") +
+  # ylab(expression('Growth Rate'[interval]*' - '*italic('E')'[Growth Rate'[interval]'] (% yr'^-1')')) +
+  # xlab("Deciduousness") +
+  guides(fill = guide_legend(title = "Deciduousness")) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 0.5, hjust = 1))
+g3.1 <- g3.base + geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
+  ggtitle(expression('Species leafless in early wet season, with increasing HSM '*Psi[TLP]*' - '*italic('P')['88,Stem']))
+#  does not work: fill = "Facultative Deciduous"
+# guides(fill = guide_legend(title = "Deciduousness",
+#                            override.aes = list(fill = c("Facultative Deciduous" = "#35B779FF"))))
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_deci_HSMTLP.88S_increasing_spp_leafless in early wet season.jpeg")),
+       plot = g3.1, height = 4, width = 9, units='in')
+
+g4.1 <- g3.base %+% subset(grate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
+  geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
+  ggtitle(expression('Growth for Evergreen Species with increasing HSM '*Psi[TLP]*' - '*italic('P')['88,Stem']))
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_HSMTLP.88S_increasing_evergreens.jpeg")),
+       plot = g4.1, height = 4, width = 9, units='in')
+
+grate.long.hyd <- grate.long.hyd %>% mutate(sp.plot = factor(sp, levels=unique(sp[order(-p88S)]), ordered=TRUE))
+g3.2 <- g3.base + geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
+  ggtitle(expression('Species leafless in early wet season, with increasingly more negative '*italic('P')['88,Stem']))
+ggsave(file.path(paste0(figures.folder, "/sp_Growth_rate_by_period_deci_p88S_increasing_spp_leafless in early wet season.jpeg")),
+       plot = g3.2, height = 4, width = 9, units='in')
+
+g4.2 <- g3.base %+% subset(grate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
+  geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
+  ggtitle(expression('Growth for Evergreen Species with increasingly more negative '*italic('P')['88,Stem']))
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_p88S_increasing_evergreens.jpeg")),
+       plot = g4.2, height = 4, width = 9, units='in')
+
+## all evergreens
+grate.long <- grate.long %>%
+  left_join(traits.wide %>% select(sp, TLP, KmaxL), by = "sp") %>%
+  mutate(sp.plot = factor(sp, levels=unique(sp[order(KmaxL)]), ordered=TRUE))
+
+g5 <- g3.base %+% subset(grate.long, size == "large" & deciduous == "E") +
+  geom_col(aes(x = sp, y = median, fill = deciduousness)) +
+  ggtitle("Growth rates (DBH residuals) for Evergreen Species") +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 0.5, hjust = 1, size = 4))
+ggsave(file.path(paste0(figures.folder,
+                        "/sp_Growth_rate_by_period_evergreens.jpeg")),
+       plot = g5, height = 4, width = 15, units='in')
+
 ## Plot addtional mortality by period mean swp-------
 
-### psi
+### Yearly psi dynamics versus climatology-------
 
 census.meds <- readr::read_rds("results/census.mediandates.rds")
 census.beg <- census.meds[3: length(census.meds)]
@@ -867,4 +981,5 @@ plot.list <- lapply(plot.list.grid, plot.ticks)
 
 ggsave("arrange.pdf", arrangeGrob(grobs = plot.list.grid, ncol = 5), width = 15, height = 10, units = "in")
 ggsave("arrange.pdf", arrangeGrob(grobs = plot.list.grid, ncol = 5), width = 15, height = 10, units = "in")
+
 

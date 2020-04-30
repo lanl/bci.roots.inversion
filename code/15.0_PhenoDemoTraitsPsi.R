@@ -11,6 +11,10 @@
 ## 1.d fast species located on greater resource environments:
 ##        wetter sites within 50-ha plot, wet distributed along Panama gradient
 
+# #####################
+# ##   Libraries ######
+# #####################
+
 rm(list=ls())
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
@@ -23,21 +27,51 @@ theme_update(text = element_text(size = 14),
              strip.background = element_blank()
 )
 
+n.threshold = 50
+figures.folder <- paste0("figures/PhenoDemoTraitsPsi")
+if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
+results.folder <- paste0("results/PhenoDemoTraitsPsi")
+if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder))}
+
+#****************************
+##   Custom Functions  ######
+#****************************
 rev_sqrt_trans <- function() {
   scales::trans_new(
     name = "rev_sqrt",
     transform = function(x) -sqrt(abs(x)),
     inverse = function(x) x^2);
 }
+# Originally written by Sean
+get.ts.lk <- function(df) {
+  growth.ts <- df$median
+  k <- length(growth.ts)
+  psi.dat <- df[, grep("[0-9]", names(df))]
+  loglk <- apply(psi.dat, 2, function(x) sum(dnorm(growth.ts, mean = scale(x), 1, log = TRUE)))
+  R2 <- apply(psi.dat, 2,
+              function(x)  summary(lm(growth.ts ~ x))$r.squared)
+  corr <- apply(psi.dat, 2,
+                function(x)  cor(growth.ts, x, method = "pearson", use = "complete.obs"))
+  AIC.psi <- -2 * loglk + 2*k
+  aic.sorted <- sort(AIC.psi, decreasing = FALSE, index.return = TRUE)
+  depth <- names(aic.sorted$x)[which(aic.sorted$x <= aic.sorted$x[1] + 2)]
+  return(list(depth = depth,
+              aic.scores = aic.sorted$x[which(aic.sorted$x <= aic.sorted$x[1] + 2)],
+              ml.scores = loglk[aic.sorted$ix[which(aic.sorted$x <= aic.sorted$x[1] + 2)]],
+              R2 = R2[aic.sorted$ix[which(aic.sorted$x <= aic.sorted$x[1] + 2)]],
+              corr = corr[aic.sorted$ix[which(aic.sorted$x <= aic.sorted$x[1] + 2)]]))
+}
 
-n.threshold = 50
-figures.folder <- paste0("figures/PhenoDemoTraitsPsi")
-if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
-results.folder <- paste0("results/PhenoDemoTraitsPsi")
-if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder))}
+get.ml.max <- function(result) {
+  result$ml.scores[1]
+}
+
+#******************************************************
 ## Deciduousness-----
+#******************************************************
+
 deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osvaldo Calderon & JoeWright_expert_opinion.xlsx"))
-deci.level_key <- c("Evg" = 1, "DF" = 2, "DB" = 3, "DO" = 4, "D" = "4") #c(a = "apple", b = "banana", c = "carrot")
+deci.level_key <- c("Evg" = "1", "DF" = "2", "DB" = "3", "DO" = "4") #c(a = "apple", b = "banana", c = "carrot")
 
 deci <- deci %>% mutate(sp = tolower(sp6)) %>%
   select(sp4, sp, deciduous) %>%
@@ -52,7 +86,9 @@ head(deci)
 # deci.2 <- deci.2 %>% mutate(sp = as.character(Species.code), deciduousness = as.character(Deciduousness)) %>%
 #   select(sp, deciduousness)
 
+#******************************************************
 ### LWP -----
+#******************************************************
 
 lwp <- read_excel("data-raw/traits/2016ENSO_Panama_LWP_20170407181307/2016ENSO_Panama_LWP.xlsx",
                   sheet = "Panama_LWP")
@@ -225,8 +261,11 @@ ggsave(file.path(figures.folder, paste0("LWP_min_all_days_diurnal_sp_color.jpeg"
 
 save(lwp.diff, file = file.path(results.folder, "lwp.diff.Rdata"))
 save( lwp.min, file = file.path(results.folder, "lwp.min.Rdata"))
-
+load(file = file.path(results.folder, "lwp.min.Rdata"))
+#******************************************************
 ## Panama rainfall gradient preference------
+#******************************************************
+
 moist.pref <- read.csv("data-raw/Condit_et_al_2013/TreeCommunityDrySeasonSpeciesResponse.csv")
 moist.pref <- moist.pref %>% mutate(sp = paste0(tolower(str_sub(species, 1, 4)), str_sub(genus, 1, 2))) %>%
   rename(moist.pref = Moist, moist.pref.2 = Moist.2) %>% select(sp, moist.pref, moist.pref.2)
@@ -239,7 +278,10 @@ sp.hab <- moist.pref %>% full_join(hab.swp, by = "sp") %>%
          Plot.swp.ENSO = med.swp.dry - mean(med.swp.dry, na.rm = TRUE)) %>%
   select(-med.swp.reg, -med.swp.dry, -sd.swp.reg, -sd.swp.dry, -Panama.moist.pref.2, -Plot.swp.ENSO)
 
+#******************************************************
 ### Hydraulic traits by Brett Wolfe ---------
+#******************************************************
+
 hyd <- read.csv("data-raw/traits/HydraulicTraits_BrettWolfe/ht1_20200103.csv") #  # Brett's data
 hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%
   rename(LMA = lma_gm2_m, WD = xylem_den_m, TLP = tlp_m,
@@ -261,7 +303,10 @@ hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%
 length(unique(hyd$sp)) # 27 sp across BCI, PNM, San Lorenzo
 
 
+#******************************************************
 ####----Phenology by Wolfe hydraulic traits-----
+#******************************************************
+
 hyd.long <- hyd %>% select(-DeciLvl) %>%
   select(sp, deciduousness, deciduous, location, TLP, p50S, p88S,
          CWR_Total, Fcap_Xylem, CWR_Xylem, Felbow_Xylem, Fcap_Bark, CWR_Bark, Felbow_Bark, WD, LMA,
@@ -379,7 +424,10 @@ save(hyd, file = file.path(results.folder, "hyd.traits.all.RData"))
 save(hyd.long, file = file.path(results.folder, "hyd.traits.key.long.RData"))
 ###
 
+#******************************************************
 ## Nobert Kunert traits --------
+#******************************************************
+
 traits.indi <- read.csv("data-raw/traits/HydraulicTraits_Kunert/hydraulic_traits_panama_kunert.csv") # Nobby's data
 traits <- traits.indi %>%
   rename(TLP = mean_TLP_Mpa, Chl = Chl_m2_per_g) %>%
@@ -409,7 +457,10 @@ traits <- traits %>%
 # > with(traits, table(deciduousness))
 # Evergreen    Obligate Deciduous Facultative Deciduous        Brevideciduous
 # 26                     3                    11                     8
+
+#******************************************************
 ####----Phenology by Kunert hydraulic traits-----
+#******************************************************
 
 traits.long <- traits %>% select(-DeciLvl) %>%
   gather(trait, value, -sp, -deciduousness, -deciduous, -form1) %>%
@@ -536,7 +587,10 @@ save(traits.long.hyd, file = file.path(results.folder, "kunert.traits.key.long_i
 # higher lwp.min, greater moist site preference
 ## Evg, BDeci & FDeci have significantly higher Chl and WD than O Deci
 
+#******************************************************
 ## Demographic data----
+#******************************************************
+
 load("results/demo.sp.RData")
 load("results/demo.sp_size.RData")
 load("results/mrate.long.RData")
@@ -585,8 +639,9 @@ grate.long <- grate.long %>%
   transform(deciduousness = factor(deciduousness,
                                    levels = c("Evergreen", "Brevideciduous",
                                               "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE))
-
+#******************************************************
 ## Mortality vs growth rate by phenology-----
+#******************************************************
 
 growth.type <- "med"
 formula = y ~ x
@@ -619,7 +674,9 @@ p.d2 <-  p.d0 %+% subset(demo.sp_size, avg.abund >= n.threshold  &
 ggsave(file.path(paste0("figures/mortality/", growth.type, "/sp_mean_Growth_vs_mrate_Deci_avg.abund_above", n.threshold,"_large.jpeg")),
        plot = p.d2, height = 6, width = 6, units='in')
 
+#******************************************************
 ### Is leaf phenology linked to vulnerability to different drought intensity and duration?------
+#******************************************************
 
 m1 <- ggplot(mrate.long %>%
          subset(!is.na(size) & avg.abund >= n.threshold & !is.na(deciduousness)),
@@ -695,7 +752,11 @@ ggsave(file.path(paste0(figures.folder,
                         "/sp_Mortality_rate_by_period_evergreens.jpeg")),
        plot = m5, height = 4, width = 15, units='in')
 
+#******************************************************
 ### Is leaf phenology linked to growth vulnerability to different drought intensity and duration?------
+# Indeed facultative deciduous species show greater reduction in growth in 2005-2010 period two successive early wet seasons were dry
+# a large chunk of their limited growing period
+#******************************************************
 
 g1 <- ggplot(grate.long %>%
                subset(!is.na(size) & !is.na(deciduousness)),
@@ -777,23 +838,26 @@ ggsave(file.path(paste0(figures.folder,
                         "/sp_Growth_rate_by_period_evergreens.jpeg")),
        plot = g5, height = 4, width = 15, units='in')
 
+
 ## Plot addtional mortality by period mean swp-------
 
+#******************************************************
 ### Yearly psi dynamics versus climatology-------
+#******************************************************
 
 census.meds <- readr::read_rds("results/census.mediandates.rds")
 census.beg <- census.meds[3: length(census.meds)]
 cut.breaks <- census.beg
 cut.breaks.2 <- as.Date(paste0(seq(1990, 2015, by = 5), "-01-01"))
 cut.labels.2 <- paste0(seq(1990, 2010, by = 5), "-", seq(1995, 2015, by = 5))
-
+cut.labels.interval <- 3: (length(census.meds)-1)
 load(file.path("data-raw/psi.rda"))
 
 ## by depth panels
 
 psi <- psi %>%
-  mutate(interval.yrs = cut(date, include.lowest = TRUE, breaks = cut.breaks,
-                            labels = cut.labels.2, right = TRUE))
+  mutate(interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
+                            labels = cut.labels.2, right = TRUE)))
 psi.stat.1 <- psi %>%
   group_by(interval.yrs, date, depth) %>%
   summarise(mean = -mean(psi, na.rm = TRUE),
@@ -829,8 +893,8 @@ ggsave("psi_model_daily_bestfit_params.top.few_CI_full.jpeg", plot = plot.psi.st
        file.path(figures.folder), device = "jpeg", height = 3, width = 20, units='in')
 
 psi.2 <- psi %>%
-  mutate(interval.yrs.to.plot = cut(date, include.lowest = TRUE, breaks = cut.breaks.2,
-                                    labels = cut.labels.2, right = TRUE))
+  mutate(interval.yrs.to.plot = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks.2,
+                                    labels = cut.labels.2, right = TRUE)))
 
 psi.stat.2 <- psi.2 %>%
   group_by(interval.yrs.to.plot, date, depth) %>%
@@ -982,4 +1046,78 @@ plot.list <- lapply(plot.list.grid, plot.ticks)
 ggsave("arrange.pdf", arrangeGrob(grobs = plot.list.grid, ncol = 5), width = 15, height = 10, units = "in")
 ggsave("arrange.pdf", arrangeGrob(grobs = plot.list.grid, ncol = 5), width = 15, height = 10, units = "in")
 
+#******************************************************
+### Correlation of growth rates with psi by depth-------
+#******************************************************
+## 1. psi: interval mean psi by depth
+## 2. psi.p50.g1 or g2: interval mean psi by depth: but only for the period when psi was above p50/p80
+## 3. psi.p50.g1.n: number of days psi was above p50/p80 or group 1 p50 vs. group 2 p80
+
+## Limiting to evergreen species for 2 & 3: For non-evergreen species periods in question will have to be a subset of days when leaves were on
+load(file = file.path(results.folder, "hyd.traits.all.RData"))
+load(file = file.path(results.folder, "kunert.traits.all.RData"))
+growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
+names.vec.psi.interval <- c("psi", "psi.p88.g1", "psi.p88.g2")
+## Preparing PSI matrices to compare against
+psi.interval <- vector(mode = "list", length = length(names.vec.psi.interval))
+names(psi.interval) <- names.vec.psi.interval  # "psi.p50.g1", "psi.p50.g2"
+
+psi <- psi %>%
+  mutate(interval = cut(date, include.lowest = TRUE, breaks = cut.breaks,
+                                                     labels = cut.labels.interval, right = TRUE)) %>%
+  subset(!is.na(interval))
+for (i in names(psi.interval)) {
+  if (i == "psi") {
+    psi.interval[[i]] <- psi %>%
+      group_by(depth, interval) %>%
+      summarise(psi = mean(psi, na.rm = TRUE)) %>%
+      pivot_wider(names_from = "depth", values_from = "psi")
+  } else if (i == "psi.p88.g1") {
+    psi.interval[[i]] <- psi %>%
+      group_by(depth, date, interval) %>%
+      summarise(psi = mean(psi, na.rm = TRUE)) %>%
+      ungroup(depth, date) %>%
+      subset(psi > -1.5) %>%
+      droplevels() %>%
+      select(-date) %>%
+      group_by(depth, interval) %>%
+      summarise(n.days = n()) %>%
+      pivot_wider(names_from = "depth", values_from = "n.days")
+  } else if (i == "psi.p88.g2") {
+    psi.interval[[i]] <- psi %>%
+      group_by(depth, date, interval) %>%
+      summarise(psi = mean(psi, na.rm = TRUE)) %>%
+      ungroup(depth, date) %>%
+      subset(psi > -3.5) %>%
+      droplevels() %>%
+      select(-date) %>%
+      group_by(depth, interval) %>%
+      summarise(n.days = n()) %>%
+      pivot_wider(names_from = "depth", values_from = "n.days")
+  }
+}
+
+#############################
+
+ml.ls <- vector("list", length(psi.interval))
+ml.dens <- vector("list", length(psi.interval))
+
+for (i in names(psi.interval)) {
+  print(i)
+  growth.psi <- lapply(growth.sub, as.data.frame) %>% bind_rows(.id = "sp_size") %>%
+    mutate(interval = as.factor(interval)) %>%
+    left_join(psi.interval[[i]], by = "interval")
+
+  growth.psi.ls <- split(growth.psi,
+                         f = list(growth.psi$sp_size), drop = TRUE)
+
+  ml.ls[[i]] <- lapply(growth.psi.ls, get.ts.lk)
+  ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
+}
+
+for(n in 4:length(ml.dens)) {
+  if(n == 1) plot(density(ml.dens[[n]][1:length(ml.dens[[n]])]))
+  lines(density(ml.dens[[n]]), col = terrain.colors(length(ml.dens))[n])
+  abline(v = median(ml.dens[[n]]))
+}
 

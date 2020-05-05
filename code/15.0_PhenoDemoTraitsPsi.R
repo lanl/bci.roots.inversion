@@ -18,7 +18,8 @@
 rm(list=ls())
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra, scales, GGally, ggpmisc, Evapotranspiration)
+pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
+               scales, GGally, ggpmisc, Evapotranspiration, data.table)
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),
@@ -67,6 +68,38 @@ rev_sqrt_trans <- function() {
     transform = function(x) -sqrt(abs(x)),
     inverse = function(x) x^2);
 }
+
+## to calculate tlp based psi thresholds
+
+fun.ls <- list(
+  "g.Psi" =
+    function(df) {
+      result.df <- as.data.table(psi.study)[,
+        ':='(std.psi = max(0, psi - df$psi_threshold))][
+        , keyby = .(depth, interval),
+        .(gfac = sum(std.psi, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    },
+  "g.Psi.Rad.VPD" =
+    function(df) {
+      result.df <- as.data.table(psi.study)[,
+        ':='(std.psi = max(0, psi - df$psi_threshold))][
+        , keyby = .(depth, interval),
+        .(gfac = sum(std.psi*std.Rs*std.VPD, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    } ,
+  "g.Psi.Rad.PET" =
+    function(df) {
+      result.df <- as.data.table(psi.study)[,
+        ':='(std.psi = max(0, psi - df$psi_threshold))][
+        , keyby = .(depth, interval),
+        .(gfac = mean(std.psi*std.Rs*std.pet.PM, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    }
+)
 # Originally written by Sean
 get.ts.lk <- function(df) {
   growth.ts <- df$median
@@ -454,7 +487,7 @@ save(clim.daily,
         file = file.path("results/clim.daily_with_pet.PM.Rdata"))
 
 #******************************************************
-### Load Correlation of growth rates with psi by depth -------
+### Calculate Correlation of growth rates with psi by depth -------
 #******************************************************
 ## 1. psi: interval mean psi by depth
 ## 2. psi.p50.g1 or g2: interval mean psi by depth: but only for the period when psi was above p50/p80
@@ -465,12 +498,13 @@ save(clim.daily,
 growth.sub <- growth[grep("large", names(growth))]
 ## for species with traits data
 # growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
-names.vec.psi.interval <- c("psi", "psi.thresh1", "psi.thresh2", "psi.thresh1.n.days", "psi.thresh2.n.days")
+names.gfac <- c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
 ## Preparing PSI matrices to compare against
-psi.interval <- vector(mode = "list", length = length(names.vec.psi.interval))
-names(psi.interval) <- names.vec.psi.interval  # "psi.p50.g1", "psi.p50.g2"
+psi.interval <- vector(mode = "list", length = length(names.gfac))
+names(psi.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
 
 ## combining psi, PET and VPD
+
 psi.m <- psi %>%
   mutate(interval = cut(date, include.lowest = TRUE, breaks = cut.breaks,
                         labels = cut.labels.interval, right = TRUE)) %>%
@@ -479,74 +513,39 @@ psi.m <- psi %>%
                        std.VPD = range01(VPD),
                        std.Rs = Rs) %>%
                 select(date, std.Rs, std.pet.PM, std.VPD), by = "date")
+depth.breaks <- c(soil.depths[1], soil.depths[4], soil.depths[6],
+                 soil.depths[7:length(soil.depths)])
+depth.labels <- c(0.1, 0.4, signif(soil.depths[7:(length(soil.depths)-1)], 1), signif(length(soil.depths),2))
 psi.study <- psi.m %>%
-  subset(!is.na(interval))
+  subset(!is.na(interval)) %>%
+  mutate(depth.grp = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
+                        labels = depth.labels, right = TRUE)) %>%
+  select(-depth) %>% rename(depth = depth.grp) %>%
+  group_by(date, interval, interval.yrs, par.sam, depth) %>%
+  summarise_all(list(~mean(., na.rm = TRUE)))
 
-for (i in names(psi.interval)) {
-  if (i == "psi") {
-    psi.interval[[i]] <- psi.study %>%
-      group_by(depth, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      pivot_wider(names_from = "depth", values_from = "psi")
-  } else if (i == "psi.thresh1") {
-    psi.interval[[i]] <- psi.study %>%
-      group_by(depth, date, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      ungroup(depth, date) %>%
-      subset(psi > -1) %>%
-      droplevels() %>%
-      select(-date) %>%
-      group_by(depth, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      # summarise(n.days = n()) %>%
-      pivot_wider(names_from = "depth", values_from = "psi")
-  } else if (i == "psi.thresh2") {
-    psi.interval[[i]] <- psi.study %>%
-      group_by(depth, date, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      ungroup(depth, date) %>%
-      subset(psi > -2) %>%
-      droplevels() %>%
-      select(-date) %>%
-      group_by(depth, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      # summarise(n.days = n()) %>%
-      pivot_wider(names_from = "depth", values_from = "psi")
-  } else if (i == "psi.thresh1.n.days") {
-    psi.interval[[i]] <- psi.study %>%
-      group_by(depth, date, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      ungroup(depth, date) %>%
-      subset(psi > -1) %>%
-      droplevels() %>%
-      select(-date) %>%
-      group_by(depth, interval) %>%
-      summarise(n.days = n()) %>%
-      pivot_wider(names_from = "depth", values_from = "n.days")
-  } else if (i == "psi.thresh2.n.days") {
-    psi.interval[[i]] <- psi.study %>%
-      group_by(depth, date, interval) %>%
-      summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      ungroup(depth, date) %>%
-      subset(psi > -2) %>%
-      droplevels() %>%
-      select(-date) %>%
-      group_by(depth, interval) %>%
-      # summarise(psi = mean(psi, na.rm = TRUE)) %>%
-      summarise(n.days = n()) %>%
-      pivot_wider(names_from = "depth", values_from = "n.days")
-  }
+tlp.sp <- read.csv("data-raw/traits/HydraulicTraits_Kunert/tlp_sp_mean.csv") # Nobby's data
+n.tlp.sp <- length(tlp.sp$sp)
+tlp.sp <- tlp.sp %>%
+  mutate(psi_threshold = tlp*0.8)
+
+tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
+
+for (i in 1: length(names.gfac)) {
+    psi.interval[[i]] <- lapply(lapply(tlp.sp.ls, fun.ls[[i]]),
+                             as.data.frame) %>%
+      bind_rows(.id = "sp")
 }
 
 ml.ls <- vector("list", length(psi.interval))
 ml.dens <- vector("list", length(psi.interval))
 ml.rsq.ls <- vector("list", length(psi.interval))
 for (i in names(psi.interval)) {
-  print(i)
   growth.psi <- lapply(growth.sub, as.data.frame) %>% bind_rows(.id = "sp_size") %>%
     mutate(interval = as.factor(interval)) %>%
-    left_join(psi.interval[[i]], by = "interval")
-
+    left_join(psi.interval[[i]] %>%
+                mutate(sp_size = paste0(sp, "_large")), by = c("interval", "sp_size")) %>%
+    subset(!is.na(`0.1`)) %>% droplevels()
   growth.psi.ls <- split(growth.psi,
                          f = list(growth.psi$sp_size), drop = TRUE)
   ml.ls[[i]] <- lapply(growth.psi.ls, get.ts.lk)
@@ -594,14 +593,18 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
   left_join(iso.1.3.join %>% select(sp, Xylem_sap_deltaD_permil, se, source), by = "sp")
 
 depth.rsq.isotopes <- ml.rsq.combine.best %>%
-  subset(variable == "psi") %>%
-  group_by(sp) %>%
+  group_by(variable, sp) %>%
   summarise_at(c("depth", "Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE)
 
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 
+
+# X1=sum(min(0, psi-psi_threshold)*PET), max/mean
+# X2=sum(I(psi<psi_threshold)), max/mean
+# X3=sum(min(0, psi-psi_threshold)), max/mean
+# X4=sum(I(psi<psi_threshold)*PET),max/mean
 
 #******************************************************
 ## BCI traits
@@ -813,9 +816,9 @@ traits.long <- traits.long %>%
   left_join(traits.labels.table.2, by = "trait")
 
 ## Kunert traits species wise for sp in hyd.traits----
-
 select.traits <- c("lwp.min_Predawn", "lwp.min_Diurnal", "TLP", "p50S", "p88S",
-                   "HSMTLP", "HSM50S","HSM88S", "HSMTLP.50S", "HSMTLP.88S")
+                   "HSMTLP", "HSM50S", "HSM88S", "HSMTLP.50S", "HSMTLP.88S")
+
 traits.long <- traits.long %>%
   unite("deci_sp", deciduous, sp, remove = FALSE) %>%
   mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
@@ -830,7 +833,7 @@ traits.long.hyd <- sp.hab %>%
   left_join(traits.wide %>% select(-form1, -deciduous, -deciduousness,
                                    -WSG_Chave, -Panama.moist.pref, -Plot.swp.pref,
                                    -se), by = "sp") %>%
-  pivot_longer(cols = c(-sp, -form1, -deciduous, - deciduousness, - DeciLvl),
+  pivot_longer(cols = c(-sp, -form1, -deciduous, -deciduousness, -DeciLvl),
                names_to = "trait", values_to = "value") %>%
   unite("deci_sp", deciduous, sp, remove = FALSE) %>%
   left_join(traits.labels.table.2, by = "trait") %>%
@@ -866,11 +869,11 @@ ggsave("psi.corr_best.depth_phenology_heat_by_variable.jpeg",
 
 xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 
-p0 <- ggplot(ml.rsq.combine.best %>% subset(variable == "psi"),
+p0 <- ggplot(ml.rsq.combine.best,
              aes(x = Xylem_sap_deltaD_permil, y = depth, color = deciduousness)) + #HSMTLP.80L)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se, xmin = Xylem_sap_deltaD_permil - se),
                  size = 0.5) +
-  # facet_wrap(. ~ variable) +
+  facet_wrap(. ~ variable) +
   guides(color = guide_legend(title = "Deciduousness")) +
   # geom_errorbar(aes(ymax = depth + udi.upr.rsq, ymin = depth - udi.lwr.rsq),
   #               size = 0.5, width = 0.2) +
@@ -879,7 +882,7 @@ p0 <- ggplot(ml.rsq.combine.best %>% subset(variable == "psi"),
                   sqrt(depth*diff(range(ml.rsq.combine.best$depth, na.rm = TRUE)))/20, label = sp),
             size = 4) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans="rev_sqrt", breaks = signif(round(soil.depths, 2), 2)) +
+  scale_y_continuous(trans="rev_sqrt", breaks = ml.rsq.combine.best$depth) + # signif(round(soil.depths, 2), 2)
   # scale_y_continuous(trans="reverselog_trans", breaks = signif(round(soil.depths, 2), 2))
   # scale_y_reverse() +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -890,7 +893,7 @@ p0 <- ggplot(ml.rsq.combine.best %>% subset(variable == "psi"),
                   geom = 'text_npc',
                   aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
                   npcx = 0.85, npcy = 0.1, size = 6) +
-  geom_point(size = 3, show.legend = TRUE)
+  geom_point(size = 3, show.legend = TRUE) + theme(legend.position = "top")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology.jpeg",
        plot = p0, file.path(figures.folder), device = "jpeg", height = 5, width = 6.5, units='in')
 

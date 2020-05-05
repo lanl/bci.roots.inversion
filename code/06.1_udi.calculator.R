@@ -226,7 +226,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
 
   root.param$root.75 <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac >= 0.75])))
   root.param$root.95 <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac >= 0.95])))
-  root.param$max.root <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac == 1.0000000])))
+  # root.param$max.root <- as.numeric(by(pro.df, pro.df$rf.sam, function(X) min(X$depth[X$cum.root.frac == 1.0000000])))
   summary(root.param)
 
   sp.n <- read.csv(file.path(paste("results/sp.n_med_growth_sp_by_size_6.csv")), row.names = 1)
@@ -256,7 +256,7 @@ udi.calculator <- function(splevel = splevel, dryseason = dryseason, rsq.thresh 
   ###*****************
   stopImplicitCluster()
   ds.bestfit.all <- do.call(rbind, ds.bestfit.list) %>%
-    select(par.sam, sp_size, rsq, udi, root.95, root.75, max.root, everything()) %>%
+    select(par.sam, sp_size, rsq, udi, root.95, root.75, everything()) %>%
     subset(!is.na(rsq)) %>% droplevels()
   ds.bestfit.all <- data.table(ds.bestfit.all)
   ds.bestfit.all[, ':='(likelihood =  exp(-neg.loglikelihood))] # neg.loglikelihood = -log(likelihood); likelihood = exp(-neg.loglikelihood)

@@ -64,7 +64,8 @@ rev_sqrt_trans <- function() {
 psi.corr.fun.ls <- list(
   "gr.Psi" =
     function(df) {
-      as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
         psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
         .(gfac = sum(psi.mod, na.rm = TRUE))]
@@ -73,7 +74,8 @@ psi.corr.fun.ls <- list(
     },
   "gr.Psi.Rad.VPD" =
     function(df) {
-      as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
         psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
         .(gfac = sum(psi.mod*std.Rs*std.VPD, na.rm = TRUE))]
@@ -82,7 +84,8 @@ psi.corr.fun.ls <- list(
     } ,
   "gr.Psi.Rad.PET" =
     function(df) {
-      as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
         psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
         .(gfac = mean(psi.mod*std.Rs*std.pet.PM, na.rm = TRUE))]
@@ -95,7 +98,7 @@ psi.corr.fun.ls <- list(
         as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
                                    psi.mod > 0, psi.mod := 0][
                                    , keyby = .(depth, interval),
-                                   .(gfac = sum(psi.mod, na.rm = TRUE))]
+                                   .(gfac = min(psi.mod, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     } ,
@@ -105,7 +108,7 @@ psi.corr.fun.ls <- list(
         as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
           psi.mod > 0, psi.mod := 0][
             , keyby = .(depth, interval),
-            .(gfac = sum(psi.mod*std.pet.PM, na.rm = TRUE))]
+            .(gfac = min(psi.mod*std.pet.PM, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     } ,
@@ -114,7 +117,7 @@ psi.corr.fun.ls <- list(
       result.df <-
         as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_threshold, greater.than = FALSE)][
                                    , keyby = .(depth, interval),
-                                   .(gfac = sum(psi.mod, na.rm = TRUE))]
+                                   .(gfac = mean(psi.mod, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     } ,
@@ -123,7 +126,7 @@ psi.corr.fun.ls <- list(
       result.df <-
         as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_threshold, greater.than = FALSE)][
                                    , keyby = .(depth, interval),
-                                   .(gfac = sum(psi.mod*std.pet.PM, na.rm = TRUE))]
+                                   .(gfac = mean(psi.mod*std.pet.PM, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     }
@@ -532,13 +535,6 @@ mort.sub <- mrate.long %>% subset(size == "large") %>%
   subset(interval %in% cut.labels.interval) %>%
   select(sp_size, interval, mrate)
 
-## for species with traits data
-# growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
-names.gfac <- names(psi.corr.fun.ls)#c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
-## Preparing PSI matrices to compare against
-psi.interval <- vector(mode = "list", length = length(names.gfac))
-names(psi.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
-
 ## combining psi, PET and VPD
 
 psi.m <- psi %>%
@@ -568,6 +564,13 @@ tlp.sp <- tlp.sp %>%
 
 tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
 
+## for species with traits data
+# growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
+names.gfac <- names(psi.corr.fun.ls)#c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
+## Preparing PSI matrices to compare against
+psi.interval <- vector(mode = "list", length = length(names.gfac))
+names(psi.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
+
 for (i in 1: length(names.gfac)) {
     psi.interval[[i]] <- lapply(lapply(tlp.sp.ls, psi.corr.fun.ls[[i]]),
                              as.data.frame) %>%
@@ -589,7 +592,7 @@ for (i in names(psi.interval)) {
     mutate(interval = as.factor(interval)) %>%
     left_join(psi.interval[[i]] %>%
                 mutate(sp_size = paste0(sp, "_large")), by = c("interval", "sp_size")) %>%
-    subset(!is.na(`0.1`) & !is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
+    subset(!is.na(`0.1`) & is.finite(`0.1`) & !is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
   demo.psi.ls <- split(demo.psi,
                          f = list(demo.psi$sp_size), drop = TRUE)
   ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
@@ -912,16 +915,15 @@ p0 <- ggplot(ml.rsq.combine.best,
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se, xmin = Xylem_sap_deltaD_permil - se),
                  size = 0.5) +
   facet_wrap(. ~ variable) +
-  guides(color = guide_legend(title = "Deciduousness")) +
+  # guides(color = guide_legend(title = "Deciduousness")) +
   # geom_errorbar(aes(ymax = depth + udi.upr.rsq, ymin = depth - udi.lwr.rsq),
   #               size = 0.5, width = 0.2) +
   # scale_color_viridis_c("HSMTLP.80L [MPa]", option = "plasma", direction = -1) +
-  geom_text(aes(x =  Xylem_sap_deltaD_permil + 1.5, y = depth +
-                  sqrt(depth*diff(range(ml.rsq.combine.best$depth, na.rm = TRUE)))/20, label = sp),
-            size = 4) +
+  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp), nudge_y = 0.2, nudge_x = 0.2,
+            size = 3) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans="rev_sqrt", breaks = ml.rsq.combine.best$depth) + # signif(round(soil.depths, 2), 2)
-  # scale_y_continuous(trans="reverselog_trans", breaks = signif(round(soil.depths, 2), 2))
+  # scale_y_continuous(trans="rev_sqrt", breaks = ml.rsq.combine.best$depth) + # signif(round(soil.depths, 2), 2)
+  scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.best$depth) +
   # scale_y_reverse() +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.6, npcy = 0.1, rr.digits = 2,
@@ -931,18 +933,19 @@ p0 <- ggplot(ml.rsq.combine.best,
                   geom = 'text_npc',
                   aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
                   npcx = 0.85, npcy = 0.1, size = 6) +
-  geom_point(size = 3, show.legend = TRUE) + theme(legend.position = "top")
+  geom_point(size = 1, show.legend = TRUE) + theme(legend.position = "top")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology.jpeg",
-       plot = p0, file.path(figures.folder), device = "jpeg", height = 5, width = 6.5, units='in')
+       plot = p0, file.path(figures.folder), device = "jpeg", height = 8, width = 6.5, units='in')
 
-g3 <- ggplot(ml.rsq.combine.best %>% subset(variable == "psi" & !duplicated(sp) & !is.na(depth)),
+g3 <- ggplot(ml.rsq.combine.best %>% subset(!duplicated(sp) & !is.na(depth)),
              aes(x = deci_sp.plot, y = depth)) +
+  facet_wrap(. ~ variable) +
   geom_col(aes(fill = deciduousness)) +
   guides(fill = guide_legend(title = "")) +
   theme(legend.position = "top") +
   ylab("Depth (m)") + xlab("Species") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  scale_y_continuous(breaks = signif(round(soil.depths, 2), 2)[c(4,8:13)])
+  scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.best$depth)
 g4 <- g3 + coord_flip() +
   theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
 ggsave("psi.corr_best.depth_phenology.jpeg",

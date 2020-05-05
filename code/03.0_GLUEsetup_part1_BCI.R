@@ -86,7 +86,7 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
   # `b` min max are such that Y = 99 at d = soil.depths[5] (~0.2 m) and soil.depths[13] (~ 13 m)
   all.info <- list(par.names = c("a", "b"),
                    min.param = c(5.9, 0.3009248),
-                   max.param =  c(19, 30.96))
+                   max.param = c(19, 30.96))
   ab.tag <- paste0("ab_min_", paste0(all.info$min.param, collapse = "_"), "_max_", paste0(all.info$max.param, collapse = "_"))
 
   pro.df <- read.csv(file = file.path(paste0("results/rf.sam_zeng_form_", ab.tag, "_", nsam, ".csv")), header = TRUE)
@@ -155,7 +155,9 @@ GLUEsetup_part1 <- function(current.folder = current.folder, intervals = interva
                hydro = hydro.output.chosen,
                root.param = root.nsam,
                root.param.long = pro.df,
-               si.type = current.folder
+               si.type = current.folder,
+               root.selection = "zeng",
+               rootab_par = all.info
   )
   # save this variables to a workspace
   save(file = "results/GLUEsetup_part1_BCI.RData", info)

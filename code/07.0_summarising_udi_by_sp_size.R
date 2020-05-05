@@ -40,6 +40,8 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
 
 
   if (root.selection == "on") {
+    # This was when root selection "off" included rooting profiles with root fraction
+    # increasing with depth, and "on removed those
     select.rf.sam <- read.csv(file = file.path("results/rf.sam_power.threshold_0.5.csv"), header = TRUE)
     ds.bestfit.all <- ds.bestfit.all %>% subset(rf.sam %in% select.rf.sam$x)
   } # 702 root profiles selected
@@ -65,10 +67,10 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
            rsq.tops.ll = ifelse(ll.rank > n.rank, NA, rsq),
            root.95.tops.rsq = ifelse(rsq.rank > n.rank, NA, root.95),
            root.75.tops.rsq = ifelse(rsq.rank > n.rank, NA, root.75),
-           max.root.tops.rsq = ifelse(rsq.rank > n.rank, NA, max.root),
+           # max.root.tops.rsq = ifelse(rsq.rank > n.rank, NA, max.root),
            root.95.tops.ll = ifelse(ll.rank > n.rank, NA, root.95),
-           root.75.tops.ll = ifelse(ll.rank > n.rank, NA, root.75),
-           max.root.tops.ll = ifelse(ll.rank > n.rank, NA, max.root)) %>%
+           root.75.tops.ll = ifelse(ll.rank > n.rank, NA, root.75)) %>%
+           #max.root.tops.ll = ifelse(ll.rank > n.rank, NA, max.root)) %>%
       arrange(sp_size, ll.rank, rsq.rank)
     ds.bestfit <- ds.bestfit.select %>%
     summarise(udi.best.rsq = mean(udi.best.rsq, na.rm = TRUE),
@@ -91,13 +93,13 @@ summarise.udi <- function(splevel = splevel, dryseason = dryseason, rsq.thresh =
 
               root.95.rsq = median(root.95.tops.rsq, na.rm = TRUE),
               root.75.rsq = median(root.75.tops.rsq, na.rm = TRUE),
-              max.root.rsq = median(max.root.tops.rsq, na.rm = TRUE),
+              # max.root.rsq = median(max.root.tops.rsq, na.rm = TRUE),
               rsq.max.ll = max(rsq.tops.ll, na.rm = TRUE),
               rsq.mean.ll = mean(rsq.tops.ll, na.rm = TRUE),
               rsq.min.ll = min(rsq.tops.ll, na.rm = TRUE),
               root.95.ll = median(root.95.tops.ll, na.rm = TRUE),
-              root.75.ll = median(root.75.tops.ll, na.rm = TRUE),
-              max.root.ll = median(max.root.tops.ll, na.rm = TRUE)) %>%
+              root.75.ll = median(root.75.tops.ll, na.rm = TRUE)) %>%
+              #max.root.ll = median(max.root.tops.ll, na.rm = TRUE))
     ungroup(sp_size) %>%
     separate(sp_size, c("sp", "size"), remove = FALSE) %>%
     mutate(size = factor(size, levels = c("tiny", "small", "medium", "large")))

@@ -5,8 +5,13 @@
 # Original date: December 18, 2019
 #-----------------------------------------------------
 
+#************************
+# ------ Libraries -----
+#************************
+
 rm(list=ls())
 gc()
+if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, scales, ggpmisc)
 # graphics info
 theme_set(theme_bw())
@@ -15,8 +20,24 @@ theme_update(text = element_text(size = 14),
              panel.grid.minor = element_blank(),
              strip.background = element_blank()
 )
+
+#************************
+## ----- Lood Data -----
+#************************
 iso <- read.csv("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
 tlp <- read.csv("data-raw/traits/HydraulicTraits_Kunert/tlp_sp_mean.csv", na.strings = c("NA",""), header = T, row.names = NULL, check.names = F)
+deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osvaldo Calderon & JoeWright_expert_opinion.xlsx"))
+deci.level_key <- c("Evg" = "1", "DF" = "2", "DB" = "3", "DO" = "4") #c(a = "apple", b = "banana", c = "carrot")
+
+deci <- deci %>% mutate(sp = tolower(sp6)) %>%
+  select(sp4, sp, deciduous) %>%
+  subset(deciduous %in% c("E", "DF", "DO", "DB")) %>%
+  mutate(deciduousness = recode_factor(as.factor(deciduous), `E` = "Evergreen", `DO` = "Obligate Deciduous", `DF` = "Facultative Deciduous",
+                                       `DB` = "Brevideciduous"), ordered = TRUE) %>%
+  transform(deciduousness = factor(deciduousness,
+                                   levels = c("Evergreen", "Brevideciduous",
+                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE))
+  select(sp4, sp, deciduous, deciduousness)
 
 head(iso)
 # adding species codes
@@ -55,12 +76,32 @@ iso <- iso %>% mutate(se = SE,
               PhenoRank = recode(Phenology, `Evergreen` = 1, `Facultatively deciduous` = 2,
                         Brevideciduous = 3,  `Partially deciduous` = 4,  `Deciduous` = 5),
               Phenology = factor(Phenology, levels = c("Evergreen", "Facultatively deciduous",
-                                                  "Brevideciduous", "Partially deciduous", "Deciduous")))
+                                                  "Brevideciduous", "Partially deciduous", "Deciduous"), ordered = TRUE)) %>%
+  left_join(deci, select(-sp4), by = "sp")
 
 iso.sp <- iso$sp #[!is.na(iso$Xylem_sap_deltaD_permil)]
 save(iso.sp, file = "results/sp_with_isotopic_record.Rdata")
 load("results/sp_with_isotopic_record.Rdata")
 write.csv(iso, file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4_sp_code.csv")), row.names = FALSE)
+
+iso <- iso %>%
+  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
+  mutate(deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
+
+g1 <- ggplot(iso %>% subset(!is.na(Xylem_sap_deltaD_permil)),
+             aes(x = deci_sp.plot, y = Xylem_sap_deltaD_permil)) +
+  geom_col(aes(fill = deciduousness)) +
+  guides(fill = guide_legend(title = "")) +
+  theme(legend.position = "top") +
+  ylab(xylem.label) + xlab("Species") +
+  geom_errorbar(aes(ymax = Xylem_sap_deltaD_permil + se, ymin = Xylem_sap_deltaD_permil - se), width = 0.2, size = 0.5) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4.jpeg")),
+       plot = g1, height = 5, width = 6, units='in')
+g2 <- g1 + coord_flip() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4_flipped.jpeg")),
+       plot = g2, height = 5, width = 6, units='in')
 
 ### More data from March1997 from Fig 5B (includes data in Fig 5A)
 iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
@@ -88,34 +129,46 @@ iso.soil.2 <- read.csv("data-raw/traits/isotopes/Oecologia 1995 Jackson_fig2_soi
 
 depth.m1 <- lm(depth ~ soil.deltaD, data = iso.soil.1)
 summ.depth.m1 <- summary(depth.m1)
-soil.label <- expression('Soil '*delta~""^2*"H (\u2030)"*'')
+soil.label <- expression('Soil '*delta^2*H~"(\u2030)"*'')
 ## expression(paste(delta^{2}, "H (\u2030)")))
-depth.m1.label = paste0("Depth = ", round(depth.m1$coefficients[1], 2), " + ",
-                        round(depth.m1$coefficients[2], 2),
-                        " * Soil delta 2H\nR-squared = ", round(summ.depth.m1$r.squared, 2),
-                        ", p-val = ", round(summ.depth.m1$coefficients[2, 4], 4))
+# depth.m1.label1 = bquote(Depth*''==''*.(round(depth.m1$coefficients[1], 2)) ~''+''~
+#                            .(round(depth.m1$coefficients[2], 2)) ~ delta^{2}*H)
 
+depth.m1.label1 = paste0("Depth = ", round(depth.m1$coefficients[2], 2),
+                             "*Soil delta 2H ", round(depth.m1$coefficients[1], 2))
+depth.m1.label2 = paste0("R2 = ", round(summ.depth.m1$r.squared, 2),
+                         "\np = ", round(summ.depth.m1$coefficients[2, 4], 4))
+# label.df <- data.frame(x = -40, y= 0, label = deparse(depth.m1.label1))
 g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
-  geom_point(size = 3) +
+  geom_point(size = 2) +
   xlab(soil.label) + ylab("Depth (cm)") +
   scale_y_reverse()
 g1 +   geom_smooth(method = "lm", se = FALSE) +
   geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5) +
-  geom_text(aes(x = -40, y = 0, label = depth.m1.label), color = "blue")
-ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg")), height = 5, width = 6, units='in')
+  # geom_text(data = label.df, aes(x= x, y= y, label = label), parse = TRUE, color = "blue") #+
+  geom_text(x = -38, y= 0, label = depth.m1.label1, color = "black", size = 3) +
+  geom_text(x = -10, y= -85, label = depth.m1.label2, color = "black", size = 4) +
+  xlim(-60,0) +  ylim(100, 0) + theme(text = element_text(size = 20))
+ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg")),
+       height = 3, width = 3.5, units='in')
 
 g1 +   geom_smooth(method = "loess", se = FALSE, span = 0.7) +
   geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5)
 
 depth.m2 <- lm(depth ~ soil.deltaD, data = iso.soil.2)
 summ.depth.m2 <- summary(depth.m2)
-depth.m2.label = paste0("Depth = ", round(depth.m2$coefficients[1], 2), " + ",
-                        round(depth.m2$coefficients[2], 2),
-                        " * Soil delta 2H\nR-squared = ", round(summ.depth.m2$r.squared, 2),
-                        ", p-val = ", round(summ.depth.m2$coefficients[2, 4], 4))
+
+depth.m2.label1 = paste0("Depth = ", round(depth.m2$coefficients[2], 2),
+                         "*Soil delta 2H ", round(depth.m2$coefficients[1], 2))
+depth.m2.label2 = paste0("R2 = ", round(summ.depth.m2$r.squared, 2),
+                         "\np = ", round(summ.depth.m2$coefficients[2, 4], 4))
+
 g1 %+% iso.soil.2 + geom_smooth(method = "glm", se = FALSE) +
-  geom_text(aes(x = -35, y = 5, label = depth.m2.label), color = "blue")
-ggsave(file.path(paste0("figures/UDI_confidence/Jackson_etal_1995_Depth_vs_soil_deltaD.jpeg")), height = 5, width = 6, units='in')
+  geom_text(x = -35, y= 0, label = depth.m2.label1, color = "black", size = 3) +
+  geom_text(x = -10, y= -85, label = depth.m2.label2, color = "black", size = 4) +
+  xlim(-60,0) +  ylim(100, 0) + theme(text = element_text(size = 20))
+ggsave(file.path(paste0("figures/UDI_confidence/Jackson_etal_1995_Depth_vs_soil_deltaD.jpeg")),
+       height = 3, width = 3.5, units='in')
 
 
 ## adding Xylem sap's soil uptake depth ----
@@ -126,55 +179,98 @@ iso <- iso %>% mutate(depth = predict.lm(depth.m1, newdata = data.frame(soil.del
 head(iso)
 
 
-xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
-change.xylem.label <- expression('Change in Xylem Sap '*delta~""^2*"H (\u2030)"*'')
+xylem.label <- expression('Xylem Sap '*delta^2*H~"(\u2030)"*'')
+change.xylem.label <- expression('Change in Xylem Sap '*delta^2*H~"(\u2030)"*'')
 
-iso.2.raw <- iso.2.raw %>% left_join(iso %>% select(sp, Phenology), by = "sp") %>%
+iso.2.raw <- iso.2.raw %>% left_join(iso %>% select(sp, Phenology, deciduousness), by = "sp") %>%
   left_join(iso.change, by = "sp") %>% left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp")
 
 
 ggplot(iso.2.raw, aes(y =  Xylem_sap_deltaD_permil, x = DBH, color = tlp)) +
   geom_text(aes(y =  Xylem_sap_deltaD_permil + 1.5, x = DBH, label = sp),
             size = 2) +
-  geom_point(aes(shape = Phenology), size = 3) +
+  geom_point(aes(shape = deciduousness), size = 3) +
   scale_color_viridis_c("TLP [MPa]", option = "plasma", direction = -1) +
   scale_y_continuous(limits = c(-70, -18), breaks = seq(-70, -20, by = 10)) +
   xlab("DBH (cm)") + ylab(xylem.label) +
-  ggtitle("Species March 1997 Xylem Sap deltaD Vs DBH")
-ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.jpeg")), height = 5, width = 8, units ='in')
+  guides(shape = guide_legend(title = "Deciduousness")) +
+  ggtitle("Species March 1997 Xylem Sap deltaD Vs DBH") +
+  theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.jpeg")), height = 5, width = 7, units ='in')
 
 ggplot(iso.2.raw, aes(y =  delta_sapflow_percent_per_day, x = delta_xylem_sap_deltaD_permil_per_day, color = tlp)) +
   geom_smooth(method = "lm", se = FALSE, size = 0.5, color = "black") +
   geom_text(aes(y =  delta_sapflow_percent_per_day + 0.05, label = sp),
             size = 4) +
-  geom_point(aes(shape = Phenology), size = 3) +
+  geom_point(aes(shape = deciduousness), size = 3) +
+  guides(shape = guide_legend(title = "Deciduousness")) +
   scale_color_viridis_c("TLP [MPa]", option = "plasma", direction = -1) +
   scale_x_continuous(limits = c(-0.6, 0.1)) +
   xlab(change.xylem.label) + ylab("Change in daily sap flow (% per day)") +
-  ggtitle("Sap flow Vs. Xylem Sap deltaD\nWithin species variation in 1997 dry season")
-ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7A.jpeg")), height = 5, width = 7, units ='in')
+  ggtitle("Sap flow Vs. Xylem Sap deltaD\nWithin species variation in 1997 dry season") +
+  theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7A.jpeg")),
+       height = 5, width = 7, units ='in')
 
 ggplot(iso.2.raw, aes(y = SE_mean_monthly_leaf_fall, x = delta_xylem_sap_deltaD_permil_per_day, color = tlp)) +
   geom_smooth(method = "lm", se = FALSE, size = 0.5, color = "black") +
   geom_text(aes(y = SE_mean_monthly_leaf_fall + 0.002, label = sp),
             size = 4) +
-  geom_point(aes(shape = Phenology), size = 3) +
+  geom_point(aes(shape = deciduousness), size = 3) +
+  guides(shape = guide_legend(title = "Deciduousness")) +
   scale_color_viridis_c("TLP [MPa]", option = "plasma", direction = -1) +
   scale_x_continuous(limits = c(-0.6, 0.1)) +
   xlab(change.xylem.label) + ylab("SE of mean monthly leaf fall") +
-  ggtitle("Leaf fall Vs. Xylem Sap deltaD\nWithin species variation in 1997 dry season")
+  ggtitle("Leaf fall Vs. Xylem Sap deltaD\nWithin species variation in 1997 dry season") +
+  theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
 ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7B.jpeg")), height = 5, width = 7, units ='in')
 
 
 iso.3 <- read.csv("data-raw/traits/isotopes/Oecologia 1995 Jackson _Fig3_Fig4.csv", na.strings = c("NA",""), header = T, row.names = NULL, check.names = F)
 iso.3 <- iso.3 %>% arrange(Xylem_sap_deltaD_permil) %>%
   left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp") %>%
-  mutate(source = "Jackson et al. 1995")
+  mutate(source = "Jackson et al. 1995") %>%
+  left_join(deci, select(-sp4), by = "sp")  %>%
+  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
+  mutate(deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
 
-iso.udi <- left_join(iso.3, udi, by = "sp")
-iso.sp <- unique(iso.udi$sp[!is.na(iso.udi$udi.med.rsq) & !is.na(iso.udi$Xylem_sap_deltaD_permil)])
-iso.udi <- iso.udi[order(iso.udiudi.med.rsq), ]
 
+# iso.udi <- left_join(iso.3, udi, by = "sp")
+# iso.sp <- unique(iso.udi$sp[!is.na(iso.udi$udi.med.rsq) & !is.na(iso.udi$Xylem_sap_deltaD_permil)])
+# iso.udi <- iso.udi[order(iso.udiudi.med.rsq), ]
+
+g3 <- ggplot(iso.3 %>% subset(!is.na(Xylem_sap_deltaD_permil)),
+             aes(x = deci_sp.plot, y = Xylem_sap_deltaD_permil)) +
+  geom_col(aes(fill = deciduousness), color = "gray") +
+  guides(fill = guide_legend(title = "")) +
+  theme(legend.position = "top") +
+  ylab(xylem.label) + xlab("Species") +
+  geom_errorbar(aes(ymax = Xylem_sap_deltaD_permil + se, ymin = Xylem_sap_deltaD_permil - se), width = 0.2, size = 0.5) +
+  theme(axis.text.y = element_text(size = 20), axis.title = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Oecologia 1995 Jackson _Fig3_Fig4.jpeg")),
+       plot = g3, height = 5, width = 6, units='in')
+g4 <- g3 + coord_flip() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5), axis.text.y = element_text(size = 20))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Oecologia 1995 Jackson _Fig3_Fig4_flipped.jpeg")),
+       plot = g4, height = 5, width = 6, units='in')
+
+iso.1.3.join <- iso %>% subset(!is.na(Xylem_sap_deltaD_permil)) %>%
+  select(sp, deci_sp.plot, Xylem_sap_deltaD_permil, deciduousness, se, source) %>%
+  bind_rows(iso.3 %>% select(sp, deci_sp.plot, Xylem_sap_deltaD_permil, deciduousness, se, source)) %>%
+  mutate(deci_sp.plot = factor(deci_sp.plot, levels=unique(deci_sp.plot[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
+
+g5 <- g3 %+% subset(iso.1.3.join, !is.na(deciduousness)) +
+  facet_wrap(. ~ source) +
+  geom_col(aes(fill = deciduousness)) +
+  coord_flip() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5, size = 20),
+        axis.text.y = element_text(size = 12))
+ggsave(file.path(paste0("data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4_flipped.jpeg")),
+       plot = g5, height = 5, width = 8, units='in')
+save(iso.1.3.join, file = "data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4.Rdata")
+load(file = "data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4.Rdata")
 ## Combine all isotopic records:
 View(iso)
 

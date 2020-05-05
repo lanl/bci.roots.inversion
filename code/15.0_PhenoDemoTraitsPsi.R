@@ -38,28 +38,13 @@ if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder)
 ##   Custom Functions  ######
 #****************************
 range01 <- function(x){(x-min(x))/(max(x)-min(x))}
-indicator.vec <- function(x, I.threshold, greater.than = TRUE) {
+indicator <- function(x, I.threshold, greater.than = TRUE) {
   if(greater.than == TRUE) {
     result <- ifelse((x > I.threshold), 1, 0)
   } else {
     result <- ifelse((x < I.threshold), 1, 0)
   }
   return(result)
-}
-indicator <- function(x, I.threshold, greater.than = TRUE) {
-  if(greater.than == TRUE) {
-    if(x > I.threshold) {
-      return(1)
-    } else {
-      return(0)
-    }
-  } else {
-    if(x < I.threshold) {
-      return(1)
-    } else {
-      return(0)
-    }
-  }
 }
 
 rev_sqrt_trans <- function() {
@@ -71,45 +56,88 @@ rev_sqrt_trans <- function() {
 
 ## to calculate tlp based psi thresholds
 
-fun.ls <- list(
-  "g.Psi" =
+# X1=sum(min(0, psi-psi_threshold)*PET), max/mean
+# X2=sum(I(psi<psi_threshold)), max/mean
+# X3=sum(min(0, psi-psi_threshold)), max/mean
+# X4=sum(I(psi<psi_threshold)*PET),max/mean
+
+psi.corr.fun.ls <- list(
+  "gr.Psi" =
     function(df) {
-      result.df <- as.data.table(psi.study)[,
-        ':='(std.psi = max(0, psi - df$psi_threshold))][
+      as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+        psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
-        .(gfac = sum(std.psi, na.rm = TRUE))]
+        .(gfac = sum(psi.mod, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     },
-  "g.Psi.Rad.VPD" =
+  "gr.Psi.Rad.VPD" =
     function(df) {
-      result.df <- as.data.table(psi.study)[,
-        ':='(std.psi = max(0, psi - df$psi_threshold))][
+      as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+        psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
-        .(gfac = sum(std.psi*std.Rs*std.VPD, na.rm = TRUE))]
+        .(gfac = sum(psi.mod*std.Rs*std.VPD, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     } ,
-  "g.Psi.Rad.PET" =
+  "gr.Psi.Rad.PET" =
     function(df) {
-      result.df <- as.data.table(psi.study)[,
-        ':='(std.psi = max(0, psi - df$psi_threshold))][
+      as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+        psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
-        .(gfac = mean(std.psi*std.Rs*std.pet.PM, na.rm = TRUE))]
+        .(gfac = mean(psi.mod*std.Rs*std.pet.PM, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    } ,
+  "mr.Psi" =
+    function(df) {
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+                                   psi.mod > 0, psi.mod := 0][
+                                   , keyby = .(depth, interval),
+                                   .(gfac = sum(psi.mod, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    } ,
+  "mr.Psi.PET" =
+    function(df) {
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+          psi.mod > 0, psi.mod := 0][
+            , keyby = .(depth, interval),
+            .(gfac = sum(psi.mod*std.pet.PM, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    } ,
+  "mr.Psi.I" =
+    function(df) {
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_threshold, greater.than = FALSE)][
+                                   , keyby = .(depth, interval),
+                                   .(gfac = sum(psi.mod, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(result.df)
+    } ,
+  "mr.Psi.PET.I" =
+    function(df) {
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_threshold, greater.than = FALSE)][
+                                   , keyby = .(depth, interval),
+                                   .(gfac = sum(psi.mod*std.pet.PM, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     }
 )
 # Originally written by Sean
 get.ts.lk <- function(df) {
-  growth.ts <- df$median
-  k <- length(growth.ts)
+  demo.ts <- df$demo.rate
+  k <- length(demo.ts)
   psi.dat <- df[, grep("[0-9]", names(df))]
-  loglk <- apply(psi.dat, 2, function(x) sum(dnorm(growth.ts, mean = scale(x), 1, log = TRUE)))
+  loglk <- apply(psi.dat, 2, function(x) sum(dnorm(demo.ts, mean = scale(x), 1, log = TRUE)))
   R2 <- apply(psi.dat, 2,
-              function(x)  summary(lm(growth.ts ~ x))$r.squared)
+              function(x)  summary(lm(demo.ts ~ x))$r.squared)
   corr <- apply(psi.dat, 2,
-                function(x)  cor(growth.ts, x, method = "pearson", use = "complete.obs"))
+                function(x)  cor(demo.ts, x, method = "pearson", use = "complete.obs"))
   AIC.psi <- -2 * loglk + 2*k
   aic.sorted <- sort(AIC.psi, decreasing = FALSE, index.return = TRUE)
   depth <- names(aic.sorted$x)[which(aic.sorted$x <= aic.sorted$x[1] + 2)]
@@ -496,9 +524,17 @@ save(clim.daily,
 ## Limiting to evergreen species for 2 & 3: For non-evergreen species periods in question will have to be a subset of days when leaves were on
 
 growth.sub <- growth[grep("large", names(growth))]
+mort.sub <- mrate.long %>% subset(size == "large") %>%
+  mutate(interval = as.numeric(recode(census, `1985` = "1",
+                              `1990` = "2", `1995` = "3",
+                              `2000` = "4", `2005` = "5",
+                              `2010` = "6", `2015` = "7"))) %>%
+  subset(interval %in% cut.labels.interval) %>%
+  select(sp_size, interval, mrate)
+
 ## for species with traits data
 # growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
-names.gfac <- c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
+names.gfac <- names(psi.corr.fun.ls)#c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
 ## Preparing PSI matrices to compare against
 psi.interval <- vector(mode = "list", length = length(names.gfac))
 names(psi.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
@@ -515,7 +551,8 @@ psi.m <- psi %>%
                 select(date, std.Rs, std.pet.PM, std.VPD), by = "date")
 depth.breaks <- c(soil.depths[1], soil.depths[4], soil.depths[6],
                  soil.depths[7:length(soil.depths)])
-depth.labels <- c(0.1, 0.4, signif(soil.depths[7:(length(soil.depths)-1)], 1), signif(length(soil.depths),2))
+depth.labels <- c(0.1, 0.4, signif(soil.depths[7:(length(soil.depths)-1)], 1),
+                  signif(length(soil.depths), 2))
 psi.study <- psi.m %>%
   subset(!is.na(interval)) %>%
   mutate(depth.grp = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
@@ -532,7 +569,7 @@ tlp.sp <- tlp.sp %>%
 tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
 
 for (i in 1: length(names.gfac)) {
-    psi.interval[[i]] <- lapply(lapply(tlp.sp.ls, fun.ls[[i]]),
+    psi.interval[[i]] <- lapply(lapply(tlp.sp.ls, psi.corr.fun.ls[[i]]),
                              as.data.frame) %>%
       bind_rows(.id = "sp")
 }
@@ -541,14 +578,21 @@ ml.ls <- vector("list", length(psi.interval))
 ml.dens <- vector("list", length(psi.interval))
 ml.rsq.ls <- vector("list", length(psi.interval))
 for (i in names(psi.interval)) {
-  growth.psi <- lapply(growth.sub, as.data.frame) %>% bind_rows(.id = "sp_size") %>%
+  if(grepl("gr.", i)) {
+    demo <- lapply(growth.sub, as.data.frame) %>% bind_rows(.id = "sp_size") %>%
+      rename(demo.rate = median)
+  } else {
+    demo <- mort.sub %>%
+      rename(demo.rate = mrate)
+  }
+  demo.psi <- demo %>%
     mutate(interval = as.factor(interval)) %>%
     left_join(psi.interval[[i]] %>%
                 mutate(sp_size = paste0(sp, "_large")), by = c("interval", "sp_size")) %>%
-    subset(!is.na(`0.1`)) %>% droplevels()
-  growth.psi.ls <- split(growth.psi,
-                         f = list(growth.psi$sp_size), drop = TRUE)
-  ml.ls[[i]] <- lapply(growth.psi.ls, get.ts.lk)
+    subset(!is.na(`0.1`) & !is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
+  demo.psi.ls <- split(demo.psi,
+                         f = list(demo.psi$sp_size), drop = TRUE)
+  ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
   ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
   ml.rsq.ls[[i]] <- do.call(rbind, lapply(ml.ls[[i]], get.ml.depth.rsq))
 }
@@ -599,12 +643,6 @@ depth.rsq.isotopes <- ml.rsq.combine.best %>%
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
-
-
-# X1=sum(min(0, psi-psi_threshold)*PET), max/mean
-# X2=sum(I(psi<psi_threshold)), max/mean
-# X3=sum(min(0, psi-psi_threshold)), max/mean
-# X4=sum(I(psi<psi_threshold)*PET),max/mean
 
 #******************************************************
 ## BCI traits

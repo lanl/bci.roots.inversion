@@ -148,7 +148,13 @@ mrate$avg.abund <- round(rowMeans(abund), 0)
 mrate$sp_size <- all.sp_size$sp_size
 
 mrate.long <- pivot_longer(mrate, cols = 1:7, names_to = "census",
-             values_to = "mrate")
+             values_to = "mrate") %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
+                              `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
+         interval.num = as.numeric(recode(census, `1985` = "1",
+                                          `1990` = "2", `1995` = "3",
+                                          `2000` = "4", `2005` = "5",
+                                          `2010` = "6", `2015` = "7")))
 head(mrate.long)
 save(mrate.long, file = ("results/mrate.long.RData"))
 
@@ -174,7 +180,14 @@ head(sp.mrate)
 sp.mrate$avg.abund <- round(rowMeans(sp.abund), 0)
 sp.mrate$sp <- all.sp
 sp.mrate.long <- pivot_longer(sp.mrate, cols = 1:7, names_to = "census",
-                           values_to = "mrate")
+                           values_to = "mrate") %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
+                           `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
+         interval.num = as.numeric(recode(census, `1985` = "1",
+                                          `1990` = "2", `1995` = "3",
+                                          `2000` = "4", `2005` = "5",
+                                          `2010` = "6", `2015` = "7")))
+
 str(sp.mrate.long)
 save(sp.mrate.long, file = ("results/sp.mrate.long.RData"))
 

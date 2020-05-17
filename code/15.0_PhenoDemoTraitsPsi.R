@@ -46,6 +46,13 @@ indicator <- function(x, I.threshold, greater.than = TRUE) {
   }
   return(result)
 }
+lmp <- function (modelobject) {
+  if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
+  f <- summary(modelobject)$fstatistic
+  p <- pf(f[1],f[2],f[3],lower.tail=F)
+  attributes(p) <- NULL
+  return(p)
+}
 
 rev_sqrt_trans <- function() {
   scales::trans_new(
@@ -613,7 +620,7 @@ eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel)
 #******************************************************
 
 bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
-rename(form1 = GRWFRM1., sp = SP., WSG_Chave = WSG_CHAVE) %>% mutate(sp = tolower(sp))
+rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>% mutate(sp = tolower(sp))
 
 #******************************************************
 ### Load Hydraulic traits by Brett Wolfe ---------
@@ -742,6 +749,7 @@ traits <- traits %>%
               subset(location = "PA-BCI"), by = "sp")
 
 leaf_cond.models <- read.csv("data-raw/traits/HydraulicTraits_Kunert/Panama_fits_leaf_K_p50_Kunert.csv")
+
 leaf.k.p80 <- leaf_cond.models %>% subset(model_type == "Exponential") %>%
   mutate(sp = data.type, p50L = -psi_kl50, p80L = -psi_kl80, KmaxL = Kmax) %>% # these are Kmax that are extrapolated from the exponential curve
   select(sp, KmaxL, p50L, p80L) # 21 species
@@ -752,7 +760,7 @@ traits <- traits %>%
          HSMLWP.TLP = lwp.min_Diurnal - TLP) %>%
   left_join(sp.hab, by = "sp") %>%
   left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
-  left_join(bci.traits %>% select(sp, form1, WSG_Chave), by = "sp") %>%
+  left_join(bci.traits %>% select(sp, form1, SG100C_AVG), by = "sp") %>%
   left_join(depth.rsq.isotopes %>% ungroup() %>%
               subset(variable == "gr.Psi.Rad.PET") %>%
               select(sp, depth, Xylem_sap_deltaD_permil, se), by = "sp")
@@ -761,12 +769,12 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                               "KmaxL", "lwp.min_Predawn", "lwp.min_Diurnal", "TLP", "p50L", "p80L",
                                               "HSMLWP.TLP", "HSMLWP.50L", "HSMTLP.50L",
                                               "HSMLWP.80L", "HSMTLP.80L",
-                                              "Panama.moist.pref", "Plot.swp.pref", "WSG_Chave", "Chl"),
+                                              "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl"),
                                               levels = c("depth", "Xylem_sap_deltaD_permil",
                                                            "KmaxL", "lwp.min_Predawn", "lwp.min_Diurnal", "TLP", "p50L", "p80L",
                                                            "HSMLWP.TLP", "HSMLWP.50L", "HSMTLP.50L",
                                                            "HSMLWP.80L", "HSMTLP.80L",
-                                                           "Panama.moist.pref", "Plot.swp.pref", "WSG_Chave", "Chl"), ordered = TRUE)) %>%
+                                                           "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
                                            expression(italic(K)[max]), expression(Psi[predawn]), expression(Psi[min]),
                                            expression(Psi[TLP]), expression(italic('P')['50, Leaf']), expression(italic('P')['80, Leaf']),
@@ -775,7 +783,7 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                            expression(Psi[TLP]*' - '*italic('P')['50, Leaf']),
                                            expression(Psi[min]*' - '*italic('P')['80, Leaf']),
                                            expression(Psi[TLP]*' - '*italic('P')['80, Leaf']),
-                                           expression('Panama'[wet]), expression('Plot'[wet]), expression('WSG'[Chave]), "LMA")),
+                                           expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
                                                  expression(italic(K)[max]), expression(Psi[predawn]), expression(Psi[min]),
                                                  expression(Psi[TLP]), expression(italic('P')['50,Leaf']), expression(italic('P')['80,Leaf']),
@@ -784,7 +792,7 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                  expression(Psi[TLP]*'-'*italic('P')['50,Leaf']),
                                                  expression(Psi[min]*'-'*italic('P')['80,Leaf']),
                                                  expression(Psi[TLP]*'-'*italic('P')['80,Leaf']),
-                                                 expression('Panama'[wet]), expression('Plot'[wet]), expression('WSG'[Chave]), "LMA")))
+                                                 expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")))
 
 # > with(traits, table(deciduousness))
 # Evergreen    Obligate Deciduous Facultative Deciduous        Brevideciduous
@@ -834,13 +842,14 @@ traits.long <- traits.long %>%
 ## so beginning with those other traits
 traits.wide <- traits.long %>% select(-trait.plot, -trait.plot.chart) %>% pivot_wider(names_from = trait, values_from = value)
 traits.long.hyd <- sp.hab %>%
-  full_join(bci.traits %>% select(sp, form1, WSG_Chave), by = "sp") %>%
+  full_join(bci.traits %>% select(sp, form1, SG100C_AVG), by = "sp") %>%
   full_join(deci %>% select(-sp4), by = "sp") %>%
   subset(sp %in% unique(c(depth.rsq.isotopes$sp, hyd$sp, traits$sp))) %>%
   left_join(traits.wide %>% select(-form1, -deciduous, -deciduousness,
-                                   -WSG_Chave, -Panama.moist.pref, -Plot.swp.pref,
+                                   -SG100C_AVG, -Panama.moist.pref, -Plot.swp.pref,
                                    -se), by = "sp") %>%
-  pivot_longer(cols = c(-sp, -form1, -deciduous, -deciduousness, -DeciLvl),
+  pivot_longer(cols = c(-sp, -form1, -deciduous, -deciduousness, -DeciLvl,
+                        -deciduousness.label, -sp.plot, -deci_sp, -deci_sp.plot),
                names_to = "trait", values_to = "value") %>%
   unite("deci_sp", deciduous, sp, remove = FALSE) %>%
   left_join(traits.labels.table.2, by = "trait") %>%
@@ -852,6 +861,148 @@ save(traits, file = file.path(results.folder, "kunert.traits.all.RData"))
 save(traits.long, file = file.path(results.folder, "kunert.traits.key.long.RData"))
 save(traits.long.hyd, file = file.path(results.folder, "kunert.traits.key.long_in_Wolfe_traits_species_list.RData"))
 load(file = file.path(results.folder, "kunert.traits.key.long.RData"))
+
+#******************************************************
+## Predictors of Kmax by PSI relationship --------
+#******************************************************
+traits.for.kcurves <- traits.indi %>%
+  rename(TLP = mean_TLP_Mpa, Chl = Chl_m2_per_g, LMA = LMA_g_per_m2,
+         SPAD = mean_SPAD, WD = WD_g_per_cm3, LD = LD_g_per_cm3) %>%
+  select(sp, TLP, Chl, LMA, SPAD, WD, LD) %>% group_by(sp) %>%
+  summarise_all(mean, na.rm = TRUE)
+sp.exp.param <- leaf_cond.models %>% subset(model_type == "Exponential") %>%
+  mutate(sp = data.type) %>% select(sp, A, B, Kmax, Kmax_at_0.1) %>%
+  left_join(traits.for.kcurves, by = "sp") %>%
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
+  left_join(bci.traits %>%
+              select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD), by = "sp")
+range(sp.exp.param$Kmax, na.rm = TRUE)
+# 0.9679718 9.9476435
+range(sp.exp.param$Kmax_at_0.1, na.rm = TRUE)
+# 0.8453948 7.1963332
+Exponential <- function (A, B, psi) {
+  A * exp(-B * psi)
+}
+
+figures.folder.k <- paste0("figures/PhenoDemoTraitsPsi/kmax_by_psi")
+if(!dir.exists(file.path(figures.folder.k))) {dir.create(file.path(figures.folder.k))}
+
+## ******
+### PCA to check which variables may strongly correlate wtih Parameters A & B
+## ******
+df.pca <- sp.exp.param %>% remove_rownames %>% column_to_rownames(var = "sp") %>% select_if(is.numeric) ## more species without Kmax data %>% select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
+# if (diff(range(df.pca$root.95, na.rm = TRUE)) == 0) {
+df.pca <- df.pca %>% subset(complete.cases(df.pca))
+result.pca <- prcomp(df.pca, center = TRUE, scale = TRUE)
+
+pdf(file.path(figures.folder.k ,"kamx_by_psi_params_pca.pdf"), height = 6, width = 6)
+biplot(result.pca, choices = 1:2, pc.biplot = TRUE, main = "")
+dev.off()
+
+
+## single explanatory variable
+var.y <- c("A", "A", "A", "A", "B", "B")
+var.x <- c("SG100C_AVG", "LMA", "LMALAM_AVD", "B", "SG100C_AVG", "LMALAM_AVD")
+for(i in 1:length(var.x)){
+  jpeg(file.path(figures.folder.k, paste0("kamx_by_psi_", var.y[i], "_by_", var.x[i],".jpeg")),
+       width = 4, height = 4, units = "in", pointsize = 10,
+       quality = 100, res = 300)
+  df <- sp.exp.param[!is.na(sp.exp.param[, var.x[i]]),]
+  df$x <- df[, var.x[i]]
+  df$y <- df[, var.y[i]]
+  model1 <- lm(y ~ poly(x, 2), data = df)
+  plot(y ~ x, data = df, xlab = var.x[i], ylab = var.y[i])
+  x0 <- seq(min(df$x, na.rm = TRUE), max(df$x, na.rm = TRUE), length = 100)  ## prediction grid
+  y0 <- predict(model1, newdata = list(x = x0))  ## predicted values
+  lines(x0, y0, col = 2)
+  ## rounded coefficients for better output
+  cf <- round(coef(model1), 2)
+  ## sign check to avoid having plus followed by minus for negative coefficients
+  eq <- paste0("y = ", cf[1],
+               ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), "x",
+               ifelse(sign(cf[3])==1, " + ", " - "), abs(cf[3]), "x2")
+  r2 <- paste0("R-squared = ", round(summary(model1)$r.squared, 2),
+               ", P-val = ", round(lmp(model1), 2))
+  mtext(eq, 3, line = -2)
+  mtext(r2, 3, line = -4)
+  dev.off()
+}
+
+## Best R2 have two variables
+k_by_psi.models <- vector(mode = "list", length = 2)
+k_by_psi.models[[1]] <- lm(B ~ polym(SG100C_AVG, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models[[1]]) # Adjusted R-squared:  0.8122;  p-value: 0.001392
+k_by_psi.models[[2]]<- lm(A ~ polym(B, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models[[2]])
+# Adjusted R-squared:  0.667, ,  p-value: 0.004658
+## But LMALMA_AVD are fewer than LMALEAF_AVD, so filling up some gaps in them
+k_by_psi.models[[3]]<- lm(LMALEAF_AVD ~ LMALAM_AVD, data = bci.traits)
+summary(k_by_psi.models[[3]])
+plot(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
+# Adjusted R-squared:  0.9332 ; p-value: < 2.2e-16
+save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
+
+bci.AB <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
+bci.AB <- bci.AB %>% mutate(LMALEAF_AVD =
+                              ifelse(is.na(LMALAM_AVD),
+                                     predict(k_by_psi.models[[3]], newdata = bci.AB),
+                                     LMALAM_AVD),
+                            A = predict(k_by_psi.models[[1]], newdata = bci.AB),
+                            B = predict(k_by_psi.models[[1]], newdata = bci.AB))
+save(bci.AB, file = file.path(results.folder, "bci.AB.Rdata"))
+
+###*****
+## Plot K by PSI using fitted exponential curves
+###*****
+# Define colour pallete
+pal = colorRampPalette(c("red", "blue"))
+# # Use the following line with RColorBrewer
+# pal = colorRampPalette(cols)
+sp.exp.param.plot <- sp.exp.param %>%
+  mutate(order.chl = findInterval(Chl, sort(Chl)),
+         order.tlp = findInterval(TLP, sort(TLP)),
+         order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
+         order.decilvl = findInterval(DeciLvl, sort(DeciLvl)),
+         order.lma = findInterval(LMA, sort(LMA)))
+
+df.plot <- sp.exp.param.plot
+df.name <- "kmax_psi_data_fitted_AB"
+col.var <- "LMA"
+order.col.var <- "order.lma"
+legend.col.var <- "LMA"
+
+df.plot <- bci.AB %>%
+  # subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
+  mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
+         order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)))
+df.name <- "predicted_AB_for_data_sp"
+# col.var <- "LMALAM_AVD"
+# order.col.var <- "order.lma"
+# legend.col.var <- "LMALAM_AVD"
+col.var <- "SG100C_AVG"
+order.col.var <- "order.wsg"
+legend.col.var <- "Specific Gravity"
+
+jpeg(file.path(figures.folder.k, paste0("kamx_by_psi_color_by_", legend.col.var,"_", df.name, ".jpeg")),
+     width = 4, height = 4, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+par(mar = c(5, 5, 2, 2))
+plot(1, type="n", xlab="Leaf Water Potential (-MPa)", ylab=
+       expression("Leaf Hydraulic Conductance (mmol "~m^-2*s^-1*MPa^-1*")"),
+     xlim=c(0, 3), ylim=c(0, 7.5))
+
+for (i in 1:nrow(df.plot)) {
+  params <- df.plot[i, ]
+  df <- data.frame(psi = seq(0, 3, length.out = 100)) %>%
+    mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
+    cbind.data.frame(params)
+  # Rank variable for colour assignment
+  lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[i, order.col.var]]) # "darkorange"
+}
+legend("topright", title = legend.col.var, col=pal(2), pch=19,
+       legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
+                           decreasing = TRUE), 1)))
+dev.off()
 
 #******************************************************
 ### Calculate Correlation of growth rates with psi by depth -------
@@ -905,11 +1056,11 @@ dev.off()
 psi.m <- psi %>%
   mutate(interval = cut(date, include.lowest = TRUE, breaks = cut.breaks,
                         labels = cut.labels.interval, right = TRUE)) %>%
-  # full_join(clim.daily %>%
-  #             mutate(std.pet.PM = 1 - range01(pet.PM),
-  #                    std.VPD = 1 - range01(VPD),
-  #                    std.Rs = range01(Rs)) %>%
-  full_join(clim.daily.effect %>%
+  full_join(clim.daily %>%
+              mutate(std.pet.PM = 1 - range01(pet.PM),
+                     std.VPD = 1 - range01(VPD),
+                     std.Rs = range01(Rs)) %>%
+  # full_join(clim.daily.effect %>%
               select(date, std.Rs, std.pet.PM, std.VPD), by = "date")
 depth.breaks <- c(soil.depths[1], soil.depths[4], soil.depths[6],
                   soil.depths[7:length(soil.depths)])
@@ -921,15 +1072,15 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,':='(doy = format(date, "%
     (!year %chin% c("1991") | depth == 2.9) &
     (!year %chin% c("1991", "1992") | depth < 2.9)][, c("doy", "year") := NULL][, ':='(depth = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
                                                                                                    labels = depth.labels, right = TRUE))][, by = .(date, interval, interval.yrs, par.sam, depth),
-                                                                                                                                          lapply(.SD, mean, na.rm = TRUE)]
+                                                                                                                                          lapply(.SD, median, na.rm = TRUE)]
 psi.study <- as.data.frame(psi.study)
+
 traits.indi <- read.csv("data-raw/traits/HydraulicTraits_Kunert/hydraulic_traits_panama_kunert.csv") # Nobby's data
 tlp.sp <- traits.indi %>% group_by(sp) %>% select(-idividual, -ind_ID) %>%
   dplyr::summarise(tlp = mean(mean_TLP_Mpa, na.rm = TRUE))
 n.tlp.sp <- length(tlp.sp$sp)
 tlp.sp <- tlp.sp %>%
   mutate(psi_threshold = tlp*0.8)
-
 tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
 
 ## for species with traits data
@@ -944,6 +1095,8 @@ for (i in 1: length(names.gfac)) {
                               as.data.frame) %>%
     bind_rows(.id = "sp")
 }
+
+mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
 
 ml.ls <- vector("list", length(psi.interval))
 ml.dens <- vector("list", length(psi.interval))
@@ -1198,7 +1351,7 @@ select.traits.3 <- c("KmaxL", "lwp.min_Predawn",
 
 select.traits.4 <- c("depth", "Xylem_sap_deltaD_permil",
                      "KmaxL", "lwp.min_Predawn", "TLP", "p50L",
-                     "HSMLWP.TLP", "Panama.moist.pref", "Plot.swp.pref", "WSG_Chave", "Chl")
+                     "HSMLWP.TLP", "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl")
 
 traits.pairs.1 <- traits.long %>%
   subset(trait %in% select.traits.3) %>%

@@ -899,13 +899,12 @@ pdf(file.path(figures.folder.k ,"kamx_by_psi_params_pca.pdf"), height = 6, width
 biplot(result.pca, choices = 1:2, pc.biplot = TRUE, main = "")
 dev.off()
 
-
 ## single explanatory variable
 var.y <- c("A", "A", "A", "A", "B", "B")
 var.x <- c("SG100C_AVG", "LMA", "LMALAM_AVD", "B", "SG100C_AVG", "LMALAM_AVD")
 for(i in 1:length(var.x)){
   jpeg(file.path(figures.folder.k, paste0("kamx_by_psi_", var.y[i], "_by_", var.x[i],".jpeg")),
-       width = 4, height = 4, units = "in", pointsize = 10,
+       width = 3, height = 3, units = "in", pointsize = 10,
        quality = 100, res = 300)
   df <- sp.exp.param[!is.na(sp.exp.param[, var.x[i]]),]
   df$x <- df[, var.x[i]]
@@ -936,20 +935,57 @@ k_by_psi.models[[2]]<- lm(A ~ polym(B, LMALAM_AVD, degree = 2, raw = TRUE), data
 summary(k_by_psi.models[[2]])
 # Adjusted R-squared:  0.667, ,  p-value: 0.004658
 ## But LMALMA_AVD are fewer than LMALEAF_AVD, so filling up some gaps in them
-k_by_psi.models[[3]]<- lm(LMALEAF_AVD ~ LMALAM_AVD, data = bci.traits)
+k_by_psi.models[[3]] <- lm(LMALEAF_AVD ~ LMALAM_AVD, data = bci.traits)
 summary(k_by_psi.models[[3]])
 plot(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
 # Adjusted R-squared:  0.9332 ; p-value: < 2.2e-16
 save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
-
+#
+# bci.AB.long <- bci.AB %>% pivot_longer(cols = -sp, names_to = "trait", values_to = "value") %>%
+#   mutate(source = "predicted_from_soft_traits") %>%
+#   bind_rows(sp.exp.param %>% pivot_longer(cols = c(-sp, -deciduous, -deciduousness), names_to = "trait", values_to = "value") %>%
+#               mutate(source = "fitted_to_k_by_LWP_curve"))
+#
+# bci.AB.wide <- bci.AB.long %>% pivot_wider(names_from = trait,
+#                                            values_from = value)
+###**********
+## Predict A & B from soft traits and the above models
+###**********
 bci.AB <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
 bci.AB <- bci.AB %>% mutate(LMALEAF_AVD =
                               ifelse(is.na(LMALAM_AVD),
                                      predict(k_by_psi.models[[3]], newdata = bci.AB),
                                      LMALAM_AVD),
-                            A = predict(k_by_psi.models[[1]], newdata = bci.AB),
                             B = predict(k_by_psi.models[[1]], newdata = bci.AB))
+bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models[[2]], newdata = bci.AB))
+
+###**********
+## Do params A & B predicted from soft traits match those fitted to data?
+###**********
+data.model.AB <- bci.AB %>% rename(model.A = A, model.B = B) %>%
+  left_join(sp.exp.param %>% select(sp, A, B) %>%
+              rename(data.A = A, data.B = B), by = "sp")
 save(bci.AB, file = file.path(results.folder, "bci.AB.Rdata"))
+jpeg(file.path(figures.folder.k, paste0("B_data_vs_model.jpeg")),
+     width = 3, height = 3.3, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+plot(model.B ~ data.B, data = data.model.AB, xlim =
+       range(data.model.AB$B.y, na.rm = TRUE),
+     ylim = range(data.model.AB$B.y, na.rm = TRUE),
+     ylab = "B, fitted to Data", xlab = "B, predicted from soft traits")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+dev.off()
+
+jpeg(file.path(figures.folder.k, paste0("A_data_vs_model.jpeg")),
+     width = 3, height = 3.3, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+plot(model.A ~ data.A, data = data.model.AB, xlim =
+       range(data.model.AB$A.y, na.rm = TRUE),
+     ylim = range(data.model.AB$A.y, na.rm = TRUE),
+     ylab = "A, fitted to Data", xlab = "A, predicted from soft traits")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+dev.off()
+
 
 ###*****
 ## Plot K by PSI using fitted exponential curves
@@ -963,19 +999,26 @@ sp.exp.param.plot <- sp.exp.param %>%
          order.tlp = findInterval(TLP, sort(TLP)),
          order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
          order.decilvl = findInterval(DeciLvl, sort(DeciLvl)),
-         order.lma = findInterval(LMA, sort(LMA)))
+         order.lma = findInterval(LMA, sort(LMA)),
+         order.B = findInterval(B, sort(B)))
+## choose among alternatives of which data or subset to plot and which variable
+# df.plot <- sp.exp.param.plot
+# df.name <- "kmax_psi_data_fitted_AB"
+# col.var <- "LMA"
+# order.col.var <- "order.lma"
+# legend.col.var <- "LMA"
 
-df.plot <- sp.exp.param.plot
-df.name <- "kmax_psi_data_fitted_AB"
-col.var <- "LMA"
-order.col.var <- "order.lma"
-legend.col.var <- "LMA"
+# col.var <- "B"
+# order.col.var <- "order.B"
+# legend.col.var <- "B"
 
 df.plot <- bci.AB %>%
   # subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
   mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
          order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)))
+
 df.name <- "predicted_AB_for_data_sp"
+# df.name <- "predicted_AB"
 # col.var <- "LMALAM_AVD"
 # order.col.var <- "order.lma"
 # legend.col.var <- "LMALAM_AVD"
@@ -984,7 +1027,7 @@ order.col.var <- "order.wsg"
 legend.col.var <- "Specific Gravity"
 
 jpeg(file.path(figures.folder.k, paste0("kamx_by_psi_color_by_", legend.col.var,"_", df.name, ".jpeg")),
-     width = 4, height = 4, units = "in", pointsize = 10,
+     width = 3.5, height = 3.5, units = "in", pointsize = 10,
      quality = 100, res = 300)
 par(mar = c(5, 5, 2, 2))
 plot(1, type="n", xlab="Leaf Water Potential (-MPa)", ylab=

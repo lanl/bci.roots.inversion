@@ -252,6 +252,7 @@ deci <- deci %>% mutate(sp = tolower(sp6)) %>%
   select(sp4, sp, deciduous, deciduousness, deciduousness.label, DeciLvl)
 
 head(deci)
+
 # deci.2 <- read.csv("data-raw/traits/HydraulicTraits_Kunert/deciduous_species_Meakem.csv")
 # deci.2 <- deci.2 %>% mutate(sp = as.character(Species.code), deciduousness = as.character(Deciduousness)) %>%
 #   select(sp, deciduousness)
@@ -442,7 +443,6 @@ cut.labels.interval <- 3: (length(census.meds)-1)
 psi <- bci.elm.fates.hydro::psi
 gpp <- bci.elm.fates.hydro::gpp
 
-
 psi <- psi %>%
   mutate(interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
                                                      labels = cut.labels.2, right = TRUE)))
@@ -552,7 +552,6 @@ clim.daily <- clim.daily %>%
          VPD = SVP * (1 - RH/100),
          interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
                                                      labels = cut.labels.2, right = TRUE)))
-
 write.csv(clim.daily,
           file.path("results/clim.daily_with_pet.PM.csv"),
           row.names = FALSE)
@@ -560,12 +559,32 @@ save(clim.daily,
         file = file.path("results/clim.daily_with_pet.PM.Rdata"))
 load(file = file.path("results/clim.daily_with_pet.PM.Rdata"))
 
-gpp.rel <- gpp %>% left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date") %>%
-  rename(gpp = value)
+gpp.rel.daily <- gpp %>% group_by(date) %>%
+  summarise(gpp = median(value)) %>%
+  left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date")
+
+gpp.rel.monthly <- gpp.rel.daily %>%
+  mutate(month = format(date, format = "%b%Y")) %>%
+  select(-date) %>%
+  group_by(month) %>%
+  summarise_all(list(~mean(., na.rm = TRUE)))
+
+gpp.rel <- gpp.rel.monthly
+data.scale <- "monthly"
+
+# gpp.rel <- gpp.rel.daily
+# data.scale <- "daily"
+
+if (data.scale == "monthly"){
+  point.size <- 3
+} else {
+  point.size <- 0.1
+}
 
 formula = y ~ poly(x, 2, raw=TRUE)
+
 gpp.vpd <- ggplot(gpp.rel, aes(y = gpp, x = VPD)) +
-  geom_point(size = 0.1) +
+  geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
                 formula = formula, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
@@ -577,10 +596,10 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp, x = VPD)) +
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("VPD (kPa)")
-ggsave("gpp.vpd.jpeg",
-       plot = gpp.vpd, file.path(figures.folder), device = "jpeg", height = 5, width = 5, units='in')
+ggsave(paste0(data.scale,"_gpp.vpd.jpeg"),
+       plot = gpp.vpd, file.path(figures.folder), device = "jpeg", height = 4.5, width = 4.5, units='in')
 gpp.pet <- ggplot(gpp.rel, aes(y = gpp, x = pet.PM)) +
-  geom_point(size = 0.1) +
+  geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula=formula, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
@@ -592,11 +611,11 @@ gpp.pet <- ggplot(gpp.rel, aes(y = gpp, x = pet.PM)) +
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Penman-Monteith PET (mm)")
-ggsave("gpp.pet.jpeg",
-       plot = gpp.pet, file.path(figures.folder), device = "jpeg", height = 5, width = 5, units='in')
+ggsave(paste0(data.scale,"_gpp.pet.jpeg"),
+       plot = gpp.pet, file.path(figures.folder), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 gpp.rad <- ggplot(gpp.rel, aes(y = gpp, x = Rs)) +
-  geom_point(size = 0.1) +
+  geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula=formula, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
@@ -608,12 +627,14 @@ gpp.rad <- ggplot(gpp.rel, aes(y = gpp, x = Rs)) +
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab(expression('Solar Radiation (MJ'*m^-2*day^-1*')'))
-ggsave("gpp.rad.jpeg",
-       plot = gpp.rad, file.path(figures.folder), device = "jpeg", height = 4, width = 4, units='in')
+ggsave(paste0(data.scale,"_gpp.rad.jpeg"),
+       plot = gpp.rad, file.path(figures.folder), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel)
-eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel)
-eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel)
+eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel.monthly)
+eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel.monthly)
+eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel.monthly)
+gpp.models <- list(eq.gpp.vpd = eq.gpp.vpd, eq.gpp.pet = eq.gpp.pet, eq.gpp.rad = eq.gpp.rad)
+save(gpp.models, file = file.path(results.folder, "gpp.models.Rdata"))
 
 #******************************************************
 ## Load BCI traits---
@@ -930,7 +951,9 @@ for(i in 1:length(var.x)){
 ## Best R2 have two variables
 k_by_psi.models <- vector(mode = "list", length = 2)
 k_by_psi.models[[1]] <- lm(B ~ polym(SG100C_AVG, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
-summary(k_by_psi.models[[1]]) # Adjusted R-squared:  0.8122;  p-value: 0.001392
+summary(k_by_psi.models[[1]])
+# Adjusted R-squared:  0.8122;  p-value: 0.001392
+## with only SG100C_AVG, R-squared:  0.547; p-value: 0.0006908
 k_by_psi.models[[2]]<- lm(A ~ polym(B, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
 summary(k_by_psi.models[[2]])
 # Adjusted R-squared:  0.667, ,  p-value: 0.004658
@@ -965,7 +988,7 @@ bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models[[2]], newdata = bci.AB))
 data.model.AB <- bci.AB %>% rename(model.A = A, model.B = B) %>%
   left_join(sp.exp.param %>% select(sp, A, B) %>%
               rename(data.A = A, data.B = B), by = "sp")
-save(bci.AB, file = file.path(results.folder, "bci.AB.Rdata"))
+save(data.model.AB, file = file.path(results.folder, "data.model.AB.Rdata"))
 jpeg(file.path(figures.folder.k, paste0("B_data_vs_model.jpeg")),
      width = 3, height = 3.3, units = "in", pointsize = 10,
      quality = 100, res = 300)
@@ -1001,50 +1024,105 @@ sp.exp.param.plot <- sp.exp.param %>%
          order.decilvl = findInterval(DeciLvl, sort(DeciLvl)),
          order.lma = findInterval(LMA, sort(LMA)),
          order.B = findInterval(B, sort(B)))
+
+k.raw.data <- read.table(paste0("data-raw/traits/HydraulicTraits_Kunert/Panama_raw_hydraulics_data.csv"), header = T, sep = ",") %>%
+  left_join(sp.exp.param.plot, by = "sp")
+
 ## choose among alternatives of which data or subset to plot and which variable
-# df.plot <- sp.exp.param.plot
-# df.name <- "kmax_psi_data_fitted_AB"
-# col.var <- "LMA"
-# order.col.var <- "order.lma"
-# legend.col.var <- "LMA"
+df.plot <- sp.exp.param.plot
+df.name <- "kmax_psi_data_fitted_AB"
+col.var <- "LMA"
+order.col.var <- "order.lma"
+legend.col.var <- "LMA"
 
 # col.var <- "B"
 # order.col.var <- "order.B"
 # legend.col.var <- "B"
 
 df.plot <- bci.AB %>%
+  subset(B >= 0 & A >= 0) %>%
   # subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
-         order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)))
+         order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)),
+         order.decilvl = findInterval(DeciLvl, sort(DeciLvl))) %>%
+  mutate(deciduousness.label.2 = recode_factor(as.factor(deciduous), `E` = "Evergreen", `DB` = "Brevi\nDeciduous",
+                                               `DF` = "Facultative\nDeciduous", `DO` = "Obligate\nDeciduous")) %>%
+  transform(deciduousness.label.2 = factor(deciduousness.label.2,
+                                           levels = c("Evergreen", "Brevi\nDeciduous",
+                                                      "Facultative\nDeciduous", "Obligate\nDeciduous"), ordered = TRUE))
 
-df.name <- "predicted_AB_for_data_sp"
-# df.name <- "predicted_AB"
-# col.var <- "LMALAM_AVD"
-# order.col.var <- "order.lma"
-# legend.col.var <- "LMALAM_AVD"
-col.var <- "SG100C_AVG"
-order.col.var <- "order.wsg"
-legend.col.var <- "Specific Gravity"
+jpeg(file.path(figures.folder.k, paste0("Sp.Gravity_by_deci.jpeg")),
+     width = 5, height = 2.5, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+par(mar = c(5, 5, 2, 2))
+boxplot(SG100C_AVG ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
+        ylab = expression('Wood Specific Gravity'['100C']), notch = TRUE, boxwex = 0.5)
+dev.off()
+jpeg(file.path(figures.folder.k, paste0("LMALAM_by_deci.jpeg")),
+     width = 5, height = 3.5, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+par(mar = c(5, 5, 2, 2))
+boxplot(LMALAM_AVD ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
+        ylab = expression('LMA'['Lamina']), notch = TRUE, boxwex = 0.5)
+dev.off()
 
-jpeg(file.path(figures.folder.k, paste0("kamx_by_psi_color_by_", legend.col.var,"_", df.name, ".jpeg")),
+# df.name <- "predicted_AB_for_data_sp"
+df.name <- "predicted_AB"
+col.var <- "LMALAM_AVD"
+order.col.var <- "order.lma"
+legend.col.var <- "LMALAM_AVD"
+# col.var <- "SG100C_AVG"
+# order.col.var <- "order.wsg"
+# legend.col.var <- "Specific Gravity"
+# col.var <- "DeciLvl"
+# order.col.var <- "order.decilvl"
+# legend.col.var <- "DeciLvl"
+# col.var <- "deci"
+# legend.col.var <- "Deciduoousness"
+std.k <- ""; ylim.k = 7.5
+# std.k <- "std.k"; ylim.k = 1
+
+jpeg(file.path(figures.folder.k, paste0(std.k, "kamx_by_psi_color_by_", legend.col.var,"_", df.name, ".jpeg")),
      width = 3.5, height = 3.5, units = "in", pointsize = 10,
      quality = 100, res = 300)
 par(mar = c(5, 5, 2, 2))
-plot(1, type="n", xlab="Leaf Water Potential (-MPa)", ylab=
+plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)", ylab =
        expression("Leaf Hydraulic Conductance (mmol "~m^-2*s^-1*MPa^-1*")"),
-     xlim=c(0, 3), ylim=c(0, 7.5))
-
+     xlim = c(0, 3), ylim = c(0, ylim.k))
+for (i in 1:nrow(df.plot)) {
+  params <- df.plot[i, ]
+  if(df.name == "kmax_psi_data_fitted_AB"){
+    points(kl ~ psi, data = subset(k.raw.data, sp %in% params$sp),
+           col = "gray85", pch = 20)
+  }
+}
 for (i in 1:nrow(df.plot)) {
   params <- df.plot[i, ]
   df <- data.frame(psi = seq(0, 3, length.out = 100)) %>%
     mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
-    cbind.data.frame(params)
+    cbind.data.frame(params, row.names = NULL)
+  if(std.k == "std.k") {
+    df <- df %>% mutate(k.predict = range01(k.predict))
+  }
+
   # Rank variable for colour assignment
-  lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[i, order.col.var]]) # "darkorange"
+  if(col.var == "deci") {
+    lines(k.predict ~ psi, data = df, col = deciduousness) # "darkorange"
+  } else {
+    lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[i, order.col.var]]) # "darkorange"
+  }
 }
-legend("topright", title = legend.col.var, col=pal(2), pch=19,
-       legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
-                           decreasing = TRUE), 1)))
+
+if(col.var == "deci") {
+  ## using levels in deciduousness used by color
+  legend("topright", legend = levels(df.plot$deciduousness),
+         col = 1:4, pch=19, bty = "n")
+} else {
+  legend("topright", title = legend.col.var, col=pal(2), pch=19,
+         legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
+                             decreasing = TRUE), 1)), bty = "n")
+}
 dev.off()
 
 #******************************************************
@@ -1056,22 +1134,41 @@ dev.off()
 
 ## Limiting to evergreen species for 2 & 3: For non-evergreen species periods in question will have to be a subset of days when leaves were on
 
-growth.sub <- growth[grep("large", names(growth))]
+growth.sub <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
+  bind_rows(.id = "sp_size") %>%
+  rename(demo.rate = median) %>%
+  separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
+  select(-sp_size, -size, -"_")
+
 mort.sub <- mrate.long %>% subset(size == "large") %>%
   mutate(interval = as.numeric(recode(census, `1985` = "1",
                                       `1990` = "2", `1995` = "3",
                                       `2000` = "4", `2005` = "5",
                                       `2010` = "6", `2015` = "7"))) %>%
   subset(interval %in% cut.labels.interval) %>%
-  select(sp_size, interval, mrate)
+  select(sp_size, interval, mrate) %>%
+  rename(demo.rate = mrate) %>%
+  separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
+  select(-sp_size, -size, -"_")
+
+## getting Kmax_by_PSI parameters for species with growth data or mortality
+union(growth.sub)
+data.model.AB <- data.model.AB %>%
+  mutate(A = ifelse(is.na(data.A), model.A, data.A),
+         B = ifelse(is.na(data.B), model.B, data.B))
+
+AB.sp.ls <- split(data.model.AB, f = list(data.model.AB$sp),
+                  drop = TRUE)[union(growth.sub$sp, mort.sub$sp)]
+
+mutate(k.predict = Exponential(A = A, B = B, psi = psi))
 
 ## combining psi, PET and VPD
 soil.depths <- unique(psi$depth)
 
 clim.daily.effect <- clim.daily %>%
-  mutate(pet.PM.effect = as.numeric(predict(eq.gpp.pet, newdata = clim.daily)),
-         VPD.effect = as.numeric(predict(eq.gpp.vpd, newdata = clim.daily)),
-         Rs.effect = as.numeric(predict(eq.gpp.rad, newdata = clim.daily)),
+  mutate(pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.pet, newdata = clim.daily)),
+         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd, newdata = clim.daily)),
+         Rs.effect = as.numeric(predict(gpp.models$eq.gpp.rad, newdata = clim.daily)),
          std.pet.PM = range01(pet.PM.effect),
          std.VPD = range01(VPD.effect),
          std.Rs = range01(Rs.effect))
@@ -1139,7 +1236,6 @@ for (i in 1: length(names.gfac)) {
     bind_rows(.id = "sp")
 }
 
-mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
 
 ml.ls <- vector("list", length(psi.interval))
 ml.dens <- vector("list", length(psi.interval))
@@ -1147,19 +1243,16 @@ ml.rsq.ls <- vector("list", length(psi.interval))
 ml.corr.ls <- vector("list", length(psi.interval))
 for (i in names(psi.interval)) {
   if(grepl("gr.", i)) {
-    demo <- lapply(growth.sub, as.data.frame) %>% bind_rows(.id = "sp_size") %>%
-      rename(demo.rate = median)
+    demo <- growth.sub
   } else {
-    demo <- mort.sub %>%
-      rename(demo.rate = mrate)
+    demo <- mort.sub
   }
   demo.psi <- demo %>%
     mutate(interval = as.factor(interval)) %>%
-    left_join(psi.interval[[i]] %>%
-                mutate(sp_size = paste0(sp, "_large")), by = c("interval", "sp_size")) %>%
+    left_join(psi.interval[[i]], by = c("interval", "sp")) %>%
     subset(!is.na(`0.1`) & is.finite(`0.1`) & !is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
   demo.psi.ls <- split(demo.psi,
-                       f = list(demo.psi$sp_size), drop = TRUE)
+                       f = list(demo.psi$sp), drop = TRUE)
   ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
   ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
   ml.corr.ls[[i]] <- do.call(rbind.data.frame, ml.ls[[i]])
@@ -1176,9 +1269,9 @@ ml.corr <- vector("list", length(psi.interval))
 ml.corr.best <- vector("list", length(psi.interval))
 for (i in names(psi.interval)) {
   ml.corr[[i]] <- ml.corr.ls[[i]] %>%
-    mutate(sp_size.depth = row.names(ml.corr.ls[[i]])) %>%
-    separate(sp_size.depth, c("sp", "size.depth", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-    select(-size.depth, -"_") %>%
+    mutate(sp.depth = row.names(ml.corr.ls[[i]])) %>%
+    separate(sp.depth, c("sp", "depth", sep = "."), remove = FALSE, extra = "drop", fill = "right") %>%
+    select(-"_") %>%
     arrange(sp, depth) %>%
     left_join(deci %>% select(-sp4), by = "sp") %>%
     droplevels() %>%

@@ -19,7 +19,8 @@ rm(list=ls())
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
-               scales, GGally, ggpmisc, Evapotranspiration, data.table, bci.elm.fates.hydro)
+               scales, GGally, ggpmisc, Evapotranspiration,
+               data.table, bci.elm.fates.hydro, mgcv)
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),
@@ -75,11 +76,16 @@ reverselog_trans <- function(base = exp(1)) {
 # X3=sum(min(0, psi-psi_threshold)), max/mean
 # X4=sum(I(psi<psi_threshold)*PET),max/mean
 
+## funciton used to estimate K_leaf from Psi and species specific parameters
+Exponential <- function (A, B, psi) {
+  A * exp(-B * psi)
+}
+
 psi.corr.fun.ls <- list(
   "gr.Psi" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
+        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
         psi.mod < 0, psi.mod := 0][
         , keyby = .(depth, interval),
         .(gfac = mean(psi.mod, na.rm = TRUE))]
@@ -89,20 +95,18 @@ psi.corr.fun.ls <- list(
   "gr.Psi.Rad.VPD" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
-        psi.mod < 0, psi.mod := 0][
+        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
         , keyby = .(depth, interval),
-        .(gfac = mean(psi.mod*std.Rs*std.VPD, na.rm = TRUE))]
+        .(gfac = mean(psi.mod*std.Rs.VPD, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     } ,
   "gr.Psi.Rad.PET" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := psi - df$psi_threshold][
-        psi.mod < 0, psi.mod := 0][
+        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
         , keyby = .(depth, interval),
-        .(gfac = mean(psi.mod*std.Rs*std.pet.PM, na.rm = TRUE))]
+        .(gfac = mean(psi.mod*std.Rs.pet.PM, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
     } ,
@@ -633,7 +637,23 @@ ggsave(paste0(data.scale,"_gpp.rad.jpeg"),
 eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel.monthly)
 eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel.monthly)
 eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel.monthly)
-gpp.models <- list(eq.gpp.vpd = eq.gpp.vpd, eq.gpp.pet = eq.gpp.pet, eq.gpp.rad = eq.gpp.rad)
+eq.gpp.rad.vpd <- lm(gpp ~ polym(Rs, VPD, degree = 2, raw = TRUE), data =  gpp.rel.monthly)
+eq.gpp.rad.pet <- lm(gpp ~ polym(Rs, pet.PM, degree = 2, raw = TRUE), data =  gpp.rel.monthly)
+eq.gpp.rad.vpd.gam <- gam(gpp ~ s(Rs, k = 5) + s(VPD, k = 5), data = gpp.rel.monthly)
+eq.gpp.rad.pet.gam <- gam(gpp ~ s(Rs, k = 5) + s(pet.PM, k = 8), data = gpp.rel.monthly)
+gam.check(eq.gpp.rad.vpd.gam)
+gam.check(eq.gpp.rad.pet.gam)
+summary(eq.gpp.rad.vpd.gam)
+summary(eq.gpp.rad.pet.gam)
+# plot(eq.gpp.rad.vpd.gam$fitted.values ~ eq.gpp.rad.vpd.gam$)
+# eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel.daily)
+# eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel.daily)
+# eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel.daily)
+gpp.models <- list(eq.gpp.vpd = eq.gpp.vpd, eq.gpp.pet = eq.gpp.pet,
+                   eq.gpp.rad = eq.gpp.rad, eq.gpp.rad.vpd = eq.gpp.rad.vpd,
+                   eq.gpp.rad.pet = eq.gpp.rad.pet,
+                   eq.gpp.rad.vpd.gam = eq.gpp.rad.vpd.gam,
+                   eq.gpp.rad.pet.gam = eq.gpp.rad.pet.gam)
 save(gpp.models, file = file.path(results.folder, "gpp.models.Rdata"))
 
 #******************************************************
@@ -901,9 +921,6 @@ range(sp.exp.param$Kmax, na.rm = TRUE)
 # 0.9679718 9.9476435
 range(sp.exp.param$Kmax_at_0.1, na.rm = TRUE)
 # 0.8453948 7.1963332
-Exponential <- function (A, B, psi) {
-  A * exp(-B * psi)
-}
 
 figures.folder.k <- paste0("figures/PhenoDemoTraitsPsi/kmax_by_psi")
 if(!dir.exists(file.path(figures.folder.k))) {dir.create(file.path(figures.folder.k))}
@@ -985,7 +1002,9 @@ bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models[[2]], newdata = bci.AB))
 ###**********
 ## Do params A & B predicted from soft traits match those fitted to data?
 ###**********
-data.model.AB <- bci.AB %>% rename(model.A = A, model.B = B) %>%
+data.model.AB <- bci.AB %>%
+  subset(B >= 0 & A >= 0) %>%
+  rename(model.A = A, model.B = B) %>%
   left_join(sp.exp.param %>% select(sp, A, B) %>%
               rename(data.A = A, data.B = B), by = "sp")
 save(data.model.AB, file = file.path(results.folder, "data.model.AB.Rdata"))
@@ -1040,7 +1059,6 @@ legend.col.var <- "LMA"
 # legend.col.var <- "B"
 
 df.plot <- bci.AB %>%
-  subset(B >= 0 & A >= 0) %>%
   # subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
   left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
@@ -1152,56 +1170,58 @@ mort.sub <- mrate.long %>% subset(size == "large") %>%
   select(-sp_size, -size, -"_")
 
 ## getting Kmax_by_PSI parameters for species with growth data or mortality
-union(growth.sub)
+## Using k_leaf_by_LWP curve parameters directly fitted to data, rather than predicted from soft traits, when available
 data.model.AB <- data.model.AB %>%
   mutate(A = ifelse(is.na(data.A), model.A, data.A),
-         B = ifelse(is.na(data.B), model.B, data.B))
-
-AB.sp.ls <- split(data.model.AB, f = list(data.model.AB$sp),
-                  drop = TRUE)[union(growth.sub$sp, mort.sub$sp)]
-
-mutate(k.predict = Exponential(A = A, B = B, psi = psi))
+         B = ifelse(is.na(data.B), model.B, data.B)) %>%
+  subset(sp %in% union(growth.sub$sp, mort.sub$sp))
 
 ## combining psi, PET and VPD
 soil.depths <- unique(psi$depth)
 
 clim.daily.effect <- clim.daily %>%
-  mutate(pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.pet, newdata = clim.daily)),
+  mutate(Rs.pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.rad.pet.gam, newdata = clim.daily)),
+         Rs.VPD.effect = as.numeric(predict(gpp.models$eq.gpp.rad.vpd.gam, newdata = clim.daily)),
+         std.Rs.pet.PM = range01(Rs.pet.PM.effect),
+         std.Rs.VPD = range01(Rs.VPD.effect),
+
+         pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.pet, newdata = clim.daily)),
          VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd, newdata = clim.daily)),
          Rs.effect = as.numeric(predict(gpp.models$eq.gpp.rad, newdata = clim.daily)),
          std.pet.PM = range01(pet.PM.effect),
          std.VPD = range01(VPD.effect),
          std.Rs = range01(Rs.effect))
-
-plot(pet.PM.effect ~ pet.PM, clim.daily.effect[1:1000,])
-plot(std.pet.PM ~ pet.PM, clim.daily.effect[1:1000,])
-jpeg(file.path(figures.folder, "pet_vs.std.pet.jpeg"), width = 4, height = 4, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-par(mar = c(5,4,2,2))
-plot(std.pet.PM ~ pet.PM, clim.daily.effect[1:1000,])
-dev.off()
-plot(VPD.effect ~ VPD, clim.daily.effect[1:1000,])
-plot(std.VPD ~ VPD, clim.daily.effect[1:1000,])
-jpeg(file.path(figures.folder, "vpd_vs.std.vpd.jpeg"), width = 4, height = 4, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-par(mar = c(5,4,2,2))
-plot(std.VPD ~ VPD, clim.daily.effect[1:1000,])
-dev.off()
-jpeg(file.path(figures.folder, "rad_vs.std.rad.jpeg"), width = 4, height = 4, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-par(mar = c(5,4,2,2))
-plot(std.Rs ~ Rs, clim.daily.effect[1:1000,])
-dev.off()
+#
+# plot(pet.PM.effect ~ pet.PM, clim.daily.effect[1:1000,])
+# plot(std.pet.PM ~ pet.PM, clim.daily.effect[1:1000,])
+# jpeg(file.path(figures.folder, "pet_vs.std.pet.jpeg"), width = 4, height = 4, units = "in", pointsize = 10,
+#      quality = 100, res = 300)
+# par(mar = c(5,4,2,2))
+# plot(std.pet.PM ~ pet.PM, clim.daily.effect[1:1000,])
+# dev.off()
+# plot(VPD.effect ~ VPD, clim.daily.effect[1:1000,])
+# plot(std.VPD ~ VPD, clim.daily.effect[1:1000,])
+# jpeg(file.path(figures.folder, "vpd_vs.std.vpd.jpeg"), width = 4, height = 4, units = "in", pointsize = 10,
+#      quality = 100, res = 300)
+# par(mar = c(5,4,2,2))
+# plot(std.VPD ~ VPD, clim.daily.effect[1:1000,])
+# dev.off()
+# jpeg(file.path(figures.folder, "rad_vs.std.rad.jpeg"), width = 4, height = 4, units = "in", pointsize = 10,
+#      quality = 100, res = 300)
+# par(mar = c(5,4,2,2))
+# plot(std.Rs ~ Rs, clim.daily.effect[1:1000,])
+# dev.off()
 
 psi.m <- psi %>%
   mutate(interval = cut(date, include.lowest = TRUE, breaks = cut.breaks,
                         labels = cut.labels.interval, right = TRUE)) %>%
-  full_join(clim.daily %>%
-              mutate(std.pet.PM = 1 - range01(pet.PM),
-                     std.VPD = 1 - range01(VPD),
-                     std.Rs = range01(Rs)) %>%
-  # full_join(clim.daily.effect %>%
-              select(date, std.Rs, std.pet.PM, std.VPD), by = "date")
+  # full_join(clim.daily %>%
+  #             mutate(std.pet.PM = 1 - range01(pet.PM),
+  #                    std.VPD = 1 - range01(VPD),
+  #                    std.Rs = range01(Rs)) %>%
+  full_join(clim.daily.effect %>%
+              select(date, std.Rs.pet.PM, std.Rs.VPD,
+                     std.Rs, std.pet.PM, std.VPD), by = "date")
 depth.breaks <- c(soil.depths[1], soil.depths[4], soil.depths[6],
                   soil.depths[7:length(soil.depths)])
 depth.labels <- c(0.1, 0.4, signif(soil.depths[7:(length(soil.depths)-1)], 1),
@@ -1225,23 +1245,27 @@ tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
 
 ## for species with traits data
 # growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
-names.gfac <- names(psi.corr.fun.ls)#c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
+names.gfac <- names(psi.corr.fun.ls)[1:3] #c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
 ## Preparing PSI matrices to compare against
-psi.interval <- vector(mode = "list", length = length(names.gfac))
-names(psi.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
+gfac.interval <- vector(mode = "list", length = length(names.gfac))
+names(gfac.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
 
-for (i in 1: length(names.gfac)) {
-  psi.interval[[i]] <- lapply(lapply(tlp.sp.ls, psi.corr.fun.ls[[i]]),
+
+AB.sp.ls <- split(data.model.AB, f = list(data.model.AB$sp),
+                  drop = TRUE)#[20]
+
+for (i in 1:length(names.gfac)) { #
+  gfac.interval[[i]] <- lapply(lapply(AB.sp.ls, psi.corr.fun.ls[[i]]),
                               as.data.frame) %>%
     bind_rows(.id = "sp")
 }
 
+ml.ls <- vector("list", length(gfac.interval))
+ml.dens <- vector("list", length(gfac.interval))
+ml.rsq.ls <- vector("list", length(gfac.interval))
+ml.corr.ls <- vector("list", length(gfac.interval))
 
-ml.ls <- vector("list", length(psi.interval))
-ml.dens <- vector("list", length(psi.interval))
-ml.rsq.ls <- vector("list", length(psi.interval))
-ml.corr.ls <- vector("list", length(psi.interval))
-for (i in names(psi.interval)) {
+for (i in names(gfac.interval)) {
   if(grepl("gr.", i)) {
     demo <- growth.sub
   } else {
@@ -1249,7 +1273,7 @@ for (i in names(psi.interval)) {
   }
   demo.psi <- demo %>%
     mutate(interval = as.factor(interval)) %>%
-    left_join(psi.interval[[i]], by = c("interval", "sp")) %>%
+    left_join(gfac.interval[[i]], by = c("interval", "sp")) %>%
     subset(!is.na(`0.1`) & is.finite(`0.1`) & !is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
   demo.psi.ls <- split(demo.psi,
                        f = list(demo.psi$sp), drop = TRUE)
@@ -1265,13 +1289,14 @@ for (i in names(psi.interval)) {
 #   abline(v = median(ml.dens[[n]]))
 # }
 
-ml.corr <- vector("list", length(psi.interval))
-ml.corr.best <- vector("list", length(psi.interval))
-for (i in names(psi.interval)) {
+ml.corr <- vector("list", length(gfac.interval))
+ml.corr.best <- vector("list", length(gfac.interval))
+for (i in names(gfac.interval)) {
   ml.corr[[i]] <- ml.corr.ls[[i]] %>%
     mutate(sp.depth = row.names(ml.corr.ls[[i]])) %>%
-    separate(sp.depth, c("sp", "depth", sep = "."), remove = FALSE, extra = "drop", fill = "right") %>%
-    select(-"_") %>%
+    separate(sp.depth, c("sp", "depth.fac", sep = "."), remove = FALSE, extra = "drop", fill = "right") %>%
+    select(-".", -depth.fac) %>%
+    mutate(depth = as.numeric(as.character(depth))) %>%
     arrange(sp, depth) %>%
     left_join(deci %>% select(-sp4), by = "sp") %>%
     droplevels() %>%
@@ -1297,16 +1322,29 @@ ml.rsq.combine.best <- dplyr::bind_rows(ml.corr.best, .id = "variable") %>%
 
 load(file = "data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4.Rdata")
 leafless_mar.apr <- read.csv("data-raw/traits/isotopes/Meinzer_1999_isotope_sp_leafless_in_mar_april.csv")
+# load(file = "results/all_isotopic_record.Rdata")
+iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
+
+iso.2 <- iso.2.raw %>%
+  # subset(source == "Meinzer et al.1999 Fig. 5A") %>%
+  mutate(source = "Meinzer et al.1999 Fig. 5B", location = "BCI") %>%
+  group_by(sp, source) %>%
+  summarise(se = sd(Xylem_sap_deltaD_permil, na.rm = TRUE)/sqrt(n()),
+            Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
+            n = n(),
+            DBH = mean(DBH, na.rm = TRUE))
 ## those species that were likely leafless at the time of Xylem sap isotopes collection
 ## in Mar & April need to be removed
 # pse1se zuelgu sponra huracr pla2el
 
 ml.rsq.combine.best <- ml.rsq.combine.best %>%
+  # left_join(iso.2 %>%
   left_join(iso.1.3.join %>%
               subset(!sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"])) %>%
               select(sp, Xylem_sap_deltaD_permil, se, source), by = "sp") %>%
   droplevels()
 ml.rsq.combine.best <- ml.rsq.combine.best %>%
+  # left_join(iso.2 %>%
   left_join(iso.1.3.join %>%
               subset(!sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"])) %>%
               group_by(sp) %>%
@@ -1328,15 +1366,14 @@ save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 # ml.rsq.combine.best <- ml.rsq.combine.best %>%
 #   left_join(traits.wide.hyd %>% select(sp, KmaxL, Panama.moist.pref:HSMLWP.TLP), by = "sp")
 
-heat.rsq <- ggplot(ml.rsq.combine %>% subset(corr >= 0 &
-                                               variable == "gr.Psi.Rad.VPD") %>% droplevels(),
+heat.rsq <- ggplot(ml.rsq.combine %>% subset(corr >= 0 ) %>% droplevels(),
                    aes(y = deci_sp, x = as.factor(depth))) +
   geom_tile(aes(fill = corr)) +
   ylab("Species") + xlab("Depth (m)") +
   facet_wrap(. ~ variable, nrow = 1) +
   scale_fill_viridis_c(expression("Pearson's "*italic(rho)), direction = -1, option = "plasma") #+
 ggsave("psi.corr_all.depths_phenology_heat_by_variable.jpeg",
-       plot = heat.rsq, file.path(figures.folder), device = "jpeg", height = 5, width = 5, units='in')
+       plot = heat.rsq, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units='in')
 
 # theme(axis.text.y = element_text(angle = 90, vjust = 0.5)) +
 # scale_x_continuous(breaks = soil.depths[c(1,8:13)])
@@ -1347,18 +1384,18 @@ ggsave("psi.corr_best.depth_phenology_heat_by_variable.jpeg",
 xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.best <- ml.rsq.combine.best %>% left_join(bci.traits %>% select(sp, form1), by = "sp") %>%
   mutate(depth = as.numeric(depth))
-ml.rsq.combine.sub <- ml.rsq.combine.best %>% subset(corr >= 0 & R2 >= 0.1 & form1 == "T" & variable == "gr.Psi.Rad.VPD" &
+ml.rsq.combine.sub <- ml.rsq.combine.best %>%
+  subset(corr >= 0 & R2 >= 0.1 & form1 == "T" & sp != "guapst" & #variable == "gr.Psi.Rad.VPD" &
                                                        !is.na(Xylem_sap_deltaD_permil.mean)) %>%
   droplevels()
 
 formula = y~x
-
 p0 <- ggplot(ml.rsq.combine.sub,
              aes(x = Xylem_sap_deltaD_permil.mean, y = depth)) + #HSMTLP.80L)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil.mean + se.mean,
                      xmin = Xylem_sap_deltaD_permil.mean - se.mean, color = deciduousness),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ variable, nrow = 2) +
+  facet_wrap( ~ variable, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil.mean, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
@@ -1373,17 +1410,17 @@ p0 <- ggplot(ml.rsq.combine.sub,
                   npcx = 0.8, npcy = 0.1, size = 4) +
   geom_point(size = 1, show.legend = TRUE, aes(color = deciduousness)) +
   theme(legend.position = "top", legend.title = element_blank(),
-          legend.direction = "vertical", strip.text = element_blank()) +
+          legend.direction = "vertical") + #, strip.text = element_blank()) +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_mean_isotope_source.jpeg",
-       plot = p0, file.path(figures.folder), device = "jpeg", height = 3.5, width = 3, units = 'in')
+       plot = p0, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
 
 p1 <- ggplot(ml.rsq.combine.sub,
              aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ variable, nrow = 2) +
+  facet_wrap( ~ variable, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
@@ -1398,21 +1435,21 @@ p1 <- ggplot(ml.rsq.combine.sub,
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(size = 2, show.legend = TRUE, aes(color = deciduousness)) +
   theme(legend.position = "top", legend.title = element_blank(),
-        legend.direction = "vertical", strip.text = element_blank()) +
+        legend.direction = "vertical") + #, strip.text = element_blank()) +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_two_isotope_sources.jpeg",
-       plot = p1, file.path(figures.folder), device = "jpeg", height = 3.5, width = 3, units = 'in')
+       plot = p1, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
 p2 <- p1 %+% subset(ml.rsq.combine.sub, source == "Meinzer et al.1999 Fig. 4")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
-       plot = p2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 3, units = 'in')
+       plot = p2, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
 
 p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
        aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
-                     xmin = Xylem_sap_deltaD_permil - se),
+                     xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ variable, nrow = 2) +
-  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp), nudge_y = 0.1, nudge_x = 0.2,
+  facet_wrap( ~ variable, nrow = 1) +
+  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   # position=position_jitter(width=ifelse(ml.rsq.combine.sub$sp=='cordal',1,0),
   #                        height=ifelse(ml.rsq.combine.sub$sp=='cordal',1,0))
@@ -1426,10 +1463,12 @@ p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.9, npcy = 0.1, size = 4) +
-  geom_point(size = 2, show.legend = TRUE) +
-  theme(strip.text = element_blank())
+  geom_point(size = 2, show.legend = TRUE, aes(color = deciduousness)) +
+  theme(legend.position = "top", legend.title = element_blank(),
+        legend.direction = "vertical") +
+  scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
-       plot = p3, file.path(figures.folder), device = "jpeg", height = 3, width = 3, units = 'in')
+       plot = p3, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
 
 g3 <- ggplot(ml.rsq.combine.best %>% subset(R2 >= 0.1 & !duplicated(sp) & !is.na(depth)),
              aes(x = deci_sp.plot, y = depth)) +

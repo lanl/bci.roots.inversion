@@ -158,6 +158,22 @@ mrate.long <- pivot_longer(mrate, cols = 1:7, names_to = "census",
 head(mrate.long)
 save(mrate.long, file = ("results/mrate.long.RData"))
 
+colnames(dead) <- colnames(D.wide)[-1]
+dead$sp_size <- all.sp_size$sp_size
+dead$abund.1982 <- abund$`1982`
+
+dead.long <- pivot_longer(dead, cols = 1:7, names_to = "census",
+                           values_to = "dead") %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
+                              `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
+         interval.num = as.numeric(recode(census, `1985` = "1",
+                                          `1990` = "2", `1995` = "3",
+                                          `2000` = "4", `2005` = "5",
+                                          `2010` = "6", `2015` = "7"))) %>%
+  separate(sp_size, c("sp", "size"), remove = FALSE)
+head(dead.long)
+save(dead.long, file = ("results/dead.long.RData"))
+
 sp_size.mrate.mean <- mrate.long %>%
   group_by(sp_size) %>%
   summarize_at(vars(mrate, avg.abund), mean, na.rm = TRUE) %>%

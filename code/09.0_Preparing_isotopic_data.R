@@ -107,15 +107,14 @@ ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_d
 iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
 iso.change <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7AB.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
 
-iso.2.raw <- iso.2.raw %>% mutate(source = "Meinzer et al.1999 Fig. 5A", location = "BCI")
+iso.2.raw <- iso.2.raw %>% mutate(source = "Meinzer et al.1999 Fig. 5B", location = "BCI")
 iso.change <- iso.change %>% mutate(source = "Meinzer et al.1999 Fig. 7AB", location = "BCI")
 head(iso.2.raw)
 iso.2 <- iso.2.raw %>%
   group_by(sp, source) %>%
-  summarise(Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
+  summarise(se = sd(Xylem_sap_deltaD_permil, na.rm = TRUE)/sqrt(n()),
+            Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
             n = n(),
-            SD = sd(Xylem_sap_deltaD_permil, na.rm = TRUE),
-            SE = SD/sqrt(n),
             DBH = mean(DBH, na.rm = TRUE))
 
 iso.2 <- iso.2 %>% left_join(iso %>% select(sp, Phenology), by = "sp") %>%
@@ -180,7 +179,7 @@ head(iso)
 
 
 xylem.label <- expression('Xylem Sap '*delta^2*H~"(\u2030)"*'')
-change.xylem.label <- expression('Change in Xylem Sap '*delta^2*H~"(\u2030)"*'')
+change.xylem.label <- expression('Change in Xylem Sap '*delta^2*H~"(\u2030)"*day^-1)
 
 iso.2.raw <- iso.2.raw %>% left_join(iso %>% select(sp, Phenology, deciduousness), by = "sp") %>%
   left_join(iso.change, by = "sp") %>% left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp")
@@ -207,7 +206,7 @@ ggplot(iso.2.raw, aes(y =  delta_sapflow_percent_per_day, x = delta_xylem_sap_de
   scale_color_viridis_c("TLP [MPa]", option = "plasma", direction = -1) +
   scale_x_continuous(limits = c(-0.6, 0.1)) +
   xlab(change.xylem.label) + ylab("Change in daily sap flow (% per day)") +
-  ggtitle("Sap flow Vs. Xylem Sap deltaD\nWithin species variation in 1997 dry season") +
+  ggtitle("Sap flow Vs. Xylem Sap deltaD\nWithin species variation through 1997 dry season") +
   theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
 ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7A.jpeg")),
        height = 5, width = 7, units ='in')
@@ -221,7 +220,7 @@ ggplot(iso.2.raw, aes(y = SE_mean_monthly_leaf_fall, x = delta_xylem_sap_deltaD_
   scale_color_viridis_c("TLP [MPa]", option = "plasma", direction = -1) +
   scale_x_continuous(limits = c(-0.6, 0.1)) +
   xlab(change.xylem.label) + ylab("SE of mean monthly leaf fall") +
-  ggtitle("Leaf fall Vs. Xylem Sap deltaD\nWithin species variation in 1997 dry season") +
+  ggtitle("Leaf fall Vs. Xylem Sap deltaD\nWithin species variation through 1997 dry season") +
   theme(axis.text = element_text(size = 20), axis.title = element_text(size = 20))
 ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_by_delta_SapFlow_&_monthly_LeafFall_Fig7B.jpeg")), height = 5, width = 7, units ='in')
 

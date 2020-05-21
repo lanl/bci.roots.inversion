@@ -76,7 +76,7 @@ for (i in 1:10) {
 ###---------------
 ### PSI
 ###---------------
-psi.mean <- bci.elm.fates.hydro::psi.mean
+psi.mean <- bci.elm.fates.hydro::gpp
 hist(psi.mean$psi)
 shapiro.test(sample(psi.mean$psi, 5000))
 ks.test(sample(psi.mean$psi, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
@@ -150,3 +150,58 @@ grid()
 dev.off()
 ## So none of the models fit, using non-parametric Kernel Density Estimator
 
+###---------------
+### GPP
+###---------------
+
+gpp <- bci.elm.fates.hydro::gpp %>% rename(gpp = value)
+hist(gpp$gpp)
+shapiro.test(sample(gpp$gpp, 5000))
+ks.test(sample(gpp$gpp, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
+
+gpp <- gpp$gpp
+
+# https://daviddalpiaz.github.io/stat3202-sp19/notes/fitting.html
+jpeg(file.path(figures.folder, "gpp_distribution.jpeg"), width = 600, height = 600, units = "px", pointsize = 24,
+     quality = 80)
+par(mfrow = c(2, 2))
+## Normal
+hist(gpp, probability = TRUE,
+     main = "gpp", xlab = expression('GPP (gC'*m^-2*day^-1*')'))
+box()
+grid()
+curve(dnorm(x, mean = mean(gpp), sd = sd(gpp)),
+      add = TRUE, col = "darkorange")
+# ## Normal but after log of data
+# hist(gpp, probability = TRUE,
+#      main = "gpp", xlab = expression('GPP (gC'*m^-2*day^-1*')'))
+# box()
+# grid()
+# curve(dlnorm(x, mean = mean(gpp), sd = sd(gpp)),
+#       add = TRUE, col = "darkorange")
+
+## kernel density
+hist(gpp, probability = TRUE,
+     main = "gpp", xlab = expression('GPP (gC'*m^-2*day^-1*')'))
+box()
+grid()
+lines(density(gpp), col = "darkorange")
+
+## exp qq plot
+qqplot(x = qnorm(ppoints(gpp)),
+       y = gpp,
+       # xlim = c(0, 400), ylim = c(0, 400),
+       main = "QQ-Plot: gpp, Normal Distribution",
+       xlab = "Theoretical Quantiles, Normal Distribution",
+       ylab = "Sample Quantiles, gpp")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+## kernel qq
+qqplot(x = quantile.density(density(gpp), ppoints(gpp)),
+       y = gpp,
+       # xlim = c(0, 400), ylim = c(0, 400),
+       main = "QQ-Plot: gpp, KDE",
+       xlab = "Theoretical Quantiles, Kernel Density Estimate",
+       ylab = "Sample Quantiles, gpp")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+grid()
+dev.off()

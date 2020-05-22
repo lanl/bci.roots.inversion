@@ -11,6 +11,21 @@
 ## 1.d fast species located on greater resource environments:
 ##        wetter sites within 50-ha plot, wet distributed along Panama gradient
 
+
+rm(list=ls())
+
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
+               scales, GGally, ggpmisc, Evapotranspiration,
+               data.table, bci.elm.fates.hydro, mgcv)
+# graphics info
+theme_set(theme_bw())
+theme_update(text = element_text(size = 14),
+             panel.grid.major = element_blank(),
+             panel.grid.minor = element_blank(),
+             strip.background = element_blank()
+)
+
 #*******************************************
 # ##   Load Libraries, graphics, data######
 #*******************************************
@@ -21,7 +36,8 @@ source("code/15.0_Prepare_data_for_correlative analyses.R")
 ##   Custom Functions  ######
 #****************************
 
-range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+range01 <- function(x){(x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
+
 indicator <- function(x, I.threshold, greater.than = TRUE) {
   if(greater.than == TRUE) {
     result <- ifelse((x > I.threshold), 1, 0)
@@ -68,7 +84,7 @@ psi.corr.fun.ls <- list(
   "gr.Psi" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
+        as.data.table(psi.study)[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
           psi.mod < 0, psi.mod := 0][
             , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod, na.rm = TRUE))][
               , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
@@ -78,8 +94,8 @@ psi.corr.fun.ls <- list(
   "gr.Psi.Rad.VPD" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.Rs.VPD, na.rm = TRUE))][
+        as.data.table(psi.study)[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod + std.Rs.VPD, na.rm = TRUE))][
             , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
@@ -87,8 +103,8 @@ psi.corr.fun.ls <- list(
   "gr.Psi.Rad.PET" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.Rs.pet.PM, na.rm = TRUE))][
+        as.data.table(psi.study)[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod + std.Rs.pet.PM, na.rm = TRUE))][
             , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(result.df)
@@ -268,12 +284,18 @@ load(file = file.path(results.folder, "lwp.min.Rdata"))
 ## 3. psi.p50.g1.n: number of days psi was above p50/p80 or group 1 p50 vs. group 2 p80
 
 ## Limiting to evergreen species for 2 & 3: For non-evergreen species periods in question will have to be a subset of days when leaves were on
+# growth.selection <- "size_class_predefined_cc_scaled"
+# intervals <- 5
+# load(file = paste0("results/gro.long.cc.med_", intervals, "_", growth.selection, ".Rdata"))
+#
+# growth.sub <- gro.long.cc.med %>% subset(size == "large") %>%
+#   rename(demo.rate = med.dbh.resid)
 
 growth.sub <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
   bind_rows(.id = "sp_size") %>%
   rename(demo.rate = median) %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  select(-sp_size, -size, -"_")
+  select(-sp_size, -"_")
 
 mort.sub <- mrate.long %>% subset(size == "large") %>%
   mutate(interval = as.numeric(recode(census, `1985` = "1",
@@ -284,7 +306,7 @@ mort.sub <- mrate.long %>% subset(size == "large") %>%
   select(sp_size, interval, mrate, diff.mrate) %>%
   rename(demo.rate = mrate) %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  select(-sp_size, -size, -"_")
+  select(-sp_size, -"_")
 
 ## getting Kmax_by_PSI parameters for species with growth data or mortality
 ## Using k_leaf_by_LWP curve parameters directly fitted to data, rather than predicted from soft traits, when available
@@ -358,7 +380,7 @@ tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
 
 ## for species with traits data
 # growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
-names.gfac <- names(psi.corr.fun.ls)#[1:3] #c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
+names.gfac <- names(psi.corr.fun.ls)[1:3] #c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
 ## Preparing PSI matrices to compare against
 gfac.interval <- vector(mode = "list", length = length(names.gfac))
 names(gfac.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
@@ -432,6 +454,53 @@ for (i in names(gfac.interval)) {
     ungroup(sp)
 
 }
+## species by depth by heat rsq
+ml.rsq.combine <- dplyr::bind_rows(ml.corr, .id = "corr.func") %>%
+  transform(corr.func = factor(corr.func, levels = names.gfac))
+ml.rsq.combine.best <- dplyr::bind_rows(ml.corr.best, .id = "corr.func") %>%
+  transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
+  unite(corr.func_sp_depth, corr.func,sp, depth, remove = FALSE)
+
+grate.gfac <- gfac.interval.long <- vector(mode = "list", length = length(names.gfac))
+names(gfac.interval.long) <- names(grate.gfac) <- names.gfac
+for (i in 1:length(names.gfac)) {
+  gfac.interval.long[[i]] <- gfac.interval[[i]] %>%
+    pivot_longer(cols = c(-sp, -interval),
+                 names_to = "depth", values_to = "gfac") %>%
+    rename(interval.num =  interval) %>%
+    mutate(depth = as.numeric(depth),
+           interval.num =  as.numeric(as.character(interval.num)),
+           size = "large")
+  grate.gfac[[i]] <- growth.sub %>% rename(interval.num = interval) %>%
+    left_join(gfac.interval.long[[i]], by = c("interval.num", "sp", "size")) %>%
+    subset(!is.na(gfac))
+}
+
+grate.gfac.best <- dplyr::bind_rows(grate.gfac, .id = "corr.func") %>%
+  mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
+                              `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")) %>%
+  transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
+  unite(corr.func_sp_depth, corr.func,sp, depth, remove = FALSE) %>%
+  subset(corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth) %>%
+  left_join(bci.traits %>% select(sp, form1), by = "sp") %>%
+  subset(form1 = "T") %>%
+  group_by(sp, size, corr.func) %>%
+  mutate(std.gfac = scale(gfac),
+         std.growth = scale(demo.rate))
+
+grate.gfac.best.plot <- ggplot(grate.gfac.best %>%
+         subset(sp %in% iso.1.3.join$sp[iso.1.3.join$source == "Meinzer et al.1999 Fig. 4"]),
+       aes(x = censusint.m)) +
+  geom_line(aes(y = std.growth, group = sp, color = sp, linetype = "Std.Growth")) +
+  geom_line(aes(y = std.gfac, group = sp, color = sp, linetype = "Std.Growth Factor")) +
+  facet_grid(corr.func ~ . , scales = "free_y") +
+  xlab("Census Interval") + ylab("Std.Growth/Growth Factor") +
+  guides(color =  FALSE,
+         linetype = guide_legend(order = 1, title = NULL, direction = "horizontal", label.position = "top", override.aes =
+                                   list(linetype = c("Std.Growth" = "solid", "Std.Growth Factor" = "dotted")))) +
+  theme(legend.position = "top")
+ggsave("Std.Growth Vs. Std.Growth Factor.jpeg",
+       plot = grate.gfac.best.plot, file.path(figures.folder), device = "jpeg", height = 5, width = 5, units='in')
 
 iso.2 <- iso.2.raw %>%
   # subset(source == "Meinzer et al.1999 Fig. 5A") %>%
@@ -445,12 +514,6 @@ iso.2 <- iso.2.raw %>%
 ## those species that were likely leafless at the time of Xylem sap isotopes collection
 ## in Mar & April need to be removed
 # pse1se zuelgu sponra huracr pla2el
-
-## species by depth by heat rsq
-ml.rsq.combine <- dplyr::bind_rows(ml.corr, .id = "variable") %>%
-  transform(variable = factor(variable, levels = names.gfac))
-ml.rsq.combine.best <- dplyr::bind_rows(ml.corr.best, .id = "variable") %>%
-  transform(variable = factor(variable, levels = names.gfac))
 
 ml.rsq.combine.best <- ml.rsq.combine.best %>%
   # left_join(iso.2 %>%
@@ -469,9 +532,9 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
   droplevels()
 
 depth.rsq.isotopes <- ml.rsq.combine.best %>%
-  group_by(variable, sp, size) %>%
+  group_by(corr.func, sp, size) %>%
   summarise_at(c("depth", "Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE) %>%
-  ungroup(variable, sp, size)
+  ungroup(corr.func, sp, size)
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
@@ -485,22 +548,22 @@ heat.rsq <- ggplot(ml.rsq.combine %>% subset(corr >= 0 ) %>% droplevels(),
                    aes(y = deci_sp, x = as.factor(depth))) +
   geom_tile(aes(fill = corr)) +
   ylab("Species") + xlab("Depth (m)") +
-  facet_wrap(. ~ variable, nrow = 1) +
+  facet_wrap(. ~ corr.func, nrow = 1) +
   scale_fill_viridis_c(expression("Pearson's "*italic(rho)), direction = -1, option = "plasma") #+
-ggsave("psi.corr_all.depths_phenology_heat_by_variable.jpeg",
-       plot = heat.rsq, file.path(figures.folder), device = "jpeg", height = 5, width = 15, units='in')
+ggsave("psi.corr_all.depths_phenology_heat_by_corr.func.jpeg",
+       plot = heat.rsq, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units='in')
 
 # theme(axis.text.y = element_text(angle = 90, vjust = 0.5)) +
 # scale_x_continuous(breaks = soil.depths[c(1,8:13)])
 heat.best.rsq <- heat.rsq %+% subset(ml.rsq.combine.best, R2 >= 0.2)
-ggsave("psi.corr_best.depth_phenology_heat_by_variable.jpeg",
-       plot = heat.best.rsq, file.path(figures.folder), device = "jpeg", height = 5, width = 15, units='in')
+ggsave("psi.corr_best.depth_phenology_heat_by_corr.func.jpeg",
+       plot = heat.best.rsq, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units='in')
 
 xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.best <- ml.rsq.combine.best %>% left_join(bci.traits %>% select(sp, form1), by = "sp") %>%
   mutate(depth = as.numeric(depth))
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
-  subset(corr >= 0 & R2 >= 0.3 & form1 == "T" & sp != "guapst" & #variable == "gr.Psi.Rad.VPD" &
+  subset(corr >= 0 & form1 == "T" & sp != "guapst" & # & R2 >= 0.1 #corr.func == "gr.Psi.Rad.VPD" &
                                                        !is.na(Xylem_sap_deltaD_permil.mean)) %>%
   droplevels()
 
@@ -510,7 +573,7 @@ p0 <- ggplot(ml.rsq.combine.sub,
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil.mean + se.mean,
                      xmin = Xylem_sap_deltaD_permil.mean - se.mean, color = deciduousness),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ variable, nrow = 2) +
+  facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil.mean, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
@@ -525,7 +588,7 @@ p0 <- ggplot(ml.rsq.combine.sub,
                   npcx = 0.8, npcy = 0.1, size = 4) +
   geom_point(size = 1, show.legend = TRUE, aes(color = deciduousness)) +
   theme(legend.position = "top", legend.title = element_blank(),
-          legend.direction = "vertical") + #, strip.text = element_blank()) +
+        legend.direction = "horizontal") + #, strip.text = element_blank()) +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_mean_isotope_source.jpeg",
        plot = p0, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
@@ -535,7 +598,7 @@ p1 <- ggplot(ml.rsq.combine.sub,
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ variable, nrow = 1) +
+  facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
@@ -550,7 +613,7 @@ p1 <- ggplot(ml.rsq.combine.sub,
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(size = 2, show.legend = TRUE, aes(color = deciduousness)) +
   theme(legend.position = "top", legend.title = element_blank(),
-        legend.direction = "vertical") + #, strip.text = element_blank()) +
+        legend.direction = "horizontal") + #, strip.text = element_blank()) +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_two_isotope_sources.jpeg",
        plot = p1, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
@@ -563,7 +626,7 @@ p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ variable, nrow = 1) +
+  facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   # position=position_jitter(width=ifelse(ml.rsq.combine.sub$sp=='cordal',1,0),
@@ -580,14 +643,14 @@ p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(size = 2, show.legend = TRUE, aes(color = deciduousness)) +
   theme(legend.position = "top", legend.title = element_blank(),
-        legend.direction = "vertical") +
+        legend.direction = "horizontal") +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
        plot = p3, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
 
 g3 <- ggplot(ml.rsq.combine.best %>% subset(R2 >= 0.1 & !duplicated(sp) & !is.na(depth)),
              aes(x = deci_sp.plot, y = depth)) +
-  facet_wrap(. ~ variable) +
+  facet_wrap(. ~ corr.func) +
   geom_col(aes(fill = deciduousness)) +
   guides(fill = guide_legend(title = "")) +
   theme(legend.position = "top") +
@@ -1033,7 +1096,7 @@ ggsave(file.path(paste0(figures.folder,
 
 ## Ordered along Rooting Depth Index
 mrate.long.depth <- mrate.long %>%
-  left_join(subset(depth.rsq.isotopes, variable == "gr.Psi.Rad.VPD"), by = "sp") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.Rad.VPD"), by = "sp") %>%
   left_join(bci.traits %>% select(form1, sp), by = "sp")
   mutate(sp.plot = factor(sp, levels = unique(sp[order(depth)]), ordered = TRUE))
 m4.6 <- m3.base %+% subset(mrate.long.depth, size == "large" &
@@ -1191,10 +1254,10 @@ for (i in 1:length(names.mfac)) {
 ## Ordered along Rooting Depth Index
 mfac.on <- "mr.kl50.I.VPD"
 mrate.mfac.depth <- mrate.long %>%
-  left_join(subset(depth.rsq.isotopes, variable == "gr.Psi.Rad.VPD") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.Rad.VPD") %>%
               rename(rdi.gr = depth) %>%
               select(sp, size, rdi.gr), by = c("sp", "size")) %>%
-  left_join(subset(depth.rsq.isotopes, variable == "mr.Psi.VPD.I") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "mr.Psi.VPD.I") %>%
               rename(rdi.mr = depth) %>%
               select(sp, size, rdi.mr), by = c("sp", "size")) %>%
   left_join(bci.traits %>% select(form1, sp), by = "sp") %>%
@@ -1259,10 +1322,10 @@ total.dead.rdi <- dead.long %>%
   group_by(sp, size) %>%
   summarise(total.dead = mean(dead, na.rm = TRUE)) %>%
   ungroup(sp, size) %>%
-  left_join(subset(depth.rsq.isotopes, variable == "gr.Psi.Rad.VPD") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.Rad.VPD") %>%
               rename(rdi.gr = depth) %>%
               select(sp, size, rdi.gr), by = c("sp", "size")) %>%
-  left_join(subset(depth.rsq.isotopes, variable == "mr.Psi.VPD.I") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "mr.Psi.VPD.I") %>%
               rename(rdi.mr = depth) %>%
               select(sp, size, rdi.mr), by = c("sp", "size")) %>%
   left_join(bci.traits %>% select(form1, sp), by = "sp") %>%
@@ -1807,6 +1870,5 @@ ggsave(file.path(figures.folder, "arrange.pdf"), arrangeGrob(grobs = plot.list.g
 
 ### Does % of the growing season < p50 or p80 explain inter-census growth or mortality?
 ### Use Meinzer data for rooting depths, and assign the depth whose water potential to track
-
 
 head(psi.stat.4)

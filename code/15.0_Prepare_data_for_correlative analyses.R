@@ -433,31 +433,116 @@ save(clim.daily,
      file = file.path("results/clim.daily_with_pet.PM.Rdata"))
 load(file = file.path("results/clim.daily_with_pet.PM.Rdata"))
 
-gpp.rel.daily <- gpp %>% group_by(date) %>%
-  summarise(gpp = median(value)) %>%
-  left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date")
+#******************************************************
+### GPP vs. RAD VPD or PET models------
+#******************************************************
+
+# # GPP from ELM.FATES output
+# gpp.rel.daily <- gpp %>% group_by(date) %>%
+#   summarise(gpp = median(value)) %>%
+#   left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date")
+
+# GPP Observed
+figures.folder.gpp <- paste0("figures/PhenoDemoTraitsPsi/gpp_by_env_variables")
+if(!dir.exists(file.path(figures.folder.gpp))) {dir.create(file.path(figures.folder.gpp))}
+
+bci.tower <- read.csv("data-raw/BCI_v3.1.csv", header = TRUE)
+bci.tower <- as.data.frame(bci.tower[-1, ])
+bci.tower$datetime <- strptime(bci.tower$date, format = "%m/%d/%Y %H:%M")
+bci.tower$datetime <- as.POSIXct(bci.tower$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "")
+str(bci.tower$datetime)
+
+obs.gpp.d <- bci.tower %>% select(datetime, gpp, vpd) %>% # in mumol/m2/2: units must be mumol/m2/s
+  mutate(date = as.Date(format(datetime, "%Y-%m-%d")),
+         gpp.mumol = as.numeric(as.character(gpp)),
+         vpd = as.numeric(as.character(vpd))) %>%
+  group_by(date) %>% summarise(gpp.tower = mean(gpp.mumol, na.rm = T),
+                               VPD.tower = mean(vpd, na.rm = T)) %>%
+  mutate(gpp.tower = gpp.tower*12*1e-06*24*60*60) %>% # gC/m2/d %>%
+  subset(date != is.na(date)) %>%
+  droplevels
+
+rectangles <- data.frame(
+  xmin = as.Date(paste0(c(2012:2017), "-05-01")),
+  xmax = as.Date(paste0(c(2012:2017), "-12-01")),
+  ymin = 0,
+  ymax = 15
+)
+
+gpp.daily <- ggplot(obs.gpp.d) +
+  geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+            fill='gray80', alpha=0.8) +
+  geom_point(aes(y = gpp.tower, x = date)) +
+  ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Date") +
+  scale_x_date(breaks = c(rectangles$xmin, rectangles$xmax), date_labels = "%b-%y") +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(("gpp.daily.jpeg"),
+       plot = gpp.daily, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 9, units='in')
+
+obs.qet.d <- bci.hydromet::forcings %>% select(date, AET, AET.flag.day) %>% # in mm/day
+  rename(AET.gap.tower = AET.flag.day,
+         AET.tower = AET) %>% # this is gap filled AET
+  subset(date > "2012-07-02" & date < "2017-09-01") %>% ## date after which ET data is present
+  droplevels()
+head(obs.qet.d)
+
+gpp.rel.daily <- obs.gpp.d %>%
+  left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date") %>%
+  left_join(obs.qet.d, by = "date") %>%
+  left_join(bci.hydromet::met.tower %>% select(date, Rs) %>% rename(Rs.tower = Rs), by = "date") %>%
+  left_join(bci.hydromet::bci.met %>% select(date, PET_man) %>% rename(Pan.Evap = PET_man), by = "date") %>%
+  left_join(bci.hydromet::met.petPM %>% select(date, pet.PM) %>% rename(pet.PM.tower = pet.PM), by = "date") %>%
+  subset(date < max(obs.gpp.d$date, na.rm = TRUE)) %>%
+  droplevels()
+
+gpp.rel.daily.long <- gpp.rel.daily %>% pivot_longer(-date, values_to = "value", names_to = "variable")
+
+gpp.rel.daily.plot <- ggplot(gpp.rel.daily.long) +
+  # geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+  #           fill='gray80', alpha=0.8) +
+  geom_vline(data = rectangles, aes(xintercept = xmin)) +
+  geom_vline(data = rectangles, aes(xintercept = xmax)) +
+  geom_line(aes(y = value, x = date, color = variable), show.legend = FALSE) +
+  geom_point(size = 0.1, aes(y = value, x = date, color = variable), show.legend = FALSE) +
+  facet_wrap(variable ~ . , scales = "free_y", ncol = 1) +
+  ylab(expression('Value')) + xlab("Date") +
+  scale_x_date(breaks = c(rectangles$xmin, rectangles$xmax), date_labels = "%b-%y") +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(("gpp.re.daily.jpeg"),
+       plot = gpp.rel.daily.plot, file.path(figures.folder.gpp), device = "jpeg", height = 9, width = 9, units='in')
 
 gpp.rel.monthly <- gpp.rel.daily %>%
   mutate(month = format(date, format = "%b%Y")) %>%
   select(-date) %>%
   group_by(month) %>%
   summarise_all(list(~mean(., na.rm = TRUE)))
+gpp.rel.weekly <- gpp.rel.daily %>%
+  mutate(week = format(date, format = "%U%Y")) %>%
+  select(-date) %>%
+  group_by(week) %>%
+  summarise_all(list(~mean(., na.rm = TRUE)))
 
-gpp.rel <- gpp.rel.monthly
-data.scale <- "monthly"
+data.scale.on <- "monthly"
 
-# gpp.rel <- gpp.rel.daily
-# data.scale <- "daily"
-
-if (data.scale == "monthly"){
+if (data.scale.on == "monthly"){
   point.size <- 3
-} else {
-  point.size <- 0.1
+  gpp.rel <- gpp.rel.monthly
+} else if (data.scale.on == "weekly"){
+  point.size <- 3
+  gpp.rel <- gpp.rel.weekly
+  } else if (data.scale.on == "daily"){
+  point.size <- 2
+  gpp.rel <- gpp.rel.daily
 }
 
 formula = y ~ poly(x, 2, raw=TRUE)
+# https://stackoverflow.com/questions/21748598/add-or-override-aes-in-the-existing-mapping-object
+# add_modify_aes <- function(mapping, ...) {
+#   ggplot2:::rename_aes(modifyList(mapping, ...))
+# }
+# ggplot(df, add_modify_aes(mapping, aes(color=new_col, y=new_y)))
 
-gpp.vpd <- ggplot(gpp.rel, aes(y = gpp, x = VPD)) +
+gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula = formula, colour = "red") +
@@ -470,9 +555,30 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp, x = VPD)) +
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("VPD (kPa)")
-ggsave(paste0(data.scale,"_gpp.vpd.jpeg"),
-       plot = gpp.vpd, file.path(figures.folder), device = "jpeg", height = 4.5, width = 4.5, units='in')
-gpp.pet <- ggplot(gpp.rel, aes(y = gpp, x = pet.PM)) +
+ggsave(paste0(data.scale.on,"_gpp.vpd.jpeg"),
+       plot = gpp.vpd, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+if(data.scale.on == "monthly") {
+  mapping.gpp.aet <- aes(y = gpp.tower, x = AET.tower)
+} else {
+  mapping.gpp.aet <- aes(y = gpp.tower, x = AET.gap.tower)
+}
+gpp.aet <- ggplot(gpp.rel, mapping.gpp.aet) +
+  geom_point(size = point.size, alpha = 0.7) +
+  stat_smooth(method="lm", se=TRUE, fill=NA,
+              formula=formula, colour = "red") +
+  stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
+               npcx = 0.95, npcy = 0.98, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4, color = "red") +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+  ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("AET (mm)")#xlab("Penman-Monteith PET (mm)")
+ggsave(paste0(data.scale.on,"_gpp.aet.jpeg"),
+       plot = gpp.aet, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
+gpp.pet <- ggplot(gpp.rel, aes(y = gpp.tower, x = pet.PM.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula=formula, colour = "red") +
@@ -485,10 +591,26 @@ gpp.pet <- ggplot(gpp.rel, aes(y = gpp, x = pet.PM)) +
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Penman-Monteith PET (mm)")
-ggsave(paste0(data.scale,"_gpp.pet.jpeg"),
-       plot = gpp.pet, file.path(figures.folder), device = "jpeg", height = 4.5, width = 4.5, units='in')
+ggsave(paste0(data.scale.on,"_gpp.pet.jpeg"),
+       plot = gpp.pet, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-gpp.rad <- ggplot(gpp.rel, aes(y = gpp, x = Rs)) +
+gpp.pan <- ggplot(gpp.rel, aes(y = gpp.tower, x = Pan.Evap)) +
+  geom_point(size = point.size, alpha = 0.7) +
+  stat_smooth(method="lm", se=TRUE, fill=NA,
+              formula=formula, colour = "red") +
+  stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
+               npcx = 0.95, npcy = 0.98, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4, color = "red") +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+  ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Pan Evaporation (mm)")#xlab("Penman-Monteith PET (mm)")
+ggsave(paste0(data.scale.on,"_gpp.pan.jpeg"),
+       plot = gpp.pan, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
+gpp.rad <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula=formula, colour = "red") +
@@ -501,27 +623,64 @@ gpp.rad <- ggplot(gpp.rel, aes(y = gpp, x = Rs)) +
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab(expression('Solar Radiation (MJ'*m^-2*day^-1*')'))
-ggsave(paste0(data.scale,"_gpp.rad.jpeg"),
-       plot = gpp.rad, file.path(figures.folder), device = "jpeg", height = 4.5, width = 4.5, units='in')
+ggsave(paste0(data.scale.on,"_gpp.rad.jpeg"),
+       plot = gpp.rad, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel.monthly)
-eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel.monthly)
-eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel.monthly)
-eq.gpp.rad.vpd <- lm(gpp ~ polym(Rs, VPD, degree = 2, raw = TRUE), data =  gpp.rel.monthly)
-eq.gpp.rad.pet <- lm(gpp ~ polym(Rs, pet.PM, degree = 2, raw = TRUE), data =  gpp.rel.monthly)
-eq.gpp.rad.vpd.gam <- gam(gpp ~ s(Rs, k = 5) + s(VPD, k = 5), data = gpp.rel.monthly)
-eq.gpp.rad.pet.gam <- gam(gpp ~ s(Rs, k = 5) + s(pet.PM, k = 8), data = gpp.rel.monthly)
+if(data.scale.on == "monthly") {
+  mapping.aet.pet <- aes(y = AET.tower, x = pet.PM.tower)
+} else {
+  mapping.aet.pet <- aes(y = AET.gap.tower, x = pet.PM.tower)
+}
+aet.pet <- ggplot(gpp.rel, mapping.aet.pet) +
+  geom_abline(intercept = 0, slope = 1, lty = "dotted") +
+  geom_point(size = point.size, alpha = 0.7) +
+  xlim(c(2, 5)) + ylim(c(2,5)) +
+  stat_smooth(method="lm", se=TRUE, fill=NA,
+              formula=formula, colour = "red") +
+  stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
+               npcx = 0.95, npcy = 0.98, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4, color = "red") +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+  ylab("AET (mm)") +xlab("Penman-Monteith PET (mm)") #xlab("Penman-Monteith PET (mm)")
+ggsave(paste0(data.scale.on,"_aet.pet.jpeg"),
+       plot = aet.pet, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
+eq.gpp.vpd.tower <- lm(gpp.tower ~ poly(VPD.tower, 2, raw = TRUE), data = gpp.rel)
+eq.gpp.aet.tower <- lm(gpp.tower ~ poly(AET.gap.tower, 2, raw = TRUE), data = gpp.rel)
+eq.gpp.rad.tower <- lm(gpp.tower ~ poly(Rs.tower, 2, raw = TRUE), data = gpp.rel)
+eq.gpp.vpd <- lm(gpp.tower ~ poly(VPD, 2, raw = TRUE), data = gpp.rel)
+eq.gpp.pet <- lm(gpp.tower ~ poly(pet.PM, 2, raw = TRUE), data = gpp.rel)
+eq.gpp.rad <- lm(gpp.tower ~ poly(Rs, 2, raw = TRUE), data = gpp.rel)
+eq.gpp.rad.vpd.tower.gam <- gam(gpp.tower ~ s(Rs.tower, k = 5) + s(VPD.tower, k = 5), data = gpp.rel)
+eq.gpp.rad.vpd.gam <- gam(gpp.tower ~ s(Rs, k = 5) + s(VPD, k = 5), data = gpp.rel)
+eq.gpp.rad.aet.gam <- gam(gpp.tower ~ s(Rs.tower, k = 5) + s(AET.gap.tower, k = 8), data = gpp.rel)
+eq.gpp.rad.pan.gam <- gam(gpp.tower ~ s(Rs.tower, k = 5) + s(Pan.Evap, k = 8), data = gpp.rel)
+eq.gpp.rad.pet.tower.gam <- gam(gpp.tower ~ s(Rs.tower, k = 5) + s(pet.PM.tower, k = 8), data = gpp.rel)
+eq.gpp.rad.pet.gam <- gam(gpp.tower ~ s(Rs, k = 5) + s(pet.PM, k = 8), data = gpp.rel)
 gam.check(eq.gpp.rad.vpd.gam)
+gam.check(eq.gpp.rad.aet.gam)
+gam.check(eq.gpp.rad.pan.gam)
 gam.check(eq.gpp.rad.pet.gam)
+summary(eq.gpp.rad.vpd.tower.gam)
 summary(eq.gpp.rad.vpd.gam)
+summary(eq.gpp.rad.aet.gam)
+summary(eq.gpp.rad.pan.gam)
+summary(eq.gpp.rad.pet.tower.gam)
 summary(eq.gpp.rad.pet.gam)
+
 # plot(eq.gpp.rad.vpd.gam$fitted.values ~ eq.gpp.rad.vpd.gam$)
 # eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel.daily)
 # eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel.daily)
 # eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel.daily)
-gpp.models <- list(eq.gpp.vpd = eq.gpp.vpd, eq.gpp.pet = eq.gpp.pet,
-                   eq.gpp.rad = eq.gpp.rad, eq.gpp.rad.vpd = eq.gpp.rad.vpd,
-                   eq.gpp.rad.pet = eq.gpp.rad.pet,
+gpp.models <- list(eq.gpp.vpd = eq.gpp.vpd,
+                   eq.gpp.pet = eq.gpp.pet,
+                   eq.gpp.rad = eq.gpp.rad,
+                   eq.gpp.rad.vpd.tower.gam = eq.gpp.rad.vpd.tower.gam,
+                   eq.gpp.rad.pet.tower.gam = eq.gpp.rad.pet.tower.gam,
                    eq.gpp.rad.vpd.gam = eq.gpp.rad.vpd.gam,
                    eq.gpp.rad.pet.gam = eq.gpp.rad.pet.gam)
 save(gpp.models, file = file.path(results.folder, "gpp.models.Rdata"))

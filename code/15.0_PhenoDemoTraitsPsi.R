@@ -515,8 +515,7 @@ grate.gfac.best.sub <- grate.gfac.best %>%
            !sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"]) &
            corr.func %in% unique(grate.gfac.best.sub$corr.func)[grep("gr.", unique(grate.gfac.best.sub$corr.func))])
 grate.gfac.best.plot <- ggplot(grate.gfac.best.sub %>%
-           subset(corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth &
-                    !sp %in% c("loncla", "guapst", "alsebl")) %>% droplevels(),
+           subset(corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth) %>% droplevels(),
        aes(x = censusint.m)) +
   geom_line(aes(y = std.growth, group = corr.func_sp_depth, color = sp, linetype = "Std.Growth"), size = 1) +
   geom_line(aes(y = std.gfac, group = corr.func_sp_depth, color = sp, linetype = "Std.Growth Factor"), size = 1) +
@@ -529,17 +528,10 @@ grate.gfac.best.plot <- ggplot(grate.gfac.best.sub %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   geom_text(aes(label = round(R2, 1), x = "2005-10", y = 1.2))
 ggsave("Std.Growth Vs. Std.Growth Factor.jpeg",
-       plot = grate.gfac.best.plot, file.path(figures.folder), device = "jpeg", height = 7, width = 10, units='in')
-
-grate.gfac.best.plot.odd <- grate.gfac.best.plot %+%
-  subset(grate.gfac.best.sub, corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth &
-           sp %in% c("loncla", "guapst", "alsebl"))
-ggsave("Std.Growth Vs. Std.Growth Factor_odd.jpeg",
-       plot = grate.gfac.best.plot.odd, file.path(figures.folder), device = "jpeg", height = 7, width = 4, units='in')
+       plot = grate.gfac.best.plot, file.path(figures.folder), device = "jpeg", height = 7, width = 14, units='in')
 
 grate.gfac.best.plot.depths <- ggplot(grate.gfac.best.sub %>%
-                                 subset(depth %in% c(0.1, 1.0, 2.0) &
-                                          !sp %in% c("loncla", "guapst", "alsebl")) %>% droplevels(),
+                                 subset(depth %in% c(0.1, 1.0, 2.0)) %>% droplevels(),
                                aes(x = censusint.m)) +
   geom_line(aes(y = std.growth, group = corr.func_sp_depth, linetype = "Std.Growth"), size = 1) +
   geom_line(aes(y = std.gfac, group = corr.func_sp_depth, color = as.factor(depth)), size = 1) +
@@ -549,31 +541,15 @@ grate.gfac.best.plot.depths <- ggplot(grate.gfac.best.sub %>%
   scale_linetype_manual(name = "", values=c("solid")) +
   theme(legend.position = "top") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  geom_text(aes(label = round(R2, 1), x = "2005-10", y = 1.2))
+  geom_text(aes(label = round(R2, 1), x = "2000-05", y = 1.2))
 ggsave("Std.Growth Vs. Std.Growth Factor_depths.jpeg",
-       plot = grate.gfac.best.plot.depths, file.path(figures.folder), device = "jpeg", height = 7, width = 10, units='in')
-
-grate.gfac.best.plot.odd.depths <- grate.gfac.best.plot.depths %+%
-  subset(grate.gfac.best.sub, depth %in% c(0.1, 1.0, 2.0) &
-           sp %in% c("loncla", "guapst", "alsebl")) +
-  guides(linetype = FALSE)
-ggsave("Std.Growth Vs. Std.Growth Factor_odd_depths.jpeg",
-       plot = grate.gfac.best.plot.odd.depths, file.path(figures.folder), device = "jpeg", height = 7, width = 4, units='in')
+       plot = grate.gfac.best.plot.depths, file.path(figures.folder), device = "jpeg", height = 7, width = 14, units='in')
 
 grate.gfac.best.plot.depths.best <- grate.gfac.best.plot.depths %+%
   subset(grate.gfac.best.sub,
-           !sp %in% c("loncla", "guapst", "alsebl") &
            corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth)
 ggsave("Std.Growth Vs. Std.Growth Factor_depths.best.jpeg",
-       plot = grate.gfac.best.plot.depths.best, file.path(figures.folder), device = "jpeg", height = 7, width = 10, units='in')
-
-grate.gfac.best.plot.odd.depths.best <- grate.gfac.best.plot.depths %+%
-  subset(grate.gfac.best.sub,
-         sp %in% c("loncla", "guapst", "alsebl") &
-           corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth) +
-  guides(linetype = FALSE)
-ggsave("Std.Growth Vs. Std.Growth Factor_odd.depths.best.jpeg",
-       plot = grate.gfac.best.plot.odd.depths.best, file.path(figures.folder), device = "jpeg", height = 7, width = 4, units='in')
+       plot = grate.gfac.best.plot.depths.best, file.path(figures.folder), device = "jpeg", height = 7, width = 14, units='in')
 
 iso.2 <- iso.2.raw %>%
   # subset(source == "Meinzer et al.1999 Fig. 5A") %>%

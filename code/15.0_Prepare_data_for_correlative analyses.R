@@ -1206,11 +1206,41 @@ if(col.var == "deci") {
 dev.off()
 
 #******************************************************
-### Load Weekly Leaf-fall data ------
+### Load LAI data ------
 #******************************************************
 figures.folder.phen <- paste0("figures/PhenoDemoTraitsPsi/leaf_fall")
 if(!dir.exists(file.path(figures.folder.phen))) {dir.create(file.path(figures.folder.phen))}
 
+
+lai <- read.csv(file.path("data-raw/BCI_lai_matteo.csv")) %>%
+  mutate(date = as.Date(date, format = "%d-%b-%y"),
+         mon = format(date, "%m"),
+         month = format(date, "%b"),
+         month.plot = factor(month,
+                             levels=unique(month[order(mon)]),
+                             ordered=TRUE)) %>%
+  group_by(month, month.plot, mon) %>%
+  summarise(lai = mean(lai, na.rm = TRUE),
+            se = mean(lai, na.rm = TRUE)) %>%
+  mutate(group = "group") %>%
+  mutate(date = as.Date(paste0("01-", month), format("%d-%b")),
+         doy = as.numeric(format(date, "%j")))
+
+lai.plot.1 <- ggplot(lai, aes(y = lai, x = month.plot)) +
+  geom_point(size = 3) + geom_line(aes(group = group)) +
+  ylab("LAI") + xlab("Month")
+ggsave(("LAI_by_month_BCI.jpeg"),
+       plot = lai.plot.1, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
+
+lai.plot.2 <- ggplot(lai, aes(y = lai, x = doy)) +
+  geom_point(size = 3) + geom_line(aes(group = group)) +
+  ylab("LAI") + xlab("DOY") + theme(plot.margin = margin(1,1,1,1, "cm"))
+ggsave(("LAI_by_DOY_BCI.jpeg"),
+       plot = lai.plot.2, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
+
+#******************************************************
+### Load Weekly Leaf-fall data ------
+#******************************************************
 leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv")) %>%
   rename(date = mean_date,
          sp4 = sp) %>% mutate(date = as.Date(date)) %>%
@@ -1277,13 +1307,15 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, interp.approx),
   summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw)) %>%
   mutate(doy = as.numeric(format(date, "%j")),
          year = as.numeric(format(date, "%Y")),
-         sp.fall.beg.year = ifelse(doy < 150, year-1, year)) %>%
-  group_by(sp, sp.fall.beg.year) %>%
+         sp.leaf.fall..year = ifelse(doy < 150, year-1, year)) %>%
+  group_by(sp, sp.leaf.fall..year) %>%
   mutate(annual.leaf.fall = sum(leaf_gm.int.raw, na.rm = TRUE),
          leaf_gm.int = leaf_gm.int.raw/annual.leaf.fall,
-         leaf_gm.cum = cumsum(leaf_gm.int),
+         # Assuming full leaf cover from June through October
+         leaf_gm.int.mod = ifelse(doy >= 150 & doy < 300, 0, leaf_gm.int),
+         leaf_gm.cum = cumsum(leaf_gm.int.mod),
          leaf_left = 1 - leaf_gm.cum) %>%
-  ungroup(sp, sp.fall.beg.year) %>%
+  ungroup(sp, sp.leaf.fall.year) %>%
   mutate(leaf_gm.int.mov = rollmean(leaf_gm.int, k = set.k, fill = NA)) %>%
   group_by(sp, doy) %>%
   mutate(leaf_gm.int.mean = mean(leaf_gm.int, na.rm = TRUE),
@@ -1347,11 +1379,11 @@ ggsave("leaf.cover_evergreens_BCI.jpeg",
 f3 <- ggplot(leaf.fall.int,
              aes(x = doy, y = leaf_left.mean)) +
   geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = c(0.6, 0.35), legend.title = element_blank(),
+  theme(legend.position = c(0.7, 0.6), legend.title = element_blank(),
         legend.background = element_rect(fill = "transparent")) +
-  ylab("Leaf Cover Fraction")
+  ylab("Leaf Cover Fraction") + xlab("DOY")
 ggsave(("leaf.cover_BCI_single_panel.jpeg"),
-       plot = f3, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
+       plot = f3, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
 
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------

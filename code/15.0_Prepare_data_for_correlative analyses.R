@@ -1215,15 +1215,15 @@ leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-
   rename(date = mean_date,
          sp4 = sp) %>% mutate(date = as.Date(date)) %>%
   subset(site != "San_Lorenzo") %>%
-  subset(site == "BCI50-ha") %>%
+  # subset(site == "BCI50-ha") %>%
   # mutate(site = "BCI") %>%
-  left_join(deci %>% dplyr::select(sp, sp4), by = "sp4")
+  left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
+  mutate(sp_site = paste(sp, site, sep = "_"))
 
 f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
 ggsave(("leaf.fall.daily_BCI.jpeg"),
        plot = f1, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
 
 ## Need to fill gaps in dates and then get an interpolated estimate of leaf fall for those days
 ## So first converting the weekly sums to leaf_fall rate for the past week
@@ -1231,7 +1231,7 @@ ggsave(("leaf.fall.daily_BCI.jpeg"),
 ## to get leaf_fall on each day of the interval, the above rate is actually treated as
 ## the rate observed on the census date (even though it is the mean rate of the interval)
 
-df.sp.site <- split(leaf.fall, f = list(leaf.fall$sp, leaf.fall$site), drop = TRUE)
+df.sp.site <- split(leaf.fall, f = list(leaf.fall$sp_site), drop = TRUE)
 # leaf.fall.full <- vector(mode = "list", length = length(df.sp.site))
 # names(leaf.fall.full) <- names(df.sp.site) # "psi.p50.g1", "psi.p50.g2"
 
@@ -1258,254 +1258,100 @@ interp.approx <- function(df) {
   ## method = "constant" would be more parsimonious
   yout <- approx(x, y, xout, method = "constant")
   df.1 <- df %>%
-    left_join(data.frame(day_number = yout$x, leaf_gm.int = yout$y), by = "day_number") %>%
+    left_join(data.frame(day_number = yout$x, leaf_gm.int.raw = yout$y), by = "day_number") %>%
     ## filling interpolation gap on the day of the census
-    mutate(leaf_gm.int = ifelse(is.na(leaf_gm_rate), leaf_gm.int, leaf_gm_rate),
+    mutate(leaf_gm.int.raw = ifelse(is.na(leaf_gm_rate), leaf_gm.int.raw, leaf_gm_rate),
            sp = df$sp[1],
            site = df$site[1])
   return(df.1)
 }
+## Absolute biomass among the two sites on BCI are not comparable
+## So normlising them.
+## Here we are interested in the season pattern of rainfall
+## So rescaling weekly leaf-fall as a fraction of the total leaf fall of the year--beginning DOY 120
 
 leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, interp.approx),
                         as.data.frame) %>%
   bind_rows(.id = "sp.site") %>%
+  group_by(sp, date) %>%
+  summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw)) %>%
   mutate(doy = as.numeric(format(date, "%j")),
          year = as.numeric(format(date, "%Y")),
-         leaf_gm.int.mov = rollmean(leaf_gm.int, k = set.k, fill = NA)) %>%
-  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
-  group_by(sp, site, doy) %>%
+         sp.fall.beg.year = ifelse(doy < 150, year-1, year)) %>%
+  group_by(sp, sp.fall.beg.year) %>%
+  mutate(annual.leaf.fall = sum(leaf_gm.int.raw, na.rm = TRUE),
+         leaf_gm.int = leaf_gm.int.raw/annual.leaf.fall,
+         leaf_gm.cum = cumsum(leaf_gm.int),
+         leaf_left = 1 - leaf_gm.cum) %>%
+  ungroup(sp, sp.fall.beg.year) %>%
+  mutate(leaf_gm.int.mov = rollmean(leaf_gm.int, k = set.k, fill = NA)) %>%
+  group_by(sp, doy) %>%
   mutate(leaf_gm.int.mean = mean(leaf_gm.int, na.rm = TRUE),
-         leaf_gm.int.sd = sd(leaf_gm.int, na.rm = TRUE)) %>%
-  ungroup(sp, site, doy) %>%
-  group_by(sp, site) %>%
-  mutate(leaf_gm.int.mov.diff = c(NA, diff(leaf_gm.int.mov)),
-         leaf_gm.int.sum = sum(leaf_gm.int, na.rm = TRUE),
-         leaf_gm.int.max = max(leaf_gm.int.mean, na.rm = TRUE)) %>%
-  ungroup(sp, site) %>%
-  mutate(doy.below.thresh = ifelse(leaf_gm.int.mean < 0.1*leaf_gm.int.max, doy, NA),
-         doy.above.thresh = ifelse(leaf_gm.int.mean > 0.05*leaf_gm.int.max, doy, NA)) %>%
-  subset(sp != "na")
-
-doy.leafless <- leaf.fall.int %>%
-  subset(!is.na(doy.below.thresh)) %>%
-  group_by(sp, site) %>%
-  arrange(doy.below.thresh) %>%
-  slice(1) %>%
-  rename(doy.leafless = doy) %>%
-  dplyr::select(site, sp, doy.leafless) %>%
-  ungroup(sp, site)
-doy.leafout <- leaf.fall.int %>%
-  subset(sp != "na" & !is.na(doy.below.thresh)) %>%
-  left_join(doy.leafless, by = c("sp", "site")) %>%
-  subset(doy < doy.leafless) %>%
-  group_by(sp, site) %>%
-  arrange(doy.below.thresh) %>%
-  slice(n())  %>%
-  rename(doy.leafout = doy) %>%
-  dplyr::select(site, sp, doy.leafout) %>%
-  ungroup(sp, site)
-
-doy.leafless <- doy.leafless %>%
-  left_join(doy.leafout, by = c("sp", "site"))
+         leaf_gm.int.sd = sd(leaf_gm.int, na.rm = TRUE),
+         leaf_left.mean = mean(leaf_left, na.rm = TRUE),
+         leaf_left.sd = sd(leaf_left, na.rm = TRUE)) %>%
+  ungroup(sp, doy) %>%
+  subset(sp != "na") %>%
+  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
+  mutate(sp.year = paste(sp, year, sep = "."))
 
 f2 <- ggplot(leaf.fall.int, aes(x = date, y = leaf_gm.int)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
-ggsave(("leaf.fall.int_BCI.jpeg"),
+ggsave(("leaf.fall.int_time_series_BCI.jpeg"),
        plot = f2, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
 
-f2.0 <- ggplot(leaf.fall.int %>% subset(year == 2014),
-               aes(x = doy, y = leaf_gm.int.mov.diff)) +
-  geom_line(aes(group = sp, color = sp), show.legend = FALSE)
-ggsave(("leaf.fall.int.mov.diff_BCI.jpeg"),
-       plot = f2.0, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
-leaf.fall.int.sub <- leaf.fall.int %>% subset(deciduousness != "Evergreen") %>%
-  mutate(sp.site.year = paste(sp, site, year, sep = "."))
-doy.leafless.aux <- doy.leafless %>%
-  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
-  subset(deciduousness != "Evergreen")
-
-leaf.fall.int.sub.aux <- leaf.fall.int.sub %>%
-  group_by(sp, site) %>%
-  summarise(y.int.threshold = 0.05*max(leaf_gm.int.mean, na.rm = TRUE)) %>%
-  ungroup(sp, site)
-
-f2.1 <- ggplot(leaf.fall.int.sub, # sp %in% unique(iso.1.3.join$sp)
+f2.1 <- ggplot(leaf.fall.int %>% subset(deciduousness != "Evergreen"), # sp %in% unique(iso.1.3.join$sp)
                aes(x = doy, y = leaf_gm.int)) +
   facet_wrap(sp ~ ., scales = "free_y") +
   geom_hline(yintercept = 0) +
-  geom_line(aes(group = sp.site.year, color = deciduousness), size = 0.3) +
+  geom_line(aes(group = sp.year, color = deciduousness), size = 0.3) +
   # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
   #             fill='pink', alpha=0.8) +
   geom_line(aes(y = leaf_gm.int.mean), color = "blue") +
-  # geom_smooth(method = "loess", se = FALSE, span = 0.1) +
-  ylab(expression('Leaf Fall (gm.'*day^-1*')')) + xlab("DOY") +
-  geom_vline(aes(xintercept = 120), color = "red") +
-  # geom_vline(data = doy.leafless.aux, aes(xintercept = doy.leafout), color = "red") +
-  # geom_vline(data = doy.leafless.aux, aes(xintercept = doy.leafless), color = "red") +
-  # geom_hline(data = leaf.fall.int.sub.aux, aes(yintercept = y.int.threshold), color = "red") +
+  ylab(expression('Leaf Fall/Annual Total')) + xlab("DOY") +
+  geom_vline(aes(xintercept = 150), color = "red") +
   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
                               override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave(("leaf.fall.int.mov_BCI.jpeg"),
+ggsave("leaf.fall.seasonality_BCI.jpeg",
        plot = f2.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
 
-set.k <- 7 ## For moving average how many days to average over
-leaf.fall.doy <- leaf.fall.int  %>%
-  group_by(site, sp, doy) %>%
-  summarise(leaf_gm = mean(leaf_gm.int, na.rm = TRUE),
-            leaf_gm.mov = mean(leaf_gm.int.mov, na.rm = TRUE),
-            leaf_gm.upper = quantile(leaf_gm.int, probs = 0.975, na.rm = TRUE),
-            leaf_gm.lower = quantile(leaf_gm.int, probs = 0.025, na.rm = TRUE)) %>%
-  mutate(leaf_gm.center = scale(leaf_gm, scale = FALSE),
-         leaf_gm.range = range01(leaf_gm),
-         leaf_gm.mov.center = scale(leaf_gm.mov, scale = FALSE),
-         leaf_gm.center.mov = rollmean(leaf_gm.center, k = set.k, fill = NA),
-         leaf_gm.mov.center.mov = rollmean(leaf_gm.mov.center, k = set.k, fill = NA)) %>%
-  ungroup(site, sp, doy) %>%
-  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp")
+f2.2 <- f2.1 %+% subset(leaf.fall.int, deciduousness == "Evergreen")
+ggsave("leaf.fall.seasonality_evergreens_BCI.jpeg",
+       plot = f2.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 18, units='in')
 
-f3 <- ggplot(leaf.fall.doy, aes(x = doy, y = leaf_gm.mov.center.mov)) +
+f2.3 <- ggplot(leaf.fall.int %>% subset(deciduousness != "Evergreen"), # sp %in% unique(iso.1.3.join$sp)
+               aes(x = doy, y = leaf_left)) +
+  facet_wrap(sp ~ ., scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  geom_line(aes(group = sp.year, color = deciduousness), size = 0.3) +
+  # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
+  #             fill='pink', alpha=0.8) +
+  geom_line(aes(y = leaf_left.mean), color = "blue") +
+  ylab(expression('Leaf Cover Fraction')) + xlab("DOY") +
+  # geom_vline(aes(xintercept = 120), color = "red") +
+  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(("leaf.cover_BCI.jpeg"),
+       plot = f2.3, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+
+f2.4 <- f2.3 %+% subset(leaf.fall.int, deciduousness == "Evergreen")
+ggsave("leaf.cover_evergreens_BCI.jpeg",
+       plot = f2.4, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 18, units='in')
+
+f3 <- ggplot(leaf.fall.int,
+             aes(x = doy, y = leaf_left.mean)) +
   geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = c(0.7, 0.7), legend.title = element_blank()) +
-  geom_smooth(method = "loess", se = FALSE, col = "red") +
-  ggtitle("DOY mean of weekly moving average taken\nThen centered and weekly moving average taken again")
-ggsave(("leaf.fall.doy_BCI.jpeg"),
+  theme(legend.position = c(0.6, 0.35), legend.title = element_blank(),
+        legend.background = element_rect(fill = "transparent")) +
+  ylab("Leaf Cover Fraction")
+ggsave(("leaf.cover_BCI_single_panel.jpeg"),
        plot = f3, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
-## to get the doy when leaf_gm drops to within species minimun
-## To avoid a local minima, using a moving average
-## This date perhaps should be taken as the end (also start?) of leaf-fall
-doy.min.leaf_lm <- leaf.fall.doy %>%
-  group_by(site, sp) %>%
-  arrange(leaf_gm.mov.center.mov) %>%
-  filter(doy > 200) %>%
-  slice(1) %>%
-  rename(min.doy = doy) %>%
-  dplyr::select(site, sp, min.doy) %>%
-  ungroup(site, sp)
-  ## Adding the doy when leaf_gm reaches within species maxima
-doy.min.max.leaf_lm <- doy.min.leaf_lm %>%
-  left_join(leaf.fall.doy %>%
-              group_by(site, sp) %>%
-              ## Also To get mean and max stats on leaf_gm
-              mutate(mean.leaf_gm = mean(leaf_gm, na.rm = TRUE),
-                     max.leaf_gm = max(leaf_gm, na.rm = TRUE),
-                     min.leaf_gm = min(leaf_gm, na.rm = TRUE)) %>%
-              arrange(desc(leaf_gm.mov.center.mov)) %>%
-              slice(1) %>%
-              rename(max.doy = doy) %>%
-              dplyr::select(site, sp, max.doy, mean.leaf_gm, max.leaf_gm, min.leaf_gm) %>%
-              ungroup(site, sp), by = c("sp", "site")) %>%
-  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp")
-
-f4 <- ggplot(doy.min.max.leaf_lm, aes(x = max.doy, y = max.leaf_gm)) +
-  geom_point(aes(color = deciduousness)) +
-  theme(legend.position = c(0.7, 0.7), legend.title = element_blank()) +
-  ylab(expression('Leaf Fall (gm.'*day^-1*')')) + xlab("DOY") +
-  ggtitle("DOY of Maximum Leaf Fall vs. Peak Leaf Fall Rate")
-ggsave(("leaf.fall.max.doy_BCI.jpeg"),
-       plot = f4, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 6.5, units='in')
-
-f5 <- ggplot(doy.min.max.leaf_lm, aes(x = min.doy, y = mean.leaf_gm)) +
-  geom_point(aes(color = deciduousness)) +
-  theme(legend.position = c(0.2, 0.7), legend.title = element_blank()) +
-  ylab(expression('Leaf Fall (gm.'*day^-1*')')) + xlab("DOY") +
-  ggtitle("DOY of Minimum Leaf Fall vs. Mean Leaf Fall Rate")
-ggsave(("leaf.fall.min.doy_BCI.jpeg"),
-       plot = f5, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 6.5, units='in')
-
-## Caclulate cumulative leaf_fall from the min.doy onwards
-
-leaf.fall.int <- leaf.fall.int %>%
-  left_join(doy.min.leaf_lm, by = c("sp", "site")) %>%
-  group_by(sp, site) %>%
-  # mutate(sp.fall.beg.year = ifelse(doy >= min.doy, year, year - 1)) %>%
-  mutate(sp.fall.beg.year = ifelse(doy >= 120, year, year - 1)) %>%
-  ungroup(sp, site)
-leaf.fall.int <- leaf.fall.int %>%
-  group_by(sp, site, sp.fall.beg.year) %>%
-  mutate(leaf_gm.cum = cumsum(leaf_gm.int),
-         annual.leaf.fall = sum(leaf_gm.int, na.rm = TRUE),
-         leaf_left = annual.leaf.fall - leaf_gm.cum) %>%
-  ungroup(sp, site, sp.fall.beg.year)
-leaf.fall.int.cum.clim <- leaf.fall.int %>%
-  group_by(sp, site, doy, deciduousness) %>%
-  summarise(leaf_gm.cum.clim = mean(leaf_gm.cum, na.rm = TRUE),
-            leaf_left.clim = mean(leaf_left, na.rm = TRUE)) %>%
-  mutate(leaf_gm.cum.clim = ifelse(is.finite(leaf_gm.cum.clim), leaf_gm.cum.clim, NA)) %>%
-  ungroup(sp, site, doy, deciduousness) %>%
-  group_by(sp, site, deciduousness) %>%
-  mutate(leaf_gm.cum.clim.range = range01(leaf_gm.cum.clim),
-         leaf_left.clim.range = range01(leaf_left.clim)) %>%
-  ungroup(sp, site, deciduousness) %>%
-  mutate(leaf_gm.cum.clim.range.grand = range01(leaf_gm.cum.clim),
-         leaf_left.clim.range.grand = 1- leaf_left.clim.range,
-         max.leaf_gm.range = max(leaf_gm.cum.clim.range.grand, na.rm = TRUE)) %>%
-  left_join(doy.min.max.leaf_lm %>%
-              dplyr::select(sp, site, min.doy, max.doy,
-                     mean.leaf_gm, max.leaf_gm, min.leaf_gm), by = c("sp", "site"))
-
- # %>% unite(sp.year, sp,  sp.fall.beg.year, remove = FALSE)
-f6 <- ggplot(leaf.fall.int.cum.clim,
-             aes(x = doy, y = leaf_gm.cum.clim.range.grand)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = c(0.7, 0.7), legend.title = element_blank()) +
-  geom_smooth(method = "loess", se = FALSE, col = "red") +
-  ggtitle("Mean Cumsum of leaf fall beginning DOY when sp-level leaf-fall at minimum")
-ggsave(("leaf.fall.doy.cumsum_BCI.jpeg"),
-       plot = f6, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-f6.1 <- f6 %+% subset(leaf.fall.int.cum.clim, deciduousness != "Evergreen") +
-  scale_y_reverse() +
-  theme(legend.position = c(0.8, 0.3))
-ggsave(("leaf.fall.doy.cumsum_reverse_non-evergreen_BCI.jpeg"),
-       plot = f6.1, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-f6.2 <- f6 %+% subset(leaf.fall.int.cum.clim, sp %in% unique(iso.1.3.join$sp)) +
-  scale_y_reverse() +
-  geom_label(aes(label = sp, x = min.doy, y = max.leaf_gm/12, color = deciduousness),
-             fill = "gray", nudge_y = 0.1, show.legend = FALSE) +
-  theme(legend.position = c(0.9, 0.3))
-ggsave(("leaf.fall.doy.cumsum_reverse_iso.sp_BCI.jpeg"),
-       plot = f6.2, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
-f7 <- ggplot(leaf.fall.int.cum.clim,
-             aes(x = doy, y = leaf_left.clim)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = "top", legend.title = element_blank()) +
-  geom_smooth(method = "loess", se = FALSE, col = "red") +
-  ylab("Total leaf biomass left to fall (gm)") +
-  ggtitle("Total leaf biomass left to fall beginning DOY when sp' leaf-fall at minimum")
-ggsave(("leaf_left.doy.cumsum_BCI.jpeg"),
-       plot = f7, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-f7.1 <- f7 %+% subset(leaf.fall.int.cum.clim, deciduousness != "Evergreen") +
-  # geom_label(aes(label = sp, x = min.doy, y = max.leaf_gm/15, color = deciduousness),
-  #            fill = "gray", nudge_y = 0.1, show.legend = FALSE) +
-  scale_color_viridis_d(drop = FALSE)
-ggsave(("leaf_left.doy.cumsum_BCI_non-evergreens.jpeg"),
-       plot = f7.1, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
-f8 <- ggplot(leaf.fall.int.cum.clim,
-             aes(x = doy, y = leaf_left.clim.range)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = "top", legend.title = element_blank()) +
-  geom_smooth(method = "loess", se = FALSE, col = "red") +
-  ylab("Std. Total leaf biomass left to fall (gm)") +
-  ggtitle("Std. total leaf biomass left to fall beginning DOY when sp' leaf-fall minimum")
-ggsave(("std.leaf_left.doy.cumsum_BCI.jpeg"),
-       plot = f8, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
-f8.1 <- f8 %+% subset(leaf.fall.int.cum.clim, deciduousness != "Evergreen") +
-  # geom_label(aes(label = sp, x = min.doy, y = max.leaf_gm/15, color = deciduousness),
-  #            fill = "gray", nudge_y = 0.1, show.legend = FALSE) +
-  scale_color_viridis_d(drop = FALSE)
-ggsave(("std.leaf_left.doy.cumsum_BCI_non-evergreens.jpeg"),
-       plot = f8.1, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
-
-# leaf.fall <- leaf.fall %>%
-#   left_join(bci.traits %>% select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD), by = "sp") %>%
-#   subset(site == "BCI50-ha")
 
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------

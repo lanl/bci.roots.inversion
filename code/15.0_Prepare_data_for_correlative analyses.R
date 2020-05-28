@@ -322,6 +322,50 @@ gpp <- bci.elm.fates.hydro::gpp
 psi <- psi %>%
   mutate(interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
                                                      labels = cut.labels.2, right = TRUE)))
+
+new.depths = data.frame(depth =
+                          seq(from = 0.1, to =
+                                psi$depth[length(psi$depth)], by = 0.1))
+
+# psi.par.sam.mean <- as.data.table(psi)[, keyby = .(date, depth), .(psi = mean(psi, na.rm = TRUE))]
+
+# psi.date <- split(psi.par.sam.mean, f = list(psi.par.sam.mean$date), drop = TRUE)
+
+# psi.date <- split(psi %>% select(-interval.yrs), f = list(psi$date, psi$par.sam), drop = TRUE)
+#
+# psi.interp.approx <- function(df) {
+#   x <- df$depth
+#   y <- df$psi
+#   xout <- new.depths$depth
+#   yout <- predict(interpSpline(x, y), xout)
+#   # yout <- approx(x, y, xout, method = "linear")
+#   df.1 <- data.frame(date = df$date[1], par.sam = df$par.sam[1],
+#                                depth = yout$x, psi = yout$y)
+#   # plot(depth ~ psi, data = df.1)
+#   return(df.1)
+# }
+#
+# psi.int <- lapply(lapply(psi.date, psi.interp.approx),
+#                         as.data.frame) %>%
+#   bind_rows()
+# save(psi.int,
+#      file = file.path("results/psi.interpolated.depths.Rdata"))
+# load(file = file.path("results/psi.interpolated.depths.Rdata"))
+
+# depth.breaks.1 <- c(0, 0.5, 1, c(1:13 + 0.5))
+# depth.labels.1 <- c(0.25, 0.75, 1.25, 2:13)
+# psi.depths <- as.data.table(psi.int)[,
+#   depths := cut(depth, breaks = depth.breaks.1, labels = depth.labels.1)][,
+#   keyby = .(date, depths, par.sam), .(psi = mean(psi, na.rm = TRUE))][,]
+psi.depths <- psi.depths %>% as.data.frame() %>% rename(depth = depths) %>%
+  mutate(interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
+                                                     labels = cut.labels.2, right = TRUE)))
+
+# save(psi.depths,
+#      file = file.path("results/psi.interpolated.depths_layers_combined.Rdata"))
+
+load(file = file.path("results/psi.interpolated.depths_layers_combined.Rdata"))
+
 #******************************************************
 ### Load climate data-------
 #******************************************************
@@ -1262,6 +1306,7 @@ ggsave(("leaf.fall.daily_BCI.jpeg"),
 ## the rate observed on the census date (even though it is the mean rate of the interval)
 
 df.sp.site <- split(leaf.fall, f = list(leaf.fall$sp_site), drop = TRUE)
+
 # leaf.fall.full <- vector(mode = "list", length = length(df.sp.site))
 # names(leaf.fall.full) <- names(df.sp.site) # "psi.p50.g1", "psi.p50.g2"
 
@@ -1280,7 +1325,7 @@ fill.day.gaps <- function(df) {
 leaf.fall.daygaps <- lapply(df.sp.site, fill.day.gaps)
 
 ## Interpolating from weely sums to daily leaf_gm
-interp.approx <- function(df) {
+leaf.interp.approx <- function(df) {
   x <- df$day_number
   y <- df$leaf_gm_rate
   xout <- df$day_number[is.na(df$leaf_gm_rate)]
@@ -1300,15 +1345,15 @@ interp.approx <- function(df) {
 ## Here we are interested in the season pattern of rainfall
 ## So rescaling weekly leaf-fall as a fraction of the total leaf fall of the year--beginning DOY 120
 
-leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, interp.approx),
+leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
                         as.data.frame) %>%
   bind_rows(.id = "sp.site") %>%
   group_by(sp, date) %>%
   summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw)) %>%
   mutate(doy = as.numeric(format(date, "%j")),
          year = as.numeric(format(date, "%Y")),
-         sp.leaf.fall..year = ifelse(doy < 150, year-1, year)) %>%
-  group_by(sp, sp.leaf.fall..year) %>%
+         sp.leaf.fall.year = ifelse(doy < 150, year-1, year)) %>%
+  group_by(sp, sp.leaf.fall.year) %>%
   mutate(annual.leaf.fall = sum(leaf_gm.int.raw, na.rm = TRUE),
          leaf_gm.int = leaf_gm.int.raw/annual.leaf.fall,
          # Assuming full leaf cover from June through October

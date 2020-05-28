@@ -22,6 +22,9 @@ years <- seq(1990, 2015, by = 5)
 ncensus  <- length(years)
 nint <- length(years) - 1
 intervals <- nint
+
+range01 <- function(x){(x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
+
 # sp4 <- c("ANOL", "TECG", "LAGL", "TERT")
 ##------------------------------------------------
 ## Collating tree.full data for all censuses
@@ -420,7 +423,6 @@ gro.long.cc <- data.frame(gro.wide) %>%
   arrange(sp, stemID, interval) %>%
   unite("sp_size", sp, size, remove = FALSE) %>%
   mutate(interval = as.numeric(interval))
-str(gro.long.cc)
 
 gro.long.cc.sub <- gro.long.cc %>% subset(interval == 3 & dbh  < 50)
 g10 <- ggplot(gro.long.cc %>% subset(stemID %in% gro.long.cc.sub$stemID),
@@ -430,7 +432,64 @@ g10 <- ggplot(gro.long.cc %>% subset(stemID %in% gro.long.cc.sub$stemID),
 #geom_line(data = gro.long.mod.med.allsp %>% subset(interval == 7), aes(y = predict.growth.allsp/10), color = "red")
 g10 +   geom_line(aes(y = dbh/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
 g10 +   geom_line(aes(y = dbh.residuals/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
+
+gro.long.cc.norm.stem <- gro.long.cc %>% group_by(stemID) %>%
+  mutate(dbh.resid.range = range01(dbh.residuals),
+         growth.range = range01(growth),
+         dbh.resid.scale = scale(dbh.residuals),
+         growth.scale = scale(growth),
+         dbh.resid.center = scale(dbh.residuals, scale = FALSE),
+         growth.center = scale(growth, scale = FALSE)) %>%
+  ungroup(stemID)
+## subsetting based on sample size
+sample.size <- 3 # at least those number of stems to calculate the mean
+
+gro.long.cc.norm.med <- gro.long.cc.norm.stem %>%
+  group_by(sp, size, sp_size, interval) %>%
+  summarise(n = n()/intervals,
+            med.dbh.resid.range = median(dbh.resid.range, na.rm = TRUE),
+            med.growth.range = median(growth.range, na.rm = TRUE),
+            med.dbh.resid.scale = median(dbh.resid.scale, na.rm = TRUE),
+            med.growth.scale = median(growth.scale, na.rm = TRUE),
+            med.dbh.resid.center = median(dbh.resid.center, na.rm = TRUE),
+            med.growth.center = median(growth.center, na.rm = TRUE)) %>%
+  subset(n >= sample.size) %>%
+  ungroup(sp_size, interval)
+
+gro.long.cc.med <- gro.long.cc %>%
+  group_by(sp, size, sp_size, interval) %>%
+  summarise(med.dbh.resid = median(dbh.residuals, na.rm = TRUE),
+            med.growth = median(growth, na.rm = TRUE)) %>%
+  subset(sp_size %in% gro.long.cc.norm.med$sp_size) %>%
+  ungroup(sp_size, interval)
+
+g11 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
+              aes(x = interval)) +
+  geom_line(aes(y = dbh.resid.range, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
+  geom_line(data = gro.long.cc.norm.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid.range), color = "black", lwd = 1) +
+  geom_line(data = gro.long.cc.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid), color = "red", lwd = 1)
+g11
+ggsave("dbh.residuals_stem_range01 and scaled_median range01 in black and median raw overlaid_in red__alsebl_large.jpeg", plot = g11, path =
+         file.path("figures"), height = 5, width = 5, units='in')
+
+g12 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
+              aes(x = interval)) +
+  geom_line(aes(y = dbh.resid.scale, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
+  geom_line(data = gro.long.cc.norm.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid.scale), color = "black", lwd = 1) +
+  geom_line(data = gro.long.cc.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid), color = "red", lwd = 1)
+g12
+ggsave("dbh.residuals_stem_center and scaled_median center in black and scaled and median raw overlaid_in red_alsebl_large.jpeg", plot = g12, path =
+         file.path("figures"), height = 5, width = 5, units='in')
+g13 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
+              aes(x = interval)) +
+  geom_line(aes(y = dbh.resid.center, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
+  geom_line(data = gro.long.cc.norm.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid.center), color = "black", lwd = 1) +
+  geom_line(data = gro.long.cc.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid), color = "red", lwd = 1)
+g13
+ggsave("dbh.residuals_stem_centered_median centered in black and median raw overlaid_in red__alsebl_large.jpeg", plot = g13, path =
+         file.path("figures"), height = 15, width = 5, units='in')
 ### centering and scaling growth for each stem
+
 growth.wide.cc.1 <- gro.long.cc %>% select(sp_size, stemID, interval, growth) %>%
   pivot_wider(names_from = c("interval"), values_from = "growth")
 growth.wide.cc <- growth.wide.cc.1 %>% select(-sp_size, -stemID)
@@ -453,8 +512,7 @@ sp_size.stem.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res.list, function(x){
   x %>% pivot_longer(everything(), names_to = c("interval"), values_to = "dbh.residuals") %>%
     mutate(interval = as.numeric(interval))})
 
-## subsetting based on sample size
-sample.size <- 3 # at least those number of stems to calculate the mean
+
 sp_size.stem.cc.n.dbh.res.list <- lapply(sp_size.stem.cc.dbh.res, function(x){
   data.frame(n = nrow(x)/intervals)})
 sp_size.n.cc.dbh.res  <- rbindlist(sp_size.stem.cc.n.dbh.res.list, idcol = "sp_size")
@@ -483,6 +541,11 @@ sp_size.stem.cc.names <- names(sp_size.stem.cc.growth) # 660
 sp_size.mean.cc.names <- names(sp_size.mean.cc.growth) # 520
 sp_size.med.cc.names <- names(sp_size.med.cc.growth) # 520
 growth.selection <- "size_class_predefined_cc_scaled"
+
+save(gro.long.cc, file = paste0("results/gro.long.cc_", intervals, "_", growth.selection, ".Rdata"))
+save(gro.long.cc.norm.stem , file = paste0("results/gro.long.cc.norm.stem _", intervals, "_", growth.selection, ".Rdata"))
+save(gro.long.cc.norm.med, file = paste0("results/gro.long.cc.norm.med_", intervals, "_", growth.selection, ".Rdata"))
+save(gro.long.cc.med, file = paste0("results/gro.long.cc.med_", intervals, "_", growth.selection, ".Rdata"))
 
 save(sp_size.stem.cc.dbh.res, file = paste0("results/sp_size.individual_growth_dbh.residuals_on_", intervals, "_", growth.selection, ".Rdata"))
 save(sp_size.mean.cc.dbh.res, file = paste0("results/sp_size.mean_growth_dbh.residuals_on_", intervals, "_", growth.selection, ".Rdata"))

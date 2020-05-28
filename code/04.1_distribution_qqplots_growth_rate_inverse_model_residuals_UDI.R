@@ -9,11 +9,13 @@ rm(list = ls())
 
 gc()
 if (!require("pacman")) install.packages("pacman")
-p_load(tidyverse, gridExtra, bci.elm.fates.hydro, spatstat)
+p_load(tidyverse, gridExtra, bci.elm.fates.hydro, spatstat, MASS)
 figures.folder <- paste0("figures/Distributions")
 if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
 
-### Growth rates of dbh residuals
+#*****************
+### Growth rates of dbh residuals ------
+#*****************
 
 load(file.path("results/GLUEsetup_part2_BCI.RData"))
 growth.rate <- as.vector(unlist(growth_by_si.info$growth))
@@ -73,9 +75,9 @@ for (i in 1:10) {
   ks.test(sample(udi.sp, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
 }
 
-###---------------
-### PSI
-###---------------
+#*****************
+### PSI ----------
+#*****************
 psi.mean <- bci.elm.fates.hydro::gpp
 hist(psi.mean$psi)
 shapiro.test(sample(psi.mean$psi, 5000))
@@ -150,9 +152,9 @@ grid()
 dev.off()
 ## So none of the models fit, using non-parametric Kernel Density Estimator
 
-###---------------
-### GPP
-###---------------
+#*****************
+### GPP ----------
+#*****************
 
 gpp <- bci.elm.fates.hydro::gpp %>% rename(gpp = value)
 hist(gpp$gpp)
@@ -205,3 +207,172 @@ qqplot(x = quantile.density(density(gpp), ppoints(gpp)),
 abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
 grid()
 dev.off()
+
+#*****************
+# Growth -------
+#*****************
+
+intervals <- 5
+growth.selection <- "size_class_predefined_cc_scaled"
+load(file = paste0("results/gro.long.cc_", intervals, "_", growth.selection, ".Rdata"))
+# growth.var <- "dbh.residuals"
+growth.var <- "growth"
+if(growth.var == "growth") {
+  growth <- gro.long.cc$growth
+} else {
+  growth <- gro.long.cc$dbh.residuals
+}
+
+# https://daviddalpiaz.github.io/stat3202-sp19/notes/fitting.html
+jpeg(file.path(figures.folder, paste0(growth.var, "_distribution.jpeg")), width = 600, height = 600, units = "px", pointsize = 24,
+     quality = 80)
+par(mfrow = c(2, 3))
+## Normal
+hist(growth, probability = TRUE,
+     main = growth.var, xlab = expression('growth (gC'*m^-2*day^-1*')'))
+box()
+grid()
+curve(dnorm(x, mean = mean(growth), sd = sd(growth)),
+      add = TRUE, col = "darkorange")
+## Log-Normal
+hist(growth, probability = TRUE,
+     main = growth.var, xlab = expression('growth (gC'*m^-2*day^-1*')'))
+box()
+grid()
+lnorm_fit_params <- fitdistr(growth[growth > 0], "lognormal")
+curve(dnorm(x, lnorm_fit_params$estimate['meanlog'], lnorm_fit_params$estimate['sdlog']),
+      add = TRUE, col = "darkorange")
+## kernel density
+hist(growth, probability = TRUE,
+     main = growth.var, xlab = expression('growth (gC'*m^-2*day^-1*')'))
+box()
+grid()
+lines(density(growth), col = "darkorange")
+
+## Normal qq plot
+qqplot(x = qnorm(ppoints(growth)),
+       y = growth,
+       # xlim = c(0, 400), ylim = c(0, 400),
+       main = "Normal ",
+       xlab = "Theoretical Quantiles, Normal Distribution",
+       ylab = "Sample Quantiles, growth")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+# Log Normal qq plot
+qqplot(x = qlnorm(ppoints(growth)),
+       y = growth,
+       # xlim = c(0, 400), ylim = c(0, 400),
+       main = "Log Normal",
+       xlab = "Theoretical Quantiles, Log Normal Distribution",
+       ylab = "Sample Quantiles, growth")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+
+## kernel qq
+qqplot(x = quantile.density(density(growth), ppoints(growth)),
+       y = growth,
+       # xlim = c(0, 400), ylim = c(0, 400),
+       main = "KDE",
+       xlab = "Theoretical Quantiles, Kernel Density Estimate",
+       ylab = "Sample Quantiles, growth")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+grid()
+dev.off()
+
+#*****************
+## Leaf Fall -----
+#*****************
+leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv"))
+
+leaf.fall <- leaf.fall$leaf_gm
+leaf.fall.var <- "Leaf Fall"
+jpeg(file.path(figures.folder, paste0("leaf.fall_distribution.jpeg")), width = 600, height = 600, units = "px", pointsize = 24,
+     quality = 80)
+par(mfrow = c(2, 4))
+## Normal
+hist(leaf.fall, probability = TRUE,
+     main = leaf.fall.var, xlab = expression('leaf.fall (gC'*m^-2*day^-1*')'))
+box()
+grid()
+curve(dnorm(x, mean = mean(leaf.fall), sd = sd(leaf.fall)),
+      add = TRUE, col = "darkorange")
+# ## Log-Normal
+# hist(leaf.fall, probability = TRUE,
+#      main = leaf.fall.var, xlab = expression('leaf.fall (gC'*m^-2*day^-1*')'))
+# box()
+# grid()
+# lnorm_fit_params <- fitdistr(leaf.fall[leaf.fall> 0], "lognormal")
+# curve(dnorm(x, lnorm_fit_params$estimate['meanlog'], lnorm_fit_params$estimate['sdlog']),
+#       add = TRUE, col = "darkorange")
+#Exp
+hist(leaf.fall, probability = TRUE,
+     main = leaf.fall.var, xlab = expression('leaf.fall (gC'*m^-2*day^-1*')'))
+box()
+grid()
+curve(dexp(x, rate = 1 / mean(leaf.fall)),
+      add = TRUE, col = "darkorange")
+# Gamma
+##gamma# calculating sample moments
+len_samp_moment_1 = mean(leaf.fall)
+len_samp_moment_2 = mean(leaf.fall ^ 2)
+
+# method of moments estimators
+len_alpha_mom = len_samp_moment_1 ^ 2 / (len_samp_moment_2 - len_samp_moment_1 ^ 2)
+len_beta_mom  = len_samp_moment_1 / len_alpha_mom
+
+hist(leaf.fall, probability = TRUE,
+     main = leaf.fall.var, xlab = expression('leaf.fall (gC'*m^-2*day^-1*')'))
+box()
+grid()
+curve(dgamma(x, shape = len_alpha_mom, scale = len_beta_mom),
+      add = TRUE, col = "darkorange", lwd = 2)
+## kernel density
+hist(leaf.fall, probability = TRUE,
+     main = leaf.fall.var, xlab = expression('leaf.fall (gC'*m^-2*day^-1*')'))
+box()
+grid()
+lines(density(leaf.fall), col = "darkorange")
+
+## Normal qq plot
+qqplot(x = qnorm(ppoints(leaf.fall)),
+       y = leaf.fall,
+       main = "Normal ",
+       xlab = "Theoretical Quantiles, Normal Distribution",
+       ylab = "Sample Quantiles, leaf.fall")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+# # Log Normal qq plot
+# qqplot(x = qlnorm(ppoints(leaf.fall)),
+#        y = leaf.fall,
+#        # xlim = c(0, 400), ylim = c(0, 400),
+#        main = "Log Normal",
+#        xlab = "Theoretical Quantiles, Log Normal Distribution",
+#        ylab = "Sample Quantiles, leaf.fall")
+# abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+# Exp
+qqplot(x = qexp(ppoints(leaf.fall), rate = 1/ mean(leaf.fall, na.rm = TRUE)),
+       y = leaf.fall,
+       main = "Exp",
+       xlab = "Theoretical Quantiles, Exp Distribution",
+       ylab = "Sample Quantiles, leaf.fall")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+# Gamma
+# gamma qq
+qqplot(x = qgamma(ppoints(leaf.fall),
+                  shape = len_alpha_mom, scale = len_beta_mom),
+       y = leaf.fall,
+       main = "Gamma",
+       xlab = "Theoretical Quantiles, Gamma Distribution",
+       ylab = "Sample Quantiles, leaf.fall")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+grid()
+## kernel qq
+qqplot(x = quantile.density(density(leaf.fall), ppoints(leaf.fall)),
+       y = leaf.fall,
+       main = "KDE",
+       xlab = "Theoretical Quantiles, Kernel Density Estimate",
+       ylab = "Sample Quantiles, leaf.fall")
+abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
+grid()
+dev.off()
+
+
+
+

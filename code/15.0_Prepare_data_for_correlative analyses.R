@@ -740,7 +740,7 @@ bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
 #******************************************************
 ### Load Hydraulic traits by Brett Wolfe ---------
 #******************************************************
-load(file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
+
 hyd <- read.csv("data-raw/traits/HydraulicTraits_BrettWolfe/ht1_20200103.csv") # Brett's data
 hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%
   rename(LMA = lma_gm2_m, WD = xylem_den_m, TLP = tlp_m,

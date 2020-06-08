@@ -352,17 +352,31 @@ load(file = file.path(results.folder, "hyd.traits.all.RData"))
 load(file = file.path(results.folder, "hyd.traits.key.long.RData"))
 load(file = file.path(results.folder, "kunert.traits.key.long.RData"))
 #******************************************************
+## Load Isotopic data-----
+#******************************************************
+
+load(file = "data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4.Rdata")
+leafless_mar.apr <- read.csv("data-raw/traits/isotopes/Meinzer_1999_isotope_sp_leafless_in_mar_april.csv")
+# load(file = "results/all_isotopic_record.Rdata")
+iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
+
+#******************************************************
 ## Load Demographic data----
 #******************************************************
-load(file.path("results/GLUEsetup_part2_BCI.RData"))
+# load(file.path("results/GLUEsetup_part2_BCI.RData"))
 ## growth rates when dbh.residuals = "on" are residuals from a dbh mixed effects model (for spp) of
 ## growth. A median residual for each sp_size is caluclated only when at least data from
 # 3 trees are present across all census intervals.
 # Medians within sp_size are then centered and scaled. {residual - E(residual)/sd(residual)}
+growth.type <- "med"
+dbh.residuals <- "on"
+solar.residuals <- "off"
+growth.selection <- "size_class_predefined_cc_scaled"
+intervals <- 5
+growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_ci_", intervals, "_", growth.selection, ".Rdata"))
+# growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
 
-if(growth_by_si.info$dbh.residuals == "on"){
-  growth <- growth_by_si.info$growth
-}
+growth <- get(growth.name); rm(growth.name)
 
 load(file = file.path(results.folder, "grate.long_by_species-size_decisuousness.Rdata"))
 load(file = file.path(results.folder, "mrate.long_by_species-size_decisuousness.Rdata"))
@@ -408,9 +422,22 @@ load(file = file.path(results.folder, "coh.sp.summ.Rdata"))
 growth.sub <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
   bind_rows(.id = "sp_size") %>%
   rename(demo.rate = median) %>%
+  # rename(demo.rate = dbh.residuals) %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
   dplyr::select(-sp_size, -"_")
 
+grate.plot <- ggplot(growth.sub, aes(x = interval, y = demo.rate)) +
+  geom_line(aes(group = sp, color = sp), show.legend = FALSE) +
+  facet_wrap(. ~ sp) +
+  ylab("Std. Growth") + xlab("Interval") +
+  geom_errorbar(aes(ymax = upr, ymin = lwr), width = 0.1, size = 0.5)
+ggsave(paste0("Std.Growth_", growth.type,".jpeg"),
+       plot = grate.plot, file.path(figures.folder), device = "jpeg", height = 7, width = 7, units='in')
+
+grate.plot.iso.sp <- grate.plot %+%
+  subset(growth.sub, sp %in% iso.1.3.join$sp[iso.1.3.join$source == "Meinzer et al.1999 Fig. 4"])
+ggsave(paste0("Std.Growth_iso.sp_", growth.type,".jpeg"),
+       plot = grate.plot.iso.sp, file.path(figures.folder), device = "jpeg", height = 3, width = 4, units='in')
 
 census.meds <- readr::read_rds("results/census.mediandates.rds")
 census.beg <- census.meds[3: length(census.meds)]
@@ -640,7 +667,7 @@ grate.gfac.best.sub <- grate.gfac.best %>%
   subset(#corr.func %in% names.gfac &
            sp %in% iso.1.3.join$sp[iso.1.3.join$source == "Meinzer et al.1999 Fig. 4"] &
            ## those that are likely leafless in Mar-Apr
-           !sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"]) &
+           #!sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"]) &
            corr.func %in% unique(grate.gfac.best$corr.func)[grep("gr.", unique(grate.gfac.best$corr.func))])
 grate.gfac.best.plot <- ggplot(grate.gfac.best.sub %>%
            subset(corr.func_sp_depth %in% ml.rsq.combine.best$corr.func_sp_depth) %>% droplevels(),
@@ -728,7 +755,9 @@ depth.rsq.isotopes <- ml.rsq.combine.best %>%
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
-
+load(file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
+load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
+load(file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 ### Plot best correlated depth against isotopic data and traits-----
 
 # ml.rsq.combine.best <- ml.rsq.combine.best %>%

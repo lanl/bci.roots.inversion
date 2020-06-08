@@ -263,6 +263,7 @@ sp.hab <- moist.pref %>% full_join(hab.swp, by = "sp") %>%
 load("results/demo.sp.RData")
 load("results/demo.sp_size.RData")
 load("results/mrate.long.RData")
+load("results/adult.mrate.long.RData")
 load(file.path("results/GLUEsetup_part2_BCI.RData"))
 ## growth rates when dbh.residuals = "on" are residuals from a dbh mixed effects model (for spp) of
 ## growth. A median residual for each sp_size is caluclated only when at least data from
@@ -291,6 +292,16 @@ mrate.long <- mrate.long %>%
   left_join(demo.sp_size %>% mutate(mean.mrate = mrate, mean.grate = grate) %>%
               select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
   mutate(diff.mrate = mrate - mean.mrate)
+adult.mrate.long <- adult.mrate.long %>%
+  left_join(deci, by = "sp") %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95", `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15")) %>%
+  left_join(demo.sp_size %>%
+              subset(size %in% c("medium", "large")) %>%
+              group_by(sp) %>%
+              summarize(mean.mrate = mean(mrate, na.rm = TRUE),
+                        mean.grate = mean(grate, na.rm = TRUE)) %>%
+              ungroup(sp), by = "sp") %>%
+  mutate(diff.mrate = mrate - mean.mrate)
 grate.long <- grate.long %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
   select(-"_") %>%
@@ -304,8 +315,9 @@ grate.long <- grate.long %>%
   group_by(sp_size) %>%
   ungroup(sp_size)
 
-save(grate.long, file = file.path(results.folder, "grate.long_by_species-size_decisuousness.Rdata"))
-save(mrate.long, file = file.path(results.folder, "mrate.long_by_species-size_decisuousness.Rdata"))
+save(grate.long, file = file.path(results.folder, "grate.long_by_species-size_deciduousness.Rdata"))
+save(mrate.long, file = file.path(results.folder, "mrate.long_by_species-size_deciduousness.Rdata"))
+save(adult.mrate.long, file = file.path(results.folder, "adult.mrate.long_by_species-size_deciduousness.Rdata"))
 
 #******************************************************
 ### Load Psi from ELM-FATES-------

@@ -266,7 +266,7 @@ load("results/mrate.long.RData")
 load("results/adult.mrate.long.RData")
 load(file.path("results/GLUEsetup_part2_BCI.RData"))
 ## growth rates when dbh.residuals = "on" are residuals from a dbh mixed effects model (for spp) of
-## growth. A median residual for each sp_size is caluclated only when at least data from
+## growth. A median residual for each sp_size is calculated only when at least data from
 # 3 trees are present across all census intervals.
 # Medians within sp_size are then centered and scaled. {residual - E(residual)/sd(residual)}
 
@@ -275,6 +275,10 @@ if(growth_by_si.info$dbh.residuals == "on"){
 }
 
 grate.long <- dplyr::bind_rows(growth, .id = 'sp_size')
+## to add absolute growth
+intervals <- 5
+growth.selection <- "size_class_predefined_cc_scaled"
+load(file = paste0("results/gro.long.cc.med_", intervals, "_", growth.selection, ".Rdata"))
 
 census.years <- c(1982, 1985, 1990, 1995, 2000, 2005, 2010, 2015)
 
@@ -313,7 +317,9 @@ grate.long <- grate.long %>%
   left_join(demo.sp_size %>% mutate(mean.mrate = mrate, mean.grate = grate) %>%
               select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
   group_by(sp_size) %>%
-  ungroup(sp_size)
+  ungroup(sp_size) %>%
+  left_join(gro.long.cc.med %>% select(sp_size, interval, med.dbh.resid, med.growth),
+            by = c("sp_size", "interval"))
 
 save(grate.long, file = file.path(results.folder, "grate.long_by_species-size_deciduousness.Rdata"))
 save(mrate.long, file = file.path(results.folder, "mrate.long_by_species-size_deciduousness.Rdata"))
@@ -752,10 +758,12 @@ bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
 #******************************************************
 ### Load Hydraulic traits by Brett Wolfe ---------
 #******************************************************
-
+# nlrq(ks~m*(exp(-(-psych_psi/b)^a))
 hyd <- read.csv("data-raw/traits/HydraulicTraits_BrettWolfe/ht1_20200103.csv") # Brett's data
+# vc_a = vc_a, vc_b = vc_b, vc_a_se = vc_a_se, vc_b_se = vc_b_se,
 hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%
-  rename(LMA = lma_gm2_m, WD = xylem_den_m, TLP = tlp_m,
+  rename(KmaxS = vc_m, KmaxS_se = vc_m_se,
+         LMA = lma_gm2_m, WD = xylem_den_m, TLP = tlp_m,
          p50S = p50, p80S = p80, p88S = p88,
          Fcap_Xylem = cwr_xylem_elbow_origin_slope, CWR_Xylem = cwr_xylem_cwr_at_elbow, Felbow_Xylem = cwr_xylem_elbow,
          Fcap_Bark = cwr_bark_elbow_origin_slope, CWR_Bark = cwr_bark_cwr_at_elbow, Felbow_Bark = cwr_bark_elbow,
@@ -774,23 +782,23 @@ hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%
 
 length(unique(hyd$sp)) # 27 sp across BCI, PNM, San Lorenzo
 traits.labels.table.1 <- data.frame(trait = factor(c("lwp.min_Predawn", "lwp.min_Diurnal", "TLP",
-                                                     "p50S", "p88S",
+                                                     "KmaxS", "p50S", "p88S",
                                                      "HSMTLP", "HSM50S","HSM88S",
                                                      "HSMTLP.50S", "HSMTLP.88S",
                                                      "CWR_Total", "CWR_Xylem", "CWR_Bark",
                                                      "Felbow_Xylem", "Felbow_Bark", "HSMFelbow_Xylem", "HSMFelbow_Bark",
                                                      "Fcap_Xylem", "Fcap_Bark","WD",
-                                                     "Panama.moist.pref", "Plot.swp.pref", "LMA"),
+                                                     "Panama.moist.pref", "Plot.swp.pref", "LMA", "vc_a", "vc_b"),
                                                    levels = c("lwp.min_Predawn", "lwp.min_Diurnal", "TLP",
-                                                              "p50S", "p88S",
+                                                              "KmaxS", "p50S", "p88S",
                                                               "HSMTLP", "HSM50S","HSM88S",
                                                               "HSMTLP.50S", "HSMTLP.88S",
                                                               "CWR_Total", "CWR_Xylem", "CWR_Bark",
                                                               "Felbow_Xylem", "Felbow_Bark", "HSMFelbow_Xylem", "HSMFelbow_Bark",
                                                               "Fcap_Xylem", "Fcap_Bark","WD",
-                                                              "Panama.moist.pref", "Plot.swp.pref", "LMA"), ordered = TRUE)) %>%
+                                                              "Panama.moist.pref", "Plot.swp.pref", "LMA", "vc_a", "vc_b"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
-                                                  expression(italic('P')['50, Stem']),  expression(italic('P')['88, Stem']),
+                                                  expression(italic('K')['max, Stem']),  expression(italic('P')['50, Stem']),  expression(italic('P')['88, Stem']),
                                                   expression(Psi[min]*' - '*Psi[TLP]),
                                                   expression(Psi[min]*' - '*italic('P')['50, Stem']),
                                                   expression(Psi[min]*' - '*italic('P')['88, Stem']),
@@ -802,9 +810,10 @@ traits.labels.table.1 <- data.frame(trait = factor(c("lwp.min_Predawn", "lwp.min
                                                   expression(Psi[min]*'-'*italic('F')['Elbow, Bark']),
                                                   expression(italic('F')['Cap, Xylem']), expression(italic('F')['Cap, Bark']),
                                                   expression('WD'[stem]),
-                                                  expression('Panama'[wet]), expression('Plot'[wet]), "LMA")),
+                                                  expression('Panama'[wet]), expression('Plot'[wet]), "LMA",
+                                                  expression('A'['vc, Stem']), expression('B'['vc, Stem']))),
             trait.plot.chart = factor(trait, labels = c(expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
-                                                        expression(italic('P')['50,Stem']),  expression(italic('P')['88,Stem']),
+                                                        expression(italic('K')['max, Stem']),  expression(italic('P')['50,Stem']),  expression(italic('P')['88,Stem']),
                                                         expression(Psi[min]*'-'*Psi[TLP]),
                                                         expression(Psi[min]*'-'*italic('P')['50,Stem']),
                                                         expression(Psi[min]*'-'*italic('P')['88,Stem']),
@@ -816,7 +825,8 @@ traits.labels.table.1 <- data.frame(trait = factor(c("lwp.min_Predawn", "lwp.min
                                                         expression(Psi[min]*'-'*italic('F')['Elbow,Bark']),
                                                         expression(italic('F')['Cap,Xylem']), expression(italic('F')['Cap,Bark']),
                                                         expression('WD'[stem]),
-                                                        expression('Panama'[wet]), expression('Plot'[wet]), "LMA"))) %>% droplevels()
+                                                        expression('Panama'[wet]), expression('Plot'[wet]), "LMA",
+                                                        expression('A'['vc, Stem']), expression('B'['vc, Stem'])))) %>% droplevels()
 
 
 #******************************************************
@@ -824,7 +834,7 @@ traits.labels.table.1 <- data.frame(trait = factor(c("lwp.min_Predawn", "lwp.min
 #******************************************************
 
 hyd.long <- hyd %>% select(-DeciLvl) %>%
-  select(sp, deciduousness, deciduous, location, TLP, p50S, p88S,
+  select(sp, deciduousness, deciduous, location, TLP, p50S, p88S, vc_a, vc_b,
          CWR_Total, Fcap_Xylem, CWR_Xylem, Felbow_Xylem, Fcap_Bark, CWR_Bark, Felbow_Bark, WD, LMA,
          HSM50S, HSM88S, HSMTLP, HSMFelbow_Xylem, HSMFelbow_Bark, HSMTLP.50S, HSMTLP.88S,
          Panama.moist.pref, Plot.swp.pref, lwp.min_Diurnal, lwp.min_Predawn) %>%
@@ -853,6 +863,14 @@ hyd.long <- hyd.long %>%
   left_join(traits.labels.table.1, by = "trait")
 
 save(hyd, file = file.path(results.folder, "hyd.traits.all.RData"))
+
+hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
+  rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
+  gather(trait, se, -sp) %>%
+  ## But for TLP it's not se but sd
+  mutate(se = ifelse(trait == "TLP", NA, se),
+         sd = ifelse(trait == "TLP", se, NA))
+hyd.long <- hyd.long %>% left_join(hyd.error, by = c("sp", "trait"))
 save(hyd.long, file = file.path(results.folder, "hyd.traits.key.long.RData"))
 
 #******************************************************
@@ -958,7 +976,7 @@ traits.wide <- traits.long %>% select(-trait.plot, -trait.plot.chart) %>% pivot_
 traits.long.hyd <- sp.hab %>%
   full_join(bci.traits %>% select(sp, form1, SG100C_AVG), by = "sp") %>%
   full_join(deci %>% select(-sp4), by = "sp") %>%
-  subset(sp %in% unique(c(depth.rsq.isotopes$sp, hyd$sp, traits$sp))) %>%
+  subset(sp %in% unique(c(hyd$sp, traits$sp))) %>%
   left_join(traits.wide %>% select(-form1, -deciduous, -deciduousness,
                                    -SG100C_AVG, -Panama.moist.pref, -Plot.swp.pref), by = "sp") %>%
   pivot_longer(cols = c(-sp, -form1, -deciduous, -deciduousness, -DeciLvl,
@@ -976,7 +994,7 @@ save(traits.long.hyd, file = file.path(results.folder, "kunert.traits.key.long_i
 
 
 #******************************************************
-## Predictors of Kmax-LWP relationship --------
+## Predictors of KmaxL-LWP relationship --------
 #******************************************************
 traits.for.kcurves <- traits.indi %>%
   rename(TLP = mean_TLP_Mpa, Chl = Chl_m2_per_g, LMA = LMA_g_per_m2,
@@ -994,8 +1012,8 @@ range(sp.exp.param$Kmax, na.rm = TRUE)
 range(sp.exp.param$Kmax_at_0.1, na.rm = TRUE)
 # 0.8453948 7.1963332
 
-figures.folder.k <- paste0("figures/PhenoDemoTraitsPsi/kmax_by_psi")
-if(!dir.exists(file.path(figures.folder.k))) {dir.create(file.path(figures.folder.k))}
+figures.folder.kleaf <- paste0("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf")
+if(!dir.exists(file.path(figures.folder.kleaf))) {dir.create(file.path(figures.folder.kleaf))}
 
 ## ******
 ### PCA to check which variables strongly correlate with Parameters A & B
@@ -1005,7 +1023,7 @@ df.pca <- sp.exp.param %>% remove_rownames %>% column_to_rownames(var = "sp") %>
 df.pca <- df.pca %>% subset(complete.cases(df.pca))
 result.pca <- prcomp(df.pca, center = TRUE, scale = TRUE)
 
-pdf(file.path(figures.folder.k ,"kamx_by_psi_params_pca.pdf"), height = 6, width = 6)
+pdf(file.path(figures.folder.kleaf ,"kamx_by_psi_params_pca.pdf"), height = 6, width = 6)
 biplot(result.pca, choices = 1:2, pc.biplot = TRUE, main = "")
 dev.off()
 
@@ -1013,8 +1031,8 @@ dev.off()
 var.y <- c("A", "A", "A", "A", "B", "B")
 var.x <- c("SG100C_AVG", "LMA", "LMALAM_AVD", "B", "SG100C_AVG", "LMALAM_AVD")
 for(i in 1:length(var.x)){
-  jpeg(file.path(figures.folder.k, paste0("kamx_by_psi_", var.y[i], "_by_", var.x[i], ".jpeg")),
-       width = 3, height = 3, units = "in", pointsize = 10,
+  jpeg(file.path(figures.folder.kleaf, paste0("kmax_by_psi_", var.y[i], "_by_", var.x[i], ".jpeg")),
+       width = 4, height = 4, units = "in", pointsize = 10,
        quality = 100, res = 300)
   df <- sp.exp.param[!is.na(sp.exp.param[, var.x[i]]),]
   df$x <- df[, var.x[i]]
@@ -1047,7 +1065,7 @@ k_by_psi.models[[2]]<- lm(A ~ polym(B, LMALAM_AVD, degree = 2, raw = TRUE), data
 summary(k_by_psi.models[[2]])
 # Adjusted R-squared:  0.667, ,  p-value: 0.004658
 ## But LMALMA_AVD are fewer than LMALEAF_AVD, so filling up some gaps in them
-k_by_psi.models[[3]] <- lm(LMALEAF_AVD ~ LMALAM_AVD, data = bci.traits)
+k_by_psi.models[[3]] <- lm(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
 summary(k_by_psi.models[[3]])
 plot(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
 # Adjusted R-squared:  0.9332 ; p-value: < 2.2e-16
@@ -1064,7 +1082,7 @@ save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
 ## Predict A & B from soft traits and the above models
 ###**********
 bci.AB <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
-bci.AB <- bci.AB %>% mutate(LMALEAF_AVD =
+bci.AB <- bci.AB %>% mutate(LMALAM_AVD =
                               ifelse(is.na(LMALAM_AVD),
                                      predict(k_by_psi.models[[3]], newdata = bci.AB),
                                      LMALAM_AVD),
@@ -1101,25 +1119,46 @@ for (i in 1:nrow(data.model.AB)) {
 }
 
 save(data.model.AB, file = file.path(results.folder, "data.model.AB.Rdata"))
-jpeg(file.path(figures.folder.k, paste0("B_data_vs_model.jpeg")),
-     width = 3, height = 3.3, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-plot(model.B ~ data.B, data = data.model.AB, xlim =
-       range(data.model.AB$B.y, na.rm = TRUE),
-     ylim = range(data.model.AB$B.y, na.rm = TRUE),
-     ylab = "B, fitted to Data", xlab = "B, predicted from soft traits")
-abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
-dev.off()
 
-jpeg(file.path(figures.folder.k, paste0("A_data_vs_model.jpeg")),
-     width = 3, height = 3.3, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-plot(model.A ~ data.A, data = data.model.AB, xlim =
-       range(data.model.AB$A.y, na.rm = TRUE),
-     ylim = range(data.model.AB$A.y, na.rm = TRUE),
-     ylab = "A, fitted to Data", xlab = "A, predicted from soft traits")
-abline(a = 0, b = 1, col = "dodgerblue", lwd = 2)
-dev.off()
+ggplot(data.model.AB, aes(x = model.B, y = data.B)) +
+  geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
+  geom_text(data = data.frame(x = 4.6, y = 4.0, label = "1:1"), aes(x = x, y = y, label = label), size =5) +
+  xlim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
+  ylim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
+  ylab(expression(italic(B)['Fitted to Data'])) +
+  xlab(expression(italic(B)['Predicted from WSG, LMA'])) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.05, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.05, npcy = 0.8, size = 4)
+ggsave(file.path(figures.folder.kleaf, paste0("B_data_vs_model.jpeg")),
+      device = "jpeg", height = 2.2, width = 2.2, units='in')
+
+ggplot(data.model.AB, aes(x = model.A, y = data.A)) +
+  geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
+  geom_text(data = data.frame(x = 4.6, y = 4.0, label = "1:1"), aes(x = x, y = y, label = label), size = 5) +
+  xlim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
+  ylim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
+  ylab(expression(italic(A)['Fitted to Data'])) +
+  xlab(expression(italic(A)['Predicted from LMA & '*italic(B)])) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.05, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.05, npcy = 0.8, size = 4)
+ggsave(file.path(figures.folder.kleaf, paste0("A_data_vs_model.jpeg")),
+       device = "jpeg", height = 2.2, width = 2.2, units='in')
+
+
 
 ###*****
 ## Plot K by PSI using fitted exponential curves
@@ -1153,8 +1192,9 @@ legend.col.var <- "LMA"
 # legend.col.var <- "B"
 
 df.plot <- bci.AB %>%
-  # subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
-  subset(sp %in% unique(iso.1.3.join$sp)) %>% droplevels() %>%
+  subset(B >= 0 & A >= 0) %>%
+  subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
+  # subset(sp %in% unique(iso.1.3.join$sp)) %>% droplevels() %>%
   left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
          order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)),
@@ -1163,16 +1203,17 @@ df.plot <- bci.AB %>%
                                                `DF` = "Facultative\nDeciduous", `DO` = "Obligate\nDeciduous")) %>%
   transform(deciduousness.label.2 = factor(deciduousness.label.2,
                                            levels = c("Evergreen", "Brevi\nDeciduous",
-                                                      "Facultative\nDeciduous", "Obligate\nDeciduous"), ordered = TRUE))
+                                                      "Facultative\nDeciduous", "Obligate\nDeciduous"), ordered = TRUE)) %>%
+  mutate(Kmax.predict = Exponential(A = A, B = B, psi = 0))
 
-jpeg(file.path(figures.folder.k, paste0("Sp.Gravity_by_deci.jpeg")),
+jpeg(file.path(figures.folder.kleaf, paste0("Sp.Gravity_by_deci.jpeg")),
      width = 5, height = 2.5, units = "in", pointsize = 10,
      quality = 100, res = 300)
 par(mar = c(5, 5, 2, 2))
 boxplot(SG100C_AVG ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
         ylab = expression('Wood Specific Gravity'['100C']), notch = TRUE, boxwex = 0.5)
 dev.off()
-jpeg(file.path(figures.folder.k, paste0("LMALAM_by_deci.jpeg")),
+jpeg(file.path(figures.folder.kleaf, paste0("LMALAM_by_deci.jpeg")),
      width = 5, height = 3.5, units = "in", pointsize = 10,
      quality = 100, res = 300)
 par(mar = c(5, 5, 2, 2))
@@ -1181,8 +1222,284 @@ boxplot(LMALAM_AVD ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8
 dev.off()
 
 # df.name <- "predicted_AB_for_data_sp"
-df.name <- "predicted_AB_for_iso_sp"
-# df.name <- "predicted_AB"
+# df.name <- "predicted_AB_for_iso_sp"
+df.name <- "predicted_AB"
+# col.var <- "LMALAM_AVD"
+# order.col.var <- "order.lma"
+# legend.col.var <- "LMALAM_AVD"
+# col.var <- "SG100C_AVG"
+# order.col.var <- "order.wsg"
+# legend.col.var <- "Specific Gravity"
+# col.var <- "DeciLvl"
+# order.col.var <- "order.decilvl"
+# legend.col.var <- "DeciLvl"
+# col.var <- "deci"
+# legend.col.var <- "Deciduoousness"
+col.var <- "NILL"
+order.col.var <- "NILL"
+legend.col.var <- "NILL"
+std.k <- ""; ylim.k = 7.5
+# std.k <- "std.k.sp"; ylim.k = 1
+# std.k <- "std.k.comm"; ylim.k = 1
+Kmax.predict.max <- max(df.plot$Kmax.predict, na.rm = TRUE)
+if(df.name == "predicted_AB_for_iso_sp") {
+  xlim.to.plot <- c(-1, 3)
+} else {
+  xlim.to.plot <- c(0, 3)
+}
+jpeg(file.path(figures.folder.kleaf, paste0(std.k, "kmax_by_psi_color_by_", legend.col.var, "_", df.name, ".jpeg")),
+     width = 2.7, height = 2.7, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+if (std.k == "") {
+  par(mar = c(4, 4.5, 1.5, 1.5))
+  plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)",
+       xlim = xlim.to.plot, ylim = c(0, ylim.k))
+  mtext(side = 2, text = "Leaf Hydraulic Conductance", line = 3)
+  mtext(side = 2, text = expression("(mmol "*m^-2*s^-1*MPa^-1*")"), line = 2)
+} else {
+  par(mar = c(4.5, 4.5, 1.5, 1.5))
+  plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)", ylab =
+         expression("Std. Leaf Hydraulic Conductance"),
+       xlim = xlim.to.plot, ylim = c(0, ylim.k))
+}
+for (i in 1:nrow(df.plot)) {
+  params <- df.plot[i, ]
+  if(df.name == "kmax_psi_data_fitted_AB"){
+    col = "gray85"; pch = 20
+  }
+}
+for (i in 1:nrow(df.plot)) {
+  params <- df.plot[i, ]
+  df <- data.frame(psi = seq(0, 3, length.out = 100)) %>%
+    mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
+    cbind.data.frame(params, row.names = NULL)
+  if(std.k == "std.k.sp") {
+    df <- df %>% mutate(k.predict = range01(k.predict))
+  }
+  if(std.k == "std.k.comm") {
+    df <- df %>% mutate(k.predict = k.predict/Kmax.predict.max)
+  }
+  if(col.var == "NILL") {
+    lines(k.predict ~ psi, data = df) # "darkorange"
+  }
+  # Rank variable for colour assignment
+  if(col.var == "deci") {
+    lines(k.predict ~ psi, data = df, col = deciduousness) # "darkorange"
+  } else {
+    lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[i, order.col.var]]) # "darkorange"
+  }
+  if(df.name == "predicted_AB_for_iso_sp") {
+    text(labels = params$sp, x = -0.2, y = df$k.predict[df$psi == df$psi[1]],
+         col = pal(nrow(df.plot))[df.plot[i, order.col.var]], cex = 0.5)
+  }
+}
+
+if(col.var == "deci") {
+  ## using levels in deciduousness used by color
+  legend("topright", legend = levels(df.plot$deciduousness),
+         col = 1:4, pch=19, bty = "n")
+} else if(col.var != "NILL") {
+  legend("topright", title = legend.col.var, col=pal(2), pch=19,
+         legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
+                             decreasing = TRUE), 1)), bty = "n")
+}
+dev.off()
+
+
+#******************************************************
+## Predictors of KmaxS-SWP relationship --------
+#******************************************************
+
+figures.folder.kstem <- paste0("figures/PhenoDemoTraitsPsi/kmax_by_psi/Stem")
+if(!dir.exists(file.path(figures.folder.kstem))) {dir.create(file.path(figures.folder.kstem))}
+
+sp.exp.param.stem <- hyd %>%
+  rename(Kmax = KmaxS, A = vc_a, B = vc_b, A_se = vc_a_se, B_se = vc_b_se,
+         LMA_sd = lma_gm2sd, LMA_n = lma_n,
+         WD_sd = xylem_den_sd) %>%
+  select(sp, Kmax, A, B, A_se, B_se, WD, LMA, LMA_sd, LMA_n, WD_sd) %>%
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
+  left_join(bci.traits %>%
+              select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD), by = "sp") %>%
+  left_join(data.model.AB %>% select(sp, model.B, model.A, data.A, data.B), by = "sp")
+range(sp.exp.param.stem$Kmax, na.rm = TRUE)
+# 0.87 8.83
+
+## ******
+### PCA to check which variables strongly correlate with Parameters A & B
+## ******
+
+df.pca.stem <- sp.exp.param.stem %>% remove_rownames %>% column_to_rownames(var = "sp") %>%
+  select_if(is.numeric) ## more species without Kmax data %>% select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
+# if (diff(range(df.pca$root.95, na.rm = TRUE)) == 0) {
+df.pca.stem <- df.pca.stem %>% subset(complete.cases(df.pca.stem))
+result.pca.stem <- prcomp(df.pca.stem, center = TRUE, scale = TRUE)
+
+pdf(file.path(figures.folder.kstem ,"kamx_by_psi_params_pca.pdf"), height = 6, width = 6)
+biplot(result.pca.stem, choices = 1:2, pc.biplot = TRUE, main = "")
+dev.off()
+
+## single explanatory variable
+var.y <- c("A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "B", "B", "B","B", "B", "B")
+var.x <- c("WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "B","data.A", "model.A",
+           "WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "A", "data.B", "model.B")
+for(i in 1:length(var.x)){
+  jpeg(file.path(figures.folder.kstem, paste0("kmax_by_psi_", var.y[i], "_by_", var.x[i], ".jpeg")),
+       width = 4, height = 4, units = "in", pointsize = 10,
+       quality = 100, res = 300)
+  df <- sp.exp.param.stem[!is.na(sp.exp.param.stem[, var.x[i]]),]
+  df$x <- df[, var.x[i]]
+  df$y <- df[, var.y[i]]
+  model1 <- lm(y ~ poly(x, 2), data = df)
+  plot(y ~ x, data = df, xlab = var.x[i], ylab = var.y[i])
+  x0 <- seq(min(df$x, na.rm = TRUE), max(df$x, na.rm = TRUE), length = 100)  ## prediction grid
+  y0 <- predict(model1, newdata = list(x = x0))  ## predicted values
+  lines(x0, y0, col = 2)
+  ## rounded coefficients for better output
+  cf <- round(coef(model1), 2)
+  ## sign check to avoid having plus followed by minus for negative coefficients
+  eq <- paste0("y = ", cf[1],
+               ifelse(sign(cf[2])==1, " + ", " - "), abs(cf[2]), "x",
+               ifelse(sign(cf[3])==1, " + ", " - "), abs(cf[3]), "x2")
+  r2 <- paste0("R-squared = ", round(summary(model1)$r.squared, 2),
+               ", P-val = ", round(lmp(model1), 2))
+  mtext(eq, 3, line = -2)
+  mtext(r2, 3, line = -4)
+  dev.off()
+}
+# A related with LMA, then WSG & WD
+# B highly related with LMA, then WSG, then LMALeaf
+
+## Best R2 have two variables
+k_by_psi.models.stem <- vector(mode = "list", length = 2)
+k_by_psi.models.stem[[1]] <- lm(B ~ polym(LMA, degree = 2, raw = TRUE), data = sp.exp.param.stem)
+summary(k_by_psi.models.stem[[1]])
+# With only LMA Adjusted R-squared:  0.173, 0.043
+# With LMA & SG100C_AVG, Adjusted R-squared:  0.1701;  p-value: 0.147
+## with only SG100C_AVG, R-squared:  0.1354 ; p-value: 0.09001
+## but not related with LMALEAF_AVD, so this is not helpful to generalise
+
+k_by_psi.models.stem[[2]]<- lm(A ~ polym(LMA, SG100C_AVG, degree = 2, raw = TRUE), data = sp.exp.param.stem)
+summary(k_by_psi.models.stem[[2]])
+# Adjusted R-squared:  0.3933,  p-value: 0.01622
+## but not related with LMALEAF_AVD or LMALAM_AVD, so this is not helpful to generalise
+
+## But LMA can be estimated from LMALEAF_AVD so filling up some gaps in them
+k_by_psi.models.stem[[3]] <- lm(LMA ~ LMALAM_AVD, data = sp.exp.param.stem)
+summary(k_by_psi.models.stem[[3]])
+# Adjusted R-squared:  0.639; p-value: 0.0003513
+plot(LMA ~ LMALEAF_AVD, data = sp.exp.param.stem)
+save(k_by_psi.models.stem, file = file.path(results.folder, "k_by_psi.models.stem.Rdata"))
+
+###**********
+## Predict A & B from soft traits and the above models
+###**********
+
+bci.AB.stem <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD) %>%
+  mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
+                             predict(k_by_psi.models[[3]], newdata = bci.AB.stem), LMALAM_AVD))
+bci.AB.stem <- bci.AB.stem %>% mutate(LMA = predict(k_by_psi.models.stem[[3]], newdata = bci.AB.stem))
+bci.AB.stem <- bci.AB.stem %>% mutate(B = predict(k_by_psi.models.stem[[1]], newdata = bci.AB.stem),
+                                      A = predict(k_by_psi.models.stem[[2]], newdata = bci.AB.stem))
+
+###**********
+## Do params A & B predicted from soft traits match those fitted to data?
+###**********
+data.model.AB.stem <- bci.AB.stem %>%
+  subset(B >= 0 & A >= 0) %>%
+  rename(model.A = A, model.B = B) %>%
+  left_join(sp.exp.param.stem %>% select(sp, A, B) %>%
+              rename(data.A = A, data.B = B), by = "sp")
+
+for (i in 1:nrow(data.model.AB.stem)) {
+  params <- data.model.AB.stem[i,]
+  df <- data.frame(psi = seq(0, 5, length.out = 1000)) %>%
+    mutate(k.predict = Exponential(A = params$model.A, B = params$model.B, psi = psi))
+
+  Kmax <- max(df$k.predict, na.rm = TRUE)
+  Kmax_at_0.1 <- df$k.predict[which(round(df$psi, 3) == 0.1)]
+
+  data.model.AB.stem$psi_kl20[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.8*Kmax)$y
+  data.model.AB.stem$psi_kl50[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.5*Kmax)$y
+  data.model.AB.stem$psi_kl80[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.2*Kmax)$y
+  data.model.AB.stem$psi_kl95[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.05*Kmax)$y
+
+  data.model.AB.stem$Kmax[i] <- Kmax
+  data.model.AB.stem$Kmax_at_0.1[i] <- Kmax_at_0.1
+  data.model.AB.stem$psi_at_0.1_kl50[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.5*Kmax_at_0.1)$y
+  data.model.AB.stem$psi_at_0.1_kl80[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.2*Kmax_at_0.1)$y
+
+}
+
+save(data.model.AB.stem, file = file.path(results.folder, "data.model.AB.stem.Rdata"))
+
+ggplot(data.model.AB.stem, aes(x = model.B, y = data.B)) +
+  geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
+  geom_text(data = data.frame(x = 4.6, y = 4.0, label = "1:1"), aes(x = x, y = y, label = label), size =5) +
+  xlim(range(c(data.model.AB.stem$model.B, data.model.AB.stem$data.B), na.rm = TRUE)) +
+  ylim(range(c(data.model.AB.stem$model.B, data.model.AB.stem$data.B), na.rm = TRUE)) +
+  ylab(expression(italic(B)['Fitted to Data'])) +
+  xlab(expression(italic(B)['Predicted from LMA'])) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.05, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.05, npcy = 0.8, size = 4)
+ggsave(file.path(figures.folder.kstem, paste0("B_data_vs_model.jpeg")),
+       device = "jpeg", height = 2.2, width = 2.2, units='in')
+
+ggplot(data.model.AB.stem, aes(x = model.A, y = data.A)) +
+  geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
+  geom_text(data = data.frame(x = 4.6, y = 4.0, label = "1:1"), aes(x = x, y = y, label = label), size = 5) +
+  xlim(range(c(data.model.AB.stem$model.B, data.model.AB.stem$data.B), na.rm = TRUE)) +
+  ylim(range(c(data.model.AB.stem$model.B, data.model.AB.stem$data.B), na.rm = TRUE)) +
+  ylab(expression(italic(A)['Fitted to Data'])) +
+  xlab(expression(italic(A)['Predicted from LMA & WSG'])) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.05, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.05, npcy = 0.8, size = 4)
+ggsave(file.path(figures.folder.kstem, paste0("A_data_vs_model.jpeg")),
+       device = "jpeg", height = 2.2, width = 2.2, units='in')
+## So poor predictors
+
+##********************
+## Plot K by Psi Stem
+##********************
+# df.name <- "predicted_AB_for_data_sp"
+df.name <- "predicted_AB"
+
+if (df.name == "predicted_AB_for_data_sp") {
+  df.plot.stem <- bci.AB.stem %>%
+    left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp")
+} else if(df.name == "predicted_AB") {
+  df.plot.stem <- sp.exp.param.stem
+}
+## Plotting DataAB
+df.plot.stem <- df.plot.stem %>%
+  subset(B >= 0 & A >= 0) %>%
+  mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
+         order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)),
+         order.decilvl = findInterval(DeciLvl, sort(DeciLvl))) %>%
+  mutate(deciduousness.label.2 = recode_factor(as.factor(deciduous), `E` = "Evergreen", `DB` = "Brevi\nDeciduous",
+                                               `DF` = "Facultative\nDeciduous", `DO` = "Obligate\nDeciduous")) %>%
+  transform(deciduousness.label.2 = factor(deciduousness.label.2,
+                                           levels = c("Evergreen", "Brevi\nDeciduous",
+                                                      "Facultative\nDeciduous", "Obligate\nDeciduous"), ordered = TRUE)) %>%
+  mutate(Kmax.predict = Exponential(A = A, B = B, psi = 0))
+
+# col.var <- "NILL"
+# order.col.var <- "NILL"
+# legend.col.var <- "NILL"
 col.var <- "LMALAM_AVD"
 order.col.var <- "order.lma"
 legend.col.var <- "LMALAM_AVD"
@@ -1194,54 +1511,65 @@ legend.col.var <- "LMALAM_AVD"
 # legend.col.var <- "DeciLvl"
 # col.var <- "deci"
 # legend.col.var <- "Deciduoousness"
-std.k <- ""; ylim.k = 7.5
-# std.k <- "std.k"; ylim.k = 1
-if(df.name == "predicted_AB_for_iso_sp") {
-  xlim.to.plot <- c(-1, 3)
-} else {
-  xlim.to.plot <- c(0, 3)
-}
-jpeg(file.path(figures.folder.k, paste0(std.k, "kamx_by_psi_color_by_", legend.col.var,"_", df.name, ".jpeg")),
-     width = 3.5, height = 3.5, units = "in", pointsize = 10,
+std.k <- ""; ylim.k = 20; if(df.name == "predicted_AB") {ylim.k = max(df.plot.stem$Kmax, na.rm = TRUE)}
+# std.k <- "std.k.sp"; ylim.k = 1
+# std.k <- "std.k.comm"; ylim.k = 1
+Kmax.predict.max.stem <- max(df.plot.stem$Kmax.predict, na.rm = TRUE)
+
+jpeg(file.path(figures.folder.kstem, paste0(std.k, "kmax_by_psi_color_by_", legend.col.var, "_", df.name, ".jpeg")),
+     width = 2.7, height = 2.7, units = "in", pointsize = 10,
      quality = 100, res = 300)
-par(mar = c(5, 5, 2, 2))
-plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)", ylab =
-       expression("Leaf Hydraulic Conductance (mmol "~m^-2*s^-1*MPa^-1*")"),
-     xlim = xlim.to.plot, ylim = c(0, ylim.k))
+if (std.k == "") {
+  par(mar = c(4, 4.5, 1.5, 1.5))
+  plot(1, type = "n", xlim = xlim.to.plot, ylim = c(0, ylim.k), ann = FALSE)
+  mtext(side = 2, text = "Stem-Specific Hydraulic Conductivity", line = 3)
+  mtext(side = 2, text = expression("(Kg "*m^-1*s^-1*MPa^-1*")"), line = 2)
+  mtext(side = 1, text = "Stem Water Potential (-MPa)", line = 2)
+} else {
+  par(mar = c(4.5, 4.5, 1.5, 1.5))
+  plot(1, type = "n", xlim = xlim.to.plot, ylim = c(0, ylim.k), ann = FALSE)
+  mtext(side = 2, text = "Std. Stem-Specific", line = 3)
+  mtext(side = 2, text = expression("Hydraulic Conductivity"), line = 2)
+  mtext(side = 1, text = "Stem Water Potential (-MPa)", line = 2)
+}
 for (i in 1:nrow(df.plot)) {
   params <- df.plot[i, ]
   if(df.name == "kmax_psi_data_fitted_AB"){
-           col = "gray85"; pch = 20
+    col = "gray85"; pch = 20
   }
 }
-for (i in 1:nrow(df.plot)) {
-  params <- df.plot[i, ]
+for (i in 1:nrow(df.plot.stem)) {
+  params <- df.plot.stem[i, ]
   df <- data.frame(psi = seq(0, 3, length.out = 100)) %>%
     mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
     cbind.data.frame(params, row.names = NULL)
-  if(std.k == "std.k") {
+  if(std.k == "std.k.sp") {
     df <- df %>% mutate(k.predict = range01(k.predict))
   }
-
+  if(std.k == "std.k.comm") {
+    df <- df %>% mutate(k.predict = k.predict/Kmax.predict.max.stem)
+  }
+  if(col.var == "NILL") {
+    lines(k.predict ~ psi, data = df, alpha = 0.7) # "darkorange"
+  }
   # Rank variable for colour assignment
   if(col.var == "deci") {
     lines(k.predict ~ psi, data = df, col = deciduousness) # "darkorange"
   } else {
-    lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[i, order.col.var]]) # "darkorange"
+    lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot.stem))[df.plot.stem[i, order.col.var]]) # "darkorange"
   }
   if(df.name == "predicted_AB_for_iso_sp") {
-  text(labels = params$sp, x = -0.2, y = df$k.predict[df$psi == df$psi[1]],
-       col = pal(nrow(df.plot))[df.plot[i, order.col.var]], cex = 0.5)
+    text(labels = params$sp, x = -0.2, y = df$k.predict[df$psi == df$psi[1]],
+         col = pal(nrow(df.plot.stem))[df.plot.stem[i, order.col.var]], cex = 0.5)
   }
 }
-
 if(col.var == "deci") {
   ## using levels in deciduousness used by color
-  legend("topright", legend = levels(df.plot$deciduousness),
+  legend("topright", legend = levels(df.plot.stem$deciduousness),
          col = 1:4, pch=19, bty = "n")
-} else {
+} else if(col.var != "NILL") {
   legend("topright", title = legend.col.var, col=pal(2), pch=19,
-         legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
+         legend=c(round(sort(range(df.plot.stem[, col.var], na.rm = TRUE),
                              decreasing = TRUE), 1)), bty = "n")
 }
 dev.off()

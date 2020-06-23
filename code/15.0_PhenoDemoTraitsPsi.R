@@ -1008,7 +1008,7 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                               "HSMLWP.80L", "HSMTLP.80L",
                                                               "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
-                                                  expression(italic(K)[max]), expression(Psi[predawn]), expression(Psi[min]),
+                                                  expression(italic(K)['max, Leaf']), expression(Psi[predawn]), expression(Psi[min]),
                                                   expression(Psi[TLP]), expression(italic('P')['50, Leaf']), expression(italic('P')['80, Leaf']),
                                                   expression(Psi[min]*' - '*Psi[TLP]),
                                                   expression(Psi[min]*' - '*italic('P')['50, Leaf']),
@@ -1017,7 +1017,7 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                   expression(Psi[TLP]*' - '*italic('P')['80, Leaf']),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
-                                                        expression(italic(K)[max]), expression(Psi[predawn]), expression(Psi[min]),
+                                                        expression(italic(K)['max, Leaf']), expression(Psi[predawn]), expression(Psi[min]),
                                                         expression(Psi[TLP]), expression(italic('P')['50,Leaf']), expression(italic('P')['80,Leaf']),
                                                         expression(Psi[min]*'-'*Psi[TLP]),
                                                         expression(Psi[min]*'-'*italic('P')['50,Leaf']),
@@ -1197,39 +1197,50 @@ depth.traits.hyd <- hyd.long %>%
   subset(trait %in% c(select.traits.1, select.traits.2)) %>%
   subset(trait != "depth") %>% left_join(hyd.pairs.2 %>% select(sp, `Depth[italic("Rsq")]`), by = "sp")
 
-depth.traits.hyd.plot <- ggplot(depth.traits.hyd, aes(x = `Depth[italic("Rsq")]`, y = value)) +
-  geom_point() +
-  facet_wrap(. ~ trait, scales = "free_y") +
+depth.traits.hyd.plot <- ggplot(depth.traits.hyd,
+                                aes(y = `Depth[italic("Rsq")]`, x = value)) +
   geom_smooth(method = "lm") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  scale_y_reverse() +
+  coord_cartesian(ylim = c(10, 0)) +
+  ylab("Effective Rooting Depth (m)") + xlab("") +
+  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 1, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 3) +
+               npcx = 0.10, npcy = 0.25, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.8, size = 3)
+                  npcx = 0.10, npcy = 0.1, size = 4) +
+  theme(panel.spacing = unit(1, "lines"))
 ggsave(file.path(figures.folder, paste0("Wolfe_traits_depth.jpeg")),
-       plot = depth.traits.hyd.plot, height = 5, width = 6, units ='in')
+       plot = depth.traits.hyd.plot, height = 6, width = 6, units ='in')
 
 depth.traits.kunert <- traits.long %>%
   subset(trait %in% c(select.traits.3, select.traits.4)) %>%
   subset(trait != "depth") %>% left_join(traits.pairs.2 %>% select(sp, `Depth[italic("Rsq")]`), by = "sp")
 
-depth.traits.kunert.plot <- ggplot(depth.traits.kunert, aes(x = `Depth[italic("Rsq")]`, y = value)) +
-  geom_point() +
-  facet_wrap(. ~ trait, scales = "free_y") +
+depth.traits.kunert.plot <- ggplot(depth.traits.kunert %>%
+                                     subset(trait != "Xylem_sap_deltaD_permil"),
+                                   aes(y = `Depth[italic("Rsq")]`, x = value)) +
   geom_smooth(method = "lm") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  scale_y_reverse() +
+  coord_cartesian(ylim = c(10, 0)) +
+  ylab("Effective Rooting Depth (m)") + xlab("") +
+  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 1, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 3) +
+               npcx = 0.10, npcy = 0.25, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.8, size = 3)
+                  npcx = 0.10, npcy = 0.1, size = 4) +
+  theme(panel.spacing = unit(1.5, "lines"))
 ggsave(file.path(figures.folder, paste0("Kunert_traits_depth.jpeg")),
-       plot = depth.traits.kunert.plot, height = 6, width = 7, units ='in')
+       plot = depth.traits.kunert.plot, height = 6.5, width = 7, units ='in')
 
 traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
                                         levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE)) %>%
@@ -1780,7 +1791,7 @@ for (i in 1:length(names.mfac)) {
 
 ## Ordered along Rooting Depth Index
 mfac.on <- "mr.kl50.I"
-mrate.mfac.depth <-
+mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%
   # mrate.long %>%
   left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD") %>%
@@ -1792,12 +1803,13 @@ mrate.mfac.depth <-
   left_join(bci.traits %>% dplyr::select(form1, sp), by = "sp") %>%
   # mutate(sp.plot = factor(sp, levels = unique(sp[order(rdi.gr)]), ordered = TRUE)) %>%
   mutate(size = as.character(size)) %>%
+  subset(size == "large" & form1 == "T") %>% droplevels()
+mrate.mfac.depth <- mrate.depth %>%
   right_join(mfac.interval.long[[mfac.on]], by = c("interval.num", "sp", "size")) %>%
   mutate(sp_size = paste(sp, size, sep = "_")) %>%
   group_by(sp, size, censusint.m) %>%
   mutate(mfac.soil.column = sum(mfac, na.rm = TRUE)) %>%
-  ungroup(sp, interval) %>%
-  subset(size == "large" & form1 == "T")
+  ungroup(sp, interval)
 mrate.mfac.depth.to.rdi.gr <- mrate.mfac.depth %>%
   group_by(sp, size) %>%
   subset(!depth > rdi.gr) %>%
@@ -1833,7 +1845,7 @@ mrate.mfac.depth.to.rdi.mr <- mrate.mfac.depth %>%
   mutate(mfac.soil.column.mr = sum(mfac, na.rm = TRUE)) %>%
   ungroup(sp, size, censusint.m)
 mrate.mfac.depth.to.rdi.mr.total.int <- mrate.mfac.depth.to.rdi.mr %>%
-  dplyr::select(sp, size, mfac.soil.column.mr, censusint.m, mrate, mrate.diff, depth) %>%
+  dplyr::select(sp, size, mfac.soil.column.mr, censusint.m, mrate, diff.mrate, depth) %>%
   group_by(sp, size, censusint.m) %>%
   summarise(mfac.soil.column.mr = mean(mfac.soil.column.mr, na.rm = TRUE),
             mrate = mean(mrate, na.rm = TRUE),
@@ -2008,7 +2020,8 @@ mfac.plot.9.0 <- ggplot(mrate.mfac.depth.gr.mean.mfac, aes(x = mfac, y = depth))
                        c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0.1, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   ylab("Effective Rooting Depth (m)") +
-  xlab(expression('Days '*Psi['Soil, z = ERD']*' < '*Psi['P80, Leaf']))
+  xlab(expression(atop('Time spent below '*Psi['P80, Leaf'], '(Days over 1990-2015)')))
+  # xlab(expression('Days '*Psi['Soil, z = ERD']*' < '*Psi['P80, Leaf']))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.0, height = 3.5, width = 3.5, units='in')
 
@@ -2095,21 +2108,38 @@ mrate.mfac.depth.mean <- mrate.mfac.depth %>% subset(depth == rdi.gr) %>%
   group_by(sp, rdi.gr) %>% summarise(mrate = mean(mrate, na.rm = TRUE))
 mfac.plot.15 <- ggplot(mrate.mfac.depth.mean,
                        aes(y = mrate, x = rdi.gr)) +
-  scale_y_reverse() +
   geom_smooth(method = "lm") +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
   xlab("Effective Rooting Depth (m)") +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.3, rr.digits = 2,
+               npcx = 0.95, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.95, npcy = 0.82, size = 6) #+ scale_y_sqrt()
+ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.jpeg")),
+       plot = mfac.plot.15, height = 3, width = 3, units='in')
+
+mfac.plot.15.1 <- ggplot(mrate.depth %>% subset(!is.na(rdi.gr)) ,
+                       aes(y = mrate, x = rdi.gr)) +
+  coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
+  geom_smooth(method = "lm") +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  xlab("Effective Rooting Depth (m)")  + ylab(y.label.1) +
+  facet_grid(. ~ censusint.m) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.95, npcy = 0.95, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.2, size = 4) #+ scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.jpeg")),
-       plot = mfac.plot.15, height = 3, width = 3, units='in')
+                  npcx = 0.95, npcy = 0.82, size = 4)
+ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr.jpeg")),
+       plot = mfac.plot.15.1, height = 2.5, width = 10, units = 'in')
 
 mfac.plot.16 <- mfac.plot.15 %+% subset(mrate.mfac.depth, depth == rdi.gr) +
   facet_grid(. ~ censusint.m) +

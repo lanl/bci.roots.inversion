@@ -95,15 +95,6 @@ psi.corr.fun.ls.2 <- list(
     function(df, dflc) {
       result.df <-
         psi.study[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod+std.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(list(result.df = result.df))
-    },
-  "gr.Psi.VPD.multi" =
-    function(df, dflc) {
-      result.df <-
-        psi.study[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
           , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.VPD, na.rm = TRUE))][
             , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
@@ -518,8 +509,8 @@ psi.m <- psi %>%
   full_join(clim.daily.effect %>%
               dplyr::select(date, std.Rs.pet.PM, std.Rs.VPD,
                      std.Rs, std.pet.PM, std.VPD), by = "date")
-depth.sub <- c(soil.depths[6:length(soil.depths)])
-depth.breaks <- c(soil.depths[6:length(soil.depths)])
+depth.sub <- c(soil.depths[5:length(soil.depths)])
+depth.breaks <- c(soil.depths[5], soil.depths[7:length(soil.depths)])
 depth.labels <- c(0.5, soil.depths[8:length(soil.depths)])
 
 psi.study <- as.data.table(psi.m)[!is.na(interval),][,
@@ -648,6 +639,27 @@ ml.rsq.combine <- dplyr::bind_rows(ml.corr, .id = "corr.func") %>%
 ml.rsq.combine.best <- dplyr::bind_rows(ml.corr.best, .id = "corr.func") %>%
   transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
   unite(corr.func_sp_depth, corr.func,sp, depth, remove = FALSE)
+
+
+## Plot chosen ERD
+
+df.erd.to.plot <- ml.rsq.combine.best %>%
+  subset(corr.func == "gr.Psi.VPD") %>%
+  mutate(size = as.character(size)) %>%
+  left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
+  subset(size == "large" & form1 == "T" &
+           corr >= 0 & R2 >= 0.1 & !duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
+  transform(sp = reorder(sp, depth))
+length(unique(df.erd.to.plot$sp))
+# 32
+erd.sp.plot <- ggplot(df.erd.to.plot,
+       aes(x = sp, y = depth)) +
+  geom_point(aes(color = sp), show.legend = FALSE) +
+  ylab("Effective Rooting Depth (m)") + xlab("Species") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine.best$depth)
+ggsave("ERD_by_sp_large_canopy.jpeg",
+       plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 3.5, width = 5, units='in')
 
 grate.gfac <- gfac.interval.long <- vector(mode = "list", length = length(names.gfac))
 names(gfac.interval.long) <- names(grate.gfac) <- names.gfac
@@ -899,6 +911,7 @@ g4 <- g3 + coord_flip() +
   theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
 ggsave("psi.corr_best.depth_phenology.jpeg",
        plot = g4, file.path(figures.folder), device = "jpeg", height = 6, width = 9, units = 'in')
+
 
 ### Plot against hydraulic traits------
 

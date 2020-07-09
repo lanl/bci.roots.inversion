@@ -1268,104 +1268,131 @@ df.plot <- bci.AB %>%
                                                       "Facultative\nDeciduous", "Obligate\nDeciduous"), ordered = TRUE)) %>%
   mutate(Kmax.predict = Exponential(A = A, B = B, psi = 0))
 
-jpeg(file.path(figures.folder.kleaf, paste0("Sp.Gravity_by_deci.jpeg")),
-     width = 5, height = 2.5, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-par(mar = c(5, 5, 2, 2))
-boxplot(SG100C_AVG ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
-        ylab = expression('Wood Specific Gravity'['100C']), notch = TRUE, boxwex = 0.5)
-dev.off()
-jpeg(file.path(figures.folder.kleaf, paste0("LMALAM_by_deci.jpeg")),
-     width = 5, height = 3.5, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-par(mar = c(5, 5, 2, 2))
-boxplot(LMALAM_AVD ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
-        ylab = expression('LMA'['Lamina']), notch = TRUE, boxwex = 0.5)
-dev.off()
+# jpeg(file.path(figures.folder.kleaf, paste0("Sp.Gravity_by_deci.jpeg")),
+#      width = 5, height = 2.5, units = "in", pointsize = 10,
+#      quality = 100, res = 300)
+# par(mar = c(5, 5, 2, 2))
+# boxplot(SG100C_AVG ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
+#         ylab = expression('Wood Specific Gravity'['100C']), notch = TRUE, boxwex = 0.5)
+# dev.off()
+# jpeg(file.path(figures.folder.kleaf, paste0("LMALAM_by_deci.jpeg")),
+#      width = 5, height = 3.5, units = "in", pointsize = 10,
+#      quality = 100, res = 300)
+# par(mar = c(5, 5, 2, 2))
+# boxplot(LMALAM_AVD ~ deciduousness.label.2, data = df.plot, col = alpha(1:4, 0.8), alpha = 0.3,
+#         ylab = expression('LMA'['Lamina']), notch = TRUE, boxwex = 0.5)
+# dev.off()
 
-# df.name <- "predicted_AB_for_data_sp"
-# df.name <- "predicted_AB_for_iso_sp"
-df.name <- "predicted_AB"
-col.var <- "LMALAM_AVD"
-order.col.var <- "order.lma"
-legend.col.var <- "LMA"
-# col.var <- "SG100C_AVG"
-# order.col.var <- "order.wsg"
-# legend.col.var <- "Wood Specific Gravity"
-# col.var <- "DeciLvl"
-# order.col.var <- "order.decilvl"
-# legend.col.var <- "DeciLvl"
-# col.var <- "deci"
-# legend.col.var <- "Deciduoousness"
-# col.var <- "NILL"
-# order.col.var <- "NILL"
-# legend.col.var <- "NILL"
-std.k <- ""; ylim.k = 7.5
-# std.k <- "std.k.sp"; ylim.k = 1
-# std.k <- "std.k.comm"; ylim.k = 1
-Kmax.predict.max <- max(df.plot$Kmax.predict, na.rm = TRUE)
-if(df.name == "predicted_AB_for_iso_sp") {
-  xlim.to.plot <- c(-1, 3)
-} else {
-  xlim.to.plot <- c(0, 3)
-}
-jpeg(file.path(figures.folder.kleaf, paste0(std.k, "kmax_by_psi_color_by_", legend.col.var, "_", df.name, ".jpeg")),
-     width = 2.7, height = 2.7, units = "in", pointsize = 10,
-     quality = 100, res = 300)
-if (std.k == "") {
-  par(mar = c(4, 4.5, 1.5, 1.5))
-  plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)",
-       xlim = xlim.to.plot, ylim = c(0, ylim.k))
-  mtext(side = 2, text = "Leaf Hydraulic Conductance", line = 3)
-  mtext(side = 2, text = expression("(mmol "*m^-2*s^-1*MPa^-1*")"), line = 2)
-} else {
-  par(mar = c(4.5, 4.5, 1.5, 1.5))
-  plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)", ylab =
-         expression("Std. Leaf Hydraulic Conductance"),
-       xlim = xlim.to.plot, ylim = c(0, ylim.k))
-}
-for (i in 1:nrow(df.plot)) {
-  params <- df.plot[i, ]
-  if(df.name == "kmax_psi_data_fitted_AB"){
-    col = "gray85"; pch = 20
+var.list <- list(df.name = c("predicted_AB", "predicted_AB_for_data_sp", "predicted_AB_for_iso_sp"),
+                 col.var = c("LMALAM_AVD", "SG100C_AVG", "DeciLvl", "NILL"),
+                 order.col.var = c("order.lma", "order.wsg", "order.decilvl", "NILL"),
+                 legend.col.var = c(expression("LMA ("*g*m^-2*")"),
+                                    expression("WSG ("*g*cm^-3*")"), "Deciduoousness", ""),
+                 std.k = c("", "std.k.sp", "std.k.comm"),
+                 ylim.k = c(7.5, 1, 1))
+
+for (i in 1:length(var.list$df.name)) {
+  df.name <- var.list$df.name[i]
+  ### Data Prep
+  df.plot <- bci.AB %>%
+    subset(B >= 0 & A >= 0)
+
+  if (df.name == "predicted_AB_for_data_sp") {
+    df.plot <- df.plot %>%
+      subset(sp %in% sp.exp.param.plot$sp) %>% droplevels()
   }
-}
-for (i in 1:nrow(df.plot)) {
-  params <- df.plot[i, ]
-  df <- data.frame(psi = seq(0, 3, length.out = 100)) %>%
-    mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
-    cbind.data.frame(params, row.names = NULL)
-  if(std.k == "std.k.sp") {
-    df <- df %>% mutate(k.predict = range01(k.predict))
+  if (df.name == "predicted_AB_for_iso_sp") {
+    df.plot <- df.plot %>%
+      subset(sp %in% unique(iso.1.3.join$sp)) %>% droplevels()
   }
-  if(std.k == "std.k.comm") {
-    df <- df %>% mutate(k.predict = k.predict/Kmax.predict.max)
-  }
-  if(col.var == "NILL") {
-    lines(k.predict ~ psi, data = df) # "darkorange"
-  }
-  # Rank variable for colour assignment
-  if(col.var == "deci") {
-    lines(k.predict ~ psi, data = df, col = deciduousness) # "darkorange"
-  } else {
-    lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[i, order.col.var]]) # "darkorange"
-  }
+  df.plot <- df.plot %>%
+    left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
+    mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
+           order.lma = findInterval(LMALAM_AVD, sort(LMALAM_AVD)),
+           order.decilvl = findInterval(DeciLvl, sort(DeciLvl))) %>%
+    mutate(deciduousness.label.2 = recode_factor(as.factor(deciduous), `E` = "Evergreen", `DB` = "Brevi\nDeciduous",
+                                                 `DF` = "Facultative\nDeciduous", `DO` = "Obligate\nDeciduous")) %>%
+    transform(deciduousness.label.2 = factor(deciduousness.label.2,
+                                             levels = c("Evergreen", "Brevi\nDeciduous",
+                                                        "Facultative\nDeciduous", "Obligate\nDeciduous"), ordered = TRUE)) %>%
+    mutate(Kmax.predict = Exponential(A = A, B = B, psi = 0)) %>% droplevels()
+
+  ###
+  Kmax.predict.max <- max(df.plot$Kmax.predict, na.rm = TRUE)
+
   if(df.name == "predicted_AB_for_iso_sp") {
-    text(labels = params$sp, x = -0.2, y = df$k.predict[df$psi == df$psi[1]],
-         col = pal(nrow(df.plot))[df.plot[i, order.col.var]], cex = 0.5)
+    xlim.to.plot <- c(-1, 3)
+  } else {
+    xlim.to.plot <- c(0, 3)
+  }
+
+  for (j in 1:length(var.list$col.var)) {
+    col.var <- var.list$col.var[j]
+    order.col.var <- var.list$order.col.var[j]
+    legend.col.var <- var.list$legend.col.var[j]
+    for (k in 1:length(var.list$std.k)) {
+      std.k <- var.list$std.k[k]
+      ylim.k <- var.list$ylim.k[k]
+      jpeg(file.path(figures.folder.kleaf, paste0(std.k, "kmax_by_psi_color_by_", col.var, "_", df.name, ".jpeg")),
+           width = 2.7, height = 2.7, units = "in", pointsize = 10,
+           quality = 100, res = 300)
+      if (std.k == "") {
+        par(mar = c(4, 4.5, 1.5, 1.5))
+        plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)",
+             xlim = xlim.to.plot, ylim = c(0, ylim.k))
+        mtext(side = 2, text = "Leaf Hydraulic Conductance", line = 3)
+        mtext(side = 2, text = expression("(mmol "*m^-2*s^-1*MPa^-1*")"), line = 2)
+      } else {
+        par(mar = c(4.5, 4.5, 1.5, 1.5))
+        plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)", ylab =
+               expression("Std. Leaf Hydraulic Conductance"),
+             xlim = xlim.to.plot, ylim = c(0, ylim.k))
+      }
+      for (m in 1:nrow(df.plot)) {
+        params <- df.plot[m, ]
+        if(df.name == "kmax_psi_data_fitted_AB"){
+          col = "gray85"; pch = 20
+        }
+      }
+      for (n in 1:nrow(df.plot)) {
+        params <- df.plot[n, ]
+        df <- data.frame(psi = seq(0, 3, length.out = 100)) %>%
+          mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
+          cbind.data.frame(params, row.names = NULL)
+        if(std.k == "std.k.sp") {
+          df <- df %>% mutate(k.predict = range01(k.predict))
+        }
+        if(std.k == "std.k.comm") {
+          df <- df %>% mutate(k.predict = k.predict/Kmax.predict.max)
+        }
+        if(col.var == "NILL") {
+          lines(k.predict ~ psi, data = df) # "darkorange"
+        }
+        # Rank variable for colour assignment
+        if(col.var == "deci") {
+          lines(k.predict ~ psi, data = df, col = deciduousness) # "darkorange"
+        } else {
+          lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[n, order.col.var]]) # "darkorange"
+        }
+        if(df.name == "predicted_AB_for_iso_sp") {
+          text(labels = params$sp, x = -0.2, y = df$k.predict[df$psi == df$psi[1]],
+               col = pal(nrow(df.plot))[df.plot[n, order.col.var]], cex = 0.3)
+        }
+      }
+
+      if(col.var == "deci") {
+        ## using levels in deciduousness used by color
+        legend("topright", legend = levels(df.plot$deciduousness),
+               col = 1:4, pch=19, bty = "n")
+      } else if(col.var != "NILL") {
+        legend("topright", title = legend.col.var, col=pal(2), pch=19,
+               legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
+                                   decreasing = TRUE), 1)), bty = "n")
+      }
+      dev.off()
+    }
   }
 }
-
-if(col.var == "deci") {
-  ## using levels in deciduousness used by color
-  legend("topright", legend = levels(df.plot$deciduousness),
-         col = 1:4, pch=19, bty = "n")
-} else if(col.var != "NILL") {
-  legend("topright", title = legend.col.var, col=pal(2), pch=19,
-         legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
-                             decreasing = TRUE), 1)), bty = "n")
-}
-dev.off()
 
 
 #******************************************************
@@ -1403,7 +1430,7 @@ dev.off()
 
 ## single explanatory variable
 var.y <- c("A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "B", "B", "B","B", "B", "B")
-var.x <- c("WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "B", "data.A", "model.A",
+var.x <- c("WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "B","data.A", "model.A",
            "WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "A", "data.B", "model.B")
 for(i in 1:length(var.x)){
   jpeg(file.path(figures.folder.kstem, paste0("kmax_by_psi_", var.y[i], "_by_", var.x[i], ".jpeg")),

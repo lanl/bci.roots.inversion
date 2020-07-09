@@ -6,9 +6,11 @@ output:
   bookdown::html_document2:
     number_sections: no
     theme: flatly
+    fig_caption: yes
   bookdown::pdf_document2: default
   bookdown::word_document2:
         reference_docx: manuscriptstyle.docx
+        fig_caption: yes
 csl: new-phytologist.csl
 bibliography: references.bib
 ---
@@ -16,23 +18,27 @@ bibliography: references.bib
 ```{r, include=FALSE}
 if(!require("pacman", quietly=TRUE))install.packages("pacman")
 suppressPackageStartupMessages(
-  pacman::p_load(bookdown, knitr, pander, citr))
+  pacman::p_load(bookdown, knitr, pander, citr, broom))
 options(tinytex.verbose = TRUE)
+source("code/load.R")
+```
+
+```{r setup}
+library(knitr)
+opts_knit$set(eval.after = "fig.cap")
 ```
 
 \
 **Corresponding author**: 
 Rutuja Chitra-Tarak
-
 \
 E: arutuj@gmail.com
-
 \
 T: +1(505)
 
 # Summary
 
-- Deep water access (WA~Deep~) is believed to be an important drought-tolerance mechanism, albeit little studied. Vulnerability to embolism ($\Psi_{88, Stem}$) and safety margins ($\Psi_{min} - \Psi_{88, Stem}$) are shown to be predictors of drought-induced mortality risk, but deep water access may delay plants from reaching these critical thresholds. Here we test its role in drought-tolerance strategies of a tropical forest community (Panama) with a novel data-model approach.
+- Deep water access (WA~Deep~) is believed to be an important drought-tolerance mechanism, but under-studied. Vulnerability to embolism ($\Psi_{88, Stem}$) and safety margins ($\Psi_{min} - \Psi_{88, Stem}$) are shown to be predictors of drought-induced mortality risk, but deep water access may delay plants from reaching these critical thresholds. Here we test its role in drought-tolerance strategies of a tropical forest community (Panama) with a novel data-model approach.
 - We inversely modelled Effective Rooting Depth (ERD) for 32 large, canopy tree species by linking species growth dynamics (xx trees, 6 censuses, 1990-2015) to VPD, $\Psi_{soil}$ by depth in the whole-soil column, and a novel community-scale model of species vulnerability curves ($K_{Leaf}$ vs. $\Psi_{x}$) linking data on the same for 21 species with community-scale softer traits. We evaluated ERD by leveraging existing isotopic tracer data ($\delta^2H$). 
 - We find that deeper ERD is associated with higher hydraulic conductivity, greater vulnerability to xylem embolism, narrower safety margin, but lower mean mortality rate (*R*^2^ = 0.2, *P* = 0.0xx). Deeper ERD species spent less time below critical hydraulic thredholds indicating that ERD buffers drought-stress.  
 - The role of deep water access in alleviating mortality of drought-sensitive trees have important implications for modeling the future of tropical species and forests under climate change.
@@ -42,24 +48,28 @@ Keywords: rooting depths, drought tolerance, mortality, tropical forest, climate
 
 # Introduction
 \
-Intensifying droughts [ref] threaten tropical forests, a biome that plays a disproportionately large role in the global carbon and energy cycle, and supports half of the global biodiversity [@Bonan:2008; @Wright:20050th]. Tropical forests are considered an especially drought-vulnerable biome given their narrower range of safety margins [@Choat:2012; @Oliveira:2019], and widespread drought-induced mortality has already been observed across the tropics, especially for large and light-wooded trees [@Bennett:2015; @Chitra-Tarak:2018; @Hilker:2014; @Phillips:2010]. However, state-of-the-art dynamic global vegetation models (DGVMs) fail to capture drought-induced vegetation dynamics in the tropics [@Galbraith:2010; @Powell:2013], as underlying mechanisms of drought-tolerance are not yet fully understood, while data are limited.
+Intensifying droughts threaten tropical forests, a biome that plays a disproportionately large role in the global carbon and energy cycle, and supports half of the global biodiversity [@Bonan:2008; @Wright:20050th]. Tropical forests are considered an especially drought-vulnerable biome based on current estimates of trees' hydraulic safety margins [@Choat:2012; @Oliveira:2019]. Widespread drought-induced mortality has already been observed across the tropics for specific tree groups [@Bennett:2015; @Chitra-Tarak:2018; @Hilker:2014; @Phillips:2010]. However, state-of-the-art dynamic global vegetation models (DGVMs) fail to capture drought-induced vegetation dynamics in the tropics [@Galbraith:2010; @Powell:2013], as underlying mechanisms of drought-tolerance are not fully understood.
 
 \
-Among all the mechanisms plants employ to deal with drought, deep water access is arguably the most commonly invoked, but under-studied mechanism. Lack of data on trees rooting or water-sourcing depths has been a key bottlneck, followed by data on water-availability at those depths. A recent meta-analysis shows that maximum rooting depths are known for less than 1% of the World’s 45-53 thousand tree species [@Fan:2017; @Silk:2000]. Further, only a small fraction of those are tropical, even though ~95% of the World’s tree diversity resides in the tropics [@Silk:2000]. Tracer techniques like stable isotopes provide an indirect way of trees' water sourcing depths in which isotopic composition of water in the non-transpiring plant tissue is matched with corresponding gradient in the vertical soil depth, but such data is also available only for ~0.05% of World's tree species [@Evaristo:2016]. Rooting or water-sourcing depths are especially challenging to obtain at community-scale for species-rich tropical forests.
+Among all the mechanisms plants employ to deal with drought, deep water access is arguably the most commonly invoked, but under-studied mechanism. Lack of data on trees rooting or water-sourcing depths has been a key bottlneck, followed by data on water-availability at those depths. A recent meta-analysis documented maximum rooting depths for 318 tree species known for less than 1% of the World’s 45-53 thousand tree species [@Fan:2017; @Silk:2000]. Further, only a small fraction of those are tropical, even though ~95% of the World’s tree diversity resides in the tropics [@Silk:2000]. Tracer techniques like stable isotopes provide an indirect way of trees' water sourcing depths in which isotopic composition of water in the non-transpiring plant tissue is matched with corresponding gradient in the vertical soil depth, but such data is also available only for ~0.05% of World's tree species [@Evaristo:2016]. Community-scale data collection for rooting or water-sourcing depths is especially challenging for species-rich tropical forests.
 
 \
 Traditionally, species are thought to employ three general mechanisms to deal with drought via a variety of associated traits: (1) avoidance--dry season dormancy via deciduous leaf-habit, (2) delay--greater water access via deep rootedness or valley/riparian habitat preference; or reduced water loss via water storage and stomatal control, and (3) physiological tolerance--continued physiological function at low leaf water potential (Poorter 2008). Recent understanding of 
 
-- traits in global change
+Trees' form and function are outcome of the environment in which trees have evolved. And as cliamte changes  and Traits link to plant environment - trait - performance 
+- traits in global change as environment changes
 - trait-demography are traits really functional (link with plant performance and fitness)
 Understanding and explaining the belowground mechanisms and trade‐offs that drive variation in root traits, resource acquisition and plant performance across species
   
+Differential dynamics of water environment by depth 
+
 - Safety-efficiency trade-off in hydraulic architecture--why deep rooted trees may be both acquisitive with unsafe xylem, yet an overall safe strategy--so long as their high resource environment is stable. 
 - consequence on performance
 - the problem of large trees--large tree mortality in the tropics
 
 \
-In this study, ….growth PLC and water ...This study x times increased the mean number of Percent Loss of Hydraulic Conductivity data reported for or tropical forests on by xx %
+In this study, what we do differently: which soil depth dynamics link dynamics of water dynamics in whole-soil column, atmospheric drought via
+...This study increased the mean number of tropical forest species with data on Percent Loss of Hydraulic Conductivity data by xx %
 
 \
 We test the hypotheses that: in this hyperdiverse forest, interspecific variation in effective rooting depths of canopy trees aligns with a conservative-acquisitive trade-off axis such that trees with deeper effective rooting depths rely on a relatively stable, larger water resource and are thus associated with acquisitive hydraulic architecture: with higher maximum stem hydraulic conductance, but greater xylem vulnerability to embolism and narrow hydraulic safety margins. Despite having a drought-vulnerable xylem, in this humid forest availability of a reliable water at depth allows trees with deeper effective rooting depths to escape the meteorological drought, resulting in lower mortality rates compared to trees with shallow effective rooting depths.
@@ -73,7 +83,7 @@ In the following sections we describe the study site, the models and data used t
 We conducted this study at the seasonally dry tropical forest on Barro Colorado Island (BCI), Panama, given its extensive characterisation in terms of long-term forest demography, plant functional ecology, hydrology, including availability of an independent isotopic tracer study on trees’ water-sourcing depths (Meinzer et al.). The 1,560 hectare Barro Colorado Island was formed after the river Chagres was dammed in 1914 that created Gatun Lake, the main channel of the Panama Canal. Rainfall at BCI is seasonal with a mean annual rainfall of 2687 mm (± 515 SD over 1983-2017) and a four-month long dry season from mid-December through mid-April  (≤ 100 mm rain/month). The entire Island is forested and classified as a tropical moist forest. Although percentage of canopy species that are at least partly deciduous during the dry season is 28%, the maximum percentage of deciduous individuals in the canopy is only 6.3%, and the percentage of crown area that is deciduous is estimated at 9.7% (Condit et al., 2000). Long-term hydrological monitoring at BCI began in 1972, while demographical monitoring began with the 50 ha ForestGEO plot establishment in 1981-82 (Condit, 1998; Hubbell et al., 1999) (Anderson-Texeira xx).
 
 \
-In the 50 ha plot all stems above 10 mm are mapped, tagged with a unique number, identified to species level and measured every 5 years through 1985-2015 for diameter growth, mortality as well as recruitment of new stems into the 10 mm size class (Hubbell, S.P., Condit, R., and Foster, R.B., 2010; Condit et al., 2012). This inventory represents 321 woody species across the eight censuses. Aside from a 2 ha patch of ~ 100 year old secondary forest at the north-eastern corner of the plot the remaining 48 ha represent old growth forest that was never clear cut for agriculture (Piperno 1992). The plot (100 m x 50 m) was originally chosen for its relative uniformity of relief and other physical conditions; the elevation range is only 40 m (120-160 m) (Harms 2001). The plot covers most of the upper catchment of Conrad Creek. The shallow valley of this creek is the main interruption to the otherwise mostly flat or gently sloping plot. The valley gives rise to the 1.5-ha swamp at the end of the wet season. Soils of the plot are homogenous with red light clays, described as the Ava soil type, accounting for 72.4% of the plot (BCI soil survey report). The topsoil field texture is silty clay loam that gradually fines to silty clay in the subsoil. Soil is mostly free draining, but restricted subsoil permeability gives rise to temporary wet season ponding. Detailed descriptions of the climate, geology, flora and fauna of BCI can be found in Croat (1978), Leigh et al. (1982) and Gentry (1990).
+In the 50 ha plot all stems above 10 mm are mapped, tagged with a unique number, identified to species level and measured every 5 years through 1985-2015 for diameter growth, mortality as well as recruitment of new stems into the 10 mm size class (Hubbell, S.P., Condit, R., and Foster, R.B., 2010; Condit et al., 2012). This inventory represents 321 woody species across the eight censuses. Aside from a 2 ha patch of ~100 year old secondary forest at the north-eastern corner of the plot the remaining 48 ha represent old growth forest that was never clear cut for agriculture (Piperno 1992). The plot (100 m x 50 m) was originally chosen for its relative uniformity of relief and other physical conditions; the elevation range is only 40 m (120-160 m) (Harms 2001). The plot covers most of the upper catchment of Conrad Creek. The shallow valley of this creek is the main interruption to the otherwise mostly flat or gently sloping plot. The valley gives rise to the 1.5-ha swamp at the end of the wet season. Soils of the plot are homogenous with red light clays, described as the Ava soil type, accounting for 72.4% of the plot (BCI soil survey report). The topsoil field texture is silty clay loam that gradually fines to silty clay in the subsoil. Soil is mostly free draining, but restricted subsoil permeability gives rise to temporary wet season ponding. Detailed descriptions of the climate, geology, flora and fauna of BCI can be found in Croat (1978), Leigh et al. (1982) and Gentry (1990).
 
 ## Model ELM-FATES for Soil Matric Potentials
 
@@ -83,22 +93,25 @@ In the 50 ha plot all stems above 10 mm are mapped, tagged with a unique number,
 To estimate dynamics of water availability by depth over the forest’s root zone, we implemented a 1-D hydrological model, the Energy Exascale Earth System Land Model (ELM), coupled with a Functionally Assembled Terrestrial Ecosystem Simulator (FATES) (hereafter, ELM-FATES). FATES is a state-of-the-art, community-based, open-source model widely used for studying climate-vegetation interactions. FATES is considered a next generation vegetation dynamics model for ELM, with a size-structured group of plants (cohorts) and successional trajectory-based patches using the ecosystem demography approach...... (How ELM talks to FATES)...Detailed descriptions can be found elsewhere (Koven et al., 2020) Fisher et al ).
 
 \
-Below we describe the equation of water balance in ELM-FATES that is most relevant for our study site, even though ELM-FATES is capable of incorporating numerous other hydrological processes relevant for wetlands and lakes and snow (CLM4.5 Tech Note). ELM-FATES parameterizes interception, throughfall, canopy drip, infiltration, evaporation, surface runoff, subsurface drainage, redistribution within the soil column, and groundwater discharge and recharge so as to simulate changes in canopy water ΔWcan, surface water ΔWsfc, soil water ΔWliq, i and water in the unconfined aquifer ΔWa (omitting processes relevant to snow or wetlands and lakes), and can be described as
+Below we describe the equation of water balance in ELM-FATES that is most relevant for our study site, even though ELM-FATES is capable of incorporating numerous other hydrological processes relevant for wetlands and lakes and snow (CLM4.5 Tech Note). ELM-FATES parameterizes interception, throughfall, canopy drip, infiltration, evaporation, surface runoff, subsurface drainage, redistribution within the soil column, and groundwater discharge and recharge so as to simulate changes in canopy water $\Delta W_{can}$, surface water $\Delta W_{sfc}$, soil water $\Delta W_{liq, z}$, and water in the unconfined aquifer $\Delta W_{a}$ (omitting processes relevant to snow or wetlands and lakes), and can be described as
 
- $\Delta W_{can} + \Delta W_{sfc} + \sum_{z=1}^{15} \Delta W_{liq,z} + \Delta W_{a} = \left(q_{rain} - E_{v} - E_{g} - q_{over} - q_{h2osfc} - q_{drai}\right).\Delta t$,        Eq. (1)
+\begin{equation}
+\Delta W_{can} + \Delta W_{sfc} + \sum_{z=1}^{15} \Delta W_{liq,z} + \Delta W_{a} = \left(q_{rain} - E_{v} - E_{g} - q_{over} - q_{h2osfc} - q_{drai}\right)\Delta t
+(\#eq:water-balance)
+\end{equation}
 
 where, $q_{rain}$ is rainfall, $E_{v}$ is evapotranspiration (ET) of the forest, $E_{g}$ is ground evaporation, $q_{over}$ is surface runoff, $q_{h2osfc}$ is runoff from surface water storage, $q_{drai}$ is sub-surface drainage (all in mm H2O) and $\Delta t$ is the time-step. z are the 15 soil layers exponentially distributed in depth, here, (r soil.depths) (m).
 
 ### Model parameterization
 \
-To parameterise the model, we identified eleven parameters relevant for in eq (1), determined their ranges based on literature for the study site or for the tropics (Table 1), and sampled 10, 000 ensembles from this parameter space with Latin Hypercube Sampling.
+To parameterise the model, we identified eleven parameters relevant for in Eq. \@ref(eq:water-balance), determined their ranges based on literature for the study site or for the tropics ([Table 1](#param)), and sampled 10, 000 ensembles from this parameter space with Latin Hypercube Sampling.
 
 \
-We ran ELM-FATES for these 10, 000 ensembles with hourly climate drivers from 1985-2018 initialised with the stand structure of the 50 ha plot in a single site mode (0.1 degree x 0.1 degree centered at 9.1530 $^\circ$N, 280.2539 $^\circ$E). As our key interest here was in soil water availability rather than forest dynamics, we ran ELM-FATES in simplified modes: static stand structure and without plant hydrodynamics, and with a single Plant Functional Type (PFT) of evergreen trees. The latter choice was because only 9.7% of BCI crown area is dry-season deciduous and addition of dry-deciduous PFT did not significantly alter results (not shown).
+We ran ELM-FATES for these 10,000 ensembles with hourly climate drivers from 1985-2018 initialised with the stand structure of the 50 ha plot in a single site mode (0.1$^\circ$ x 0.1$^\circ$ centered at 9.1530 $^\circ$N, 280.2539 $^\circ$E). As our key interest here was in soil water availability rather than forest dynamics, we ran ELM-FATES in simplified modes: static stand structure and without plant hydrodynamics, and with a single Plant Functional Type (PFT) of evergreen trees. The latter waws chosen as only 9.7% of BCI crown area is dry-season deciduous and addition of dry-deciduous PFT did not significantly alter results (not shown).
 
 ### Model evaluation
 \
-We calibrated the model against three key fluxes in Eq. (1), namely, (i) evapotranspiration ($E_{v} + E_{g}$) from the eddy flux tower, (ii) stream discharge for the Conrad Catchment ($q_{over} + q_{drai}$) and (iii) Volumetric Water Content (VWC) obtained with Time Domain Reflectometry (TDR) at three depths (10, 40 and 100 cm; relating to $W_{liq, z}$) at point location as well as opportunistic dry season VWC measured over those depths for the entire 50-ha plot (Figure \@ref(fig:hydro-calib). Among the 10,000 parameter ensembles we chose 100 ensembles that best-fit all three fluxes simultaneously (add details...that is those that maximised the sum of regression coefficients between observed and simulated variables.) See [Table 1](#param) for best-fit parameter ranges.
+We calibrated the model against three key fluxes in Eq. \@ref(eq:water-balance), namely, (i) evapotranspiration ($E_{v} + E_{g}$) from the eddy flux tower, (ii) stream discharge for the Conrad Catchment ($q_{over} + q_{drai}$) and (iii) Volumetric Water Content (VWC) obtained with Time Domain Reflectometry (TDR) at three depths (10, 40 and 100 cm; relating to $W_{liq, z}$) at point location as well as opportunistic dry season VWC measured over those depths for the entire 50-ha plot (Figure \@ref(fig:hydro-calib). Among the 10,000 parameter ensembles we chose 100 ensembles that best-fit all three fluxes simultaneously (add details...that is those that maximised the sum of regression coefficients between observed and simulated variables.) See [Table 1](#param) for best-fit parameter ranges.
 
 
 ```{r hydro-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap ="\\label{lab-hydro-calib}Model evaluation: Observations (red line) of Volumetric Water Content, Evapotranspiration and stream discharge aginst simulations (blue lines) from 100 best-fit parameter ensembles runs of ELM-FATES. This figure will be reformatted to compose individual figures into one."}
@@ -110,13 +123,34 @@ bottom_row <- cowplot::plot_grid(p2, p3, labels = c('B', 'C'), label_size = 12, 
 cowplot::plot_grid(p1, bottom_row, labels = c('A', ''), label_size = 12, ncol = 1, rel_widths = c(2, 1))
 ```
 
-## Model for Percent Loss of Leaf Conductivity
+## Model for Leaf Vulnerability Curves at community-scale
 
-```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "30%", fig.pos = 'H', fig.cap = "\\label{lab-comm-plc-curves}Modelled 'vulnerability curves' for standardized *K*~Leaf~ vs. $\\Psi$~Leaf~ for 189 tree species from Panama, color coded by Wood Specific Gravity (units)."}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_Specific Gravity_predicted_AB.jpeg"))
+We measured ($K_{x, Leaf}$ vs. $\Psi_{x, Leaf}$) on adult trees of `r length(unique(data.model.AB[!is.na(data.model.AB$data.A),]$sp))` common species (see SI x). We fitted exponential, sigmoidal, logistic and exponential form of equations to species-level data as prescribed by [@GUYOT:2011] and based on AIC criteria chose exponential form as the best-fitting one (Fig. \@ref(fig:obs-plc-curves)), described as
+
+\begin{equation}
+K_{Leaf} = y_0 + Ae^{-B\Psi_{Leaf}} + error
+(\#eq:vc-exp)
+\end{equation}
+
+where $A$ and $B$ are fitted species-specific parameters.
+
+We fitted parameters $A$ and $B$ in Eq. \@ref(eq:vc-exp) with polynomial equations a functions of two traits that were available at community-scale, namely, $WSG$ and $LMA$, defined as mean wood specific gravity after drying at 100$^\circ$C (g cm^{-3}^) and mean leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules (g m^{-2}^) for leaves receiving direct sunlight, respectively. 
+
+\begin{equation}
+A = a_3WSG^2 + a_2B + a_1B^2 + a_0 + error
+(\#eq:a-mod)
+\end{equation}
+
+\begin{equation}
+B = b_3WSG^2 + b_2WSG.LMA + b_1LMA^2 + b_0 + error
+(\#eq:b-mod)
+\end{equation}
+
+where $(a_0, a_1, a_2, a_3, b_0, b_1, b_2, b_3)$ are coefficients. $WSG$ & parameter $B$ explained large variation in parameter $A$ (Eq. \@ref(eq:a-mod); Adj. R^2^ = `r signif(glance(k_by_psi.models[[2]])$adj.r.squared, 2)`; *P* = `r  signif(glance(k_by_psi.models[[2]])$p.value, 2)`; also see Fig. \@ref(fig:ab-fit)). $WSG$ & $LMA$ explained large variation in parameter $B$ (Eq. \@ref(eq:b-mod); Adj. *R*^2^ = `r signif(glance(k_by_psi.models[[1]])$adj.r.squared, 2)`; *P* = `r  signif(glance(k_by_psi.models[[1]])$p.value, 2)`). We thus sequentially used Eq. (\#eq:b-mod) and (\#eq:a-mod) to predict parameters $B$ and $A$, respectively, for the `r length(unique(data.model.AB$sp))` species for which WSG and LMA data were available and fitted vulnerability curves (see Fig. \@ref(fig:comm-plc-curves)).
+
+```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "30%", fig.pos = 'H', fig.cap = paste("\\label{lab-comm-plc-curves} Modelled standardized 'Vulnerability curves' for  $K_{x, Leaf}$ vs. $\\Psi_{x, Leaf}$ at community-scale based on communit-scale data on $WSG$ & $LMA$ and their relationships with vulnerability curve parameters measured for a few species. Each line represents a species, color coded by $WSG$.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_Wood Specific Gravity_predicted_AB.jpeg"))
 ```
-
-See Figure \@ref(fig:comm-plc-curves) 
 
 ## Model for Effective Rooting Depths (ERD)
 
@@ -137,7 +171,7 @@ To evaluate whether ERD was associated with above-ground hydraulic traits (*n* =
 
 ## Mortality Analyses and Extreme Drought Experience
 
-To test whether ERD plays a role in alleviating mortality risk, we regressed species ERD against mean mortality rates over the 33 year record (1985-2015). To assess whether this may be due to deeper ERD species escaping the experience of catastrophic soil drought, we calculated the proportion of days over the study period (1990-2015) for which soil water potentials in the soil zone matching species ERD (𝚿ERD) were below species P80, leaf.  
+We calculated mortality rates for large trees (>=10 cm DBH) of xx canopy species for each of the seven census interval ($int$) in the 33 year record (1985-2015; $Mort_{int}$) and a species mean mortality rate across those intervals ($Mort_{mean} = \frac{1}{int}\sum_{int=1}^{6} Mort_{int}$). To test whether $ERD$ plays a role in alleviating mortality risk, we regressed species $ERD$ against species ($Mort_{mean}$). To assess whether this may be due to deeper $ERD$ species escaping the experience of catastrophic soil drought, we calculated the proportion of days over the study period (1990-2015) for which soil water potential in the soil zone matching species ERD ($\Psi_{x, ERD}$) were below species $\Psi_{80,Leaf}$.
 
 All statistical analyses were done in R statistical environment (version 3.5.3, @R:2020).
 
@@ -148,24 +182,23 @@ All statistical analyses were done in R statistical environment (version 3.5.3, 
 \
 In this forest modelled Effective Rooting Depths (ERD) for the 32 large, canopy tree species varied from 0.5 m to 13 m (Figure \@ref(fig:sp-erd)). For the subset of species for which hydraulic properties were available, species with deeper ERD showed greater maximum stem hydraulic conductance ($K_{max, Stem}$; *R*^2^ = 0.39, *P* = 0.098, *n* = 8; Figure \@ref(fig:erd-hyd)A), less negative leaf Turgor Loss Point ($\Psi_{TLP}$); *R*^2^ = 0.6, p = 0.024, *n* = 8; Figure \@ref(fig:erd-hyd)B), greater vulnerability to embolism from cavitation with less negative ($\Psi_{88, Stem}$) (*R*^2^ = 0.72, p = 0.007, *n* = 8; Figure \@ref(fig:erd-hyd)C), and narrower hydraulic safety margins ($\Psi_{min} - \Psi_{88, Stem}$; *R*^2^ = 0.74, p = 0.013, *n* = 8; Figure \@ref(fig:erd-hyd)D). 
 
-```{r sp-erd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap="\\label{lab-sp-erd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for 32 large, canopy species of Barro Colorado Island. See Table S2 for scientific names of species codes"}
+```{r sp-erd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap= paste0("\\label{lab-sp-erd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for ", length(unique(erd.data$R2)) ," large, canopy species of Barro Colorado Island. See Table S2 for scientific names of species codes")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/ERD_by_sp_large_canopy.jpeg"))
 ```
 
 
-```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap ="\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus hydraulic propertiese for seven large, canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets."}
+```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus hydraulic propertiese for seven large, canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/Select_traits_depth.jpeg"))
 ```
 
 ## Effective Rooting Depths, Experienced Drought and Mortality
 
 \
-Species with deeper ERD showed lower mean mortality rates across the 33 year record (1982-2015; *R*^2^ = 0.13, *P* = 0.029, *n* = xx; Figure \@ref(fig:erd-mort)). For five out of seven census intervals, species with shallower ERD had significantly higher mortality anomalies (MortalityCensus Interval, sp - Mean(MortalityCensus Interval, sp) than deeper ERD species; Figure (\@ref(fig:erd-mort-anom)). Analysis of time spent under catastrophic soil drought showed that the proportion of days species $\Psi_{z = ERD}$ was more negative than species $\Psi_{80, Leaf}$ decreased with species ERD (Figure \@ref(fig:erd-time)). Species with ERD deeper than 1 m did not cross species $\Psi_{80, Leaf}$ at all for the entire 25 year period for which soil water potential was modelled (1990-2015). 
+Species with deeper $ERD$ showed lower mean mortality rates across the 33 year record (1982-2015; *R*^2^ = 0.13, *P* = 0.029, *n* = xx; Figure \@ref(fig:erd-mort)). For five out of seven census intervals, species with shallower $ERD$ had significantly higher mortality anomalies ($Mort_{int}$ - $Mort{mean}$ than deeper ERD species; Figure (\@ref(fig:erd-mort-anom)). Analysis of time spent under catastrophic soil drought showed that the proportion of days species $\Psi_{x,~ERD}$ was more negative than species $\Psi_{80, Leaf}$ decreased with species ERD (Figure \@ref(fig:erd-time)). Species with ERD deeper than 1 m did not cross species $\Psi_{80, Leaf}$ at all for the entire 25 year period for which soil water potential $\Psi_{x,~z}$ was modelled (1990-2015). 
 
 ```{r erd-mort, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort}Mortality rate (mean $\\pm$ (add error)) versus Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for xx canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_rate_by rdi.gr.jpeg"))
 ```
-
 
 ```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-time}Species modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{x, z}$ was below $\\Psi_{80,Leaf}$ over 1990-2015, where z is the soil depth matching species ERD--for xx canopy species found on Barro Colorado Island. (Are *R*^2^ and *P*-values needed here?)"}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mean_mfac vs. rdi.gr.jpeg"))
@@ -209,11 +242,11 @@ knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Dept
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
 ```
 
-```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-obs-plc-curves} 'vulnerability curves' fitted to observed data shown as standardized *K*~Leaf~ vs. $\\Psi$~Leaf~ for 21 tree species from Panama, color coded by Wood Specific Gravity (units)."}
+```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-obs-plc-curves} 'vulnerability curves' fitted to observed data shown as standardized *K*~Leaf~ vs. $\\Psi$~Leaf~ for `r length(unique(data.model.AB[!is.na(data.model.AB$data.A),]$sp))` tree species from Panama, color coded by Wood Specific Gravity (units)."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.commkmax_by_psi_color_by_Specific Gravity_predicted_AB.jpeg"))
 ```
 
-```{r ab-fit, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', fresults = "asis", fig.cap = "\\label{lab-ab-fit}Parameters of 'vulnerability curve' (Eq.) fitted to data versus predicted from soft traits (Eq.)"}
+```{r ab-fit, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', fresults = "asis", fig.cap = "\\label{lab-ab-fit}Parameters $A$ & $B$ of 'vulnerability curve' fitted to data versus predicted from WSG and LMA"}
 p1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/A_data_vs_model.jpeg", scale = 1)
 p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/B_data_vs_model.jpeg", scale = 1)
 cowplot::plot_grid(p1, p2, ncol = 2, labels = "AUTO")
@@ -234,18 +267,20 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/diff.mortality_by 
 | S.N. | Parameter | Description | Range (Units) | Method of determination with reference
 | -- | ------ | ------------- | ------------- |  ------------------------------------------------------------------------------------------------- |
 | 1 | fates_leaf_ BB_slope | stomatal slope parameter, as per Ball-Berry | 4 - 16 Unitless  | The range of Ball Berry parameter fitted across several studies as compiled in Table 2 of (Medlyn et al. 2011) | 
-| 2 | fates_leaf_ slatop | Specific Leaf Area (SLA) at the top of canopy, projected area basis | 0.0042 - 0.0400 m^2^/gC | Based on the observed range of Leaf Mass Area (LMA)--24.97 to 235.8 g per m^2^-- for individual tree variation across 51 tree species in Barro Colorado Island (this study), and assumption of 50% carbon content in biomass. |  
-| 3 | fates_leaf_ vcmax25top | Maximum carboxylation rate of Rubisco at 25 $^\circ C$, canopy top | 22.7 - 92.5 umol CO^2^/m^2^/s | Observed range of Vcmax at 25 $^\circ C$ for tropical tree species under relative radiation of 50% or greater, thereby excluding highly shaded leaves. Values derived with a conversion specific for CLM model are used. (Ali et al. 2015) | 
-| 4 | fates_roota_ par | CLM rooting distribution parameter | 5.9 - 7.4 per m | Parameter a in Eq. 2 in (Zeng 2001) that regulates the shape of the rooting profile. Range corresponds to this parameter specified for BATS (or IGBP) land cover classified Deciduous Broadleaf Trees (5.9 m-1) and Evergreen Broadleaf Trees  (7.4 m-1) as given in Table 1 (or 2) of (Zeng 2001). | 
-| 5 | fates_rootb_ par | CLM rooting distribution parameter | 0.217 - 1.956  per m | Parameter b in Eq. 2 in (Zeng 2001) that regulates the depth of the rooting profile. Chosen range of *b* is derived using this equation so as to fit the observed range of rooting depth (d~r~) of 2 - 18 m for Tropical Deciduous Forest (mean ± Standard Error (SE); 3.7 ± 0.5, *n* = 5 trees; min = 2, max = 4.7)  and Tropical Evergreen Forest (mean $\pm$ S.E.; 7.3 $\pm$ 0.5, n = 3 trees and 3 communities; min = 2, max = 18 m) combined (Canadell et al. 1996). Besides the direct observation of roots at 18 m included by (Nepstad et al. 1994) in Paragominas, eastern Amazonia that is included in the above study; in Tapajos, eastern Amazonia water extraction by roots was also inferred up to 18 m. (Davidson et al. Forest Science 2011) |
+| 2 | fates_leaf_ slatop | Specific Leaf Area (SLA) at the top of canopy, projected area basis | 0.0042 - 0.0400 $m^2/gC$ | Based on the observed range of Leaf Mass Area (LMA)--24.97 to 235.8 $g/m^2$-- for individual tree variation across 51 tree species in Barro Colorado Island (this study), and assumption of 50% carbon content in biomass. |  
+| 3 | fates_leaf_ vcmax25top | Maximum carboxylation rate of Rubisco at 25 $^\circ$C, canopy top | 22.7 - 92.5 umol $CO_2/m^2/s$ | Observed range of Vcmax at 25 $^\circ$C for tropical tree species under relative radiation of 50% or greater, thereby excluding highly shaded leaves. Values derived with a conversion specific for CLM model are used. (Ali et al. 2015) | 
+| 4 | fates_roota_ par | CLM rooting distribution parameter | 5.9 - 7.4 per m | Parameter a in Eq. 2 in (Zeng 2001) that regulates the shape of the rooting profile. Range corresponds to this parameter specified for BATS (or IGBP) land cover classified Deciduous Broadleaf Trees (5.9 $m^{-1}$ and Evergreen Broadleaf Trees  (7.4 $m^{-1}$) as given in Table 1 (or 2) of (Zeng 2001). | 
+| 5 | fates_rootb_ par | CLM rooting distribution parameter | 0.217 - 1.956 $m^{-1}$ | Parameter b in Eq. 2 in (Zeng 2001) that regulates the depth of the rooting profile. Chosen range of *b* is derived using this equation so as to fit the observed range of rooting depth (d~r~) of 2 - 18 m for Tropical Deciduous Forest (mean ± Standard Error (SE); 3.7 ± 0.5, *n* = 5 trees; min = 2, max = 4.7)  and Tropical Evergreen Forest (mean $\pm$ S.E.; 7.3 $\pm$ 0.5, n = 3 trees and 3 communities; min = 2, max = 18 m) combined (Canadell et al. 1996). Besides the direct observation of roots at 18 m included by (Nepstad et al. 1994) in Paragominas, eastern Amazonia that is included in the above study; in Tapajos, eastern Amazonia water extraction by roots was also inferred up to 18 m. (Davidson et al. Forest Science 2011) |
 | 6 | fates_smpsc | Soil water potential at full stomatal closure | 113000 - 242000 mm | Based on observed range of -1.13 to -2.42 MPa for leaf turgor loss point for individual tree variation across 49 BCI tree species. This study| 
 | 7 | aveDTB | Distance to bedrock | 3 - 18 m | Ben Turner; pers. comm. | 
 | 8 | fmax | The maximum fractional saturated area |  unitless | Empirical | 
 | 9 | HKSAT | Soil hydraulic conductivity profile | 0.007 - 0.014 mm/s for $\le$ 12.5 cm; 5.56e-05, 0.0003 for $\ge$ 60 cm | To account for high macroporosity and direct flow paths in tropical soils(Broedel et al. 2017; Tomasella and Hodnett 1996)(Kinner and Stallard 2004; Broedel et al. 2017; Tomasella and Hodnett 1996) For Conrad catchment observed median Ksat (95%CI) for 12.5 cm depth is 38.3 mm/hr (25.4-51.2, *n* = 75), while for 60 cm depth 0.7 (0.2, 1.2, *n* = 40) mm/hr. For reference a storm with 12.5 mm/hr rainfall intensity has a 0.2 probability of occuring in any given rainfall event (Kinner and Stallard 2004). | 
 | 10 | HKSAT_ADJ | Adjusting factor for soil hydraulic conductivity | 1 - 8 unitless | To account for high macroporosity and direct flow paths in tropical soils that is not accounted for by small soil core samples (Broedel et al. 2017; Tomasella and Hodnett 1996)(Kinner and Stallard 2004; Broedel et al. 2017; Tomasella and Hodnett 1996) | 
-| 11 | fpi_max | Maximum interception fraction of precipitation | 0.05-0.44 | Based on throughfall data from (Zimmermann et al. 2010) and precipitation data for BCI from STRI Physical Monitoring program, defined for precipitation events greater than 10 mm. | 
+| 11 | fpi_max | Maximum interception fraction of precipitation | 0.05-0.44 unitless | Based on throughfall data from (Zimmermann et al. 2010) and precipitation data for BCI from STRI Physical Monitoring program, defined for precipitation events greater than 10 mm. | 
 
+### Appendix A
 
+#### 1. 
 # References
 
 

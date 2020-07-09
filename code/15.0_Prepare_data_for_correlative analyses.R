@@ -92,7 +92,6 @@ ggpairs.theme <- theme(strip.background = element_rect(fill = "white"),
                        panel.grid.minor = element_blank()) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 
-
 #******************************************************
 ## Load Isotopic data-----
 #******************************************************
@@ -1006,7 +1005,7 @@ sp.exp.param <- leaf_cond.models %>% subset(model_type == "Exponential") %>%
   left_join(traits.for.kcurves, by = "sp") %>%
   left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   left_join(bci.traits %>%
-              select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD), by = "sp")
+              select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD, HEIGHT_AVG, WSG_CHAVE), by = "sp")
 range(sp.exp.param$Kmax, na.rm = TRUE)
 # 0.9679718 9.9476435
 range(sp.exp.param$Kmax_at_0.1, na.rm = TRUE)
@@ -1056,19 +1055,62 @@ for(i in 1:length(var.x)){
 }
 
 ## Best R2 have two variables
-k_by_psi.models <- vector(mode = "list", length = 2)
-k_by_psi.models[[1]] <- lm(B ~ polym(SG100C_AVG, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
-summary(k_by_psi.models[[1]])
+k_by_psi.models <- vector(mode = "list", length = 10)
+names(k_by_psi.models) <- c("B.WSG.LMA", "A.B.LMA", "LMA.LAM.LEAF", "LMA.LAM.DISC", "WSG.100.Chave",
+                            "B.WSG", "B.LMA", "A.LMA", "A.WSG", "A.WSG.LMA")
+k_by_psi.models$B.WSG.LMA <- lm(B ~ polym(SG100C_AVG, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$B.WSG.LMA)
 # Adjusted R-squared:  0.8122;  p-value: 0.001392
 ## with only SG100C_AVG, R-squared:  0.547; p-value: 0.0006908
-k_by_psi.models[[2]]<- lm(A ~ polym(B, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
-summary(k_by_psi.models[[2]])
-# Adjusted R-squared:  0.667, ,  p-value: 0.004658
+k_by_psi.models$A.B.LMA<- lm(A ~ polym(B, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$A.B.LMA)
+# Adjusted R-squared:  0.667, p-value: 0.004658
+
+## Species LMALMA_AVD & SG100C_AVGgap-filled
+sp.soft.filled <- list()
 ## But LMALMA_AVD are fewer than LMALEAF_AVD, so filling up some gaps in them
-k_by_psi.models[[3]] <- lm(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
-summary(k_by_psi.models[[3]])
+sp.soft.filled$LMALEAF_AVD <- length(bci.traits$LMALAM_AVD[is.na(bci.traits$LMALAM_AVD) & !is.na(bci.traits$LMALEAF_AVD)])
+# 50 sp can be filled
+k_by_psi.models$LMA.LAM.LEAF <- lm(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
+summary(k_by_psi.models$LMA.LAM.LEAF)
 plot(LMALAM_AVD ~ LMALEAF_AVD, data = bci.traits)
-# Adjusted R-squared:  0.9332 ; p-value: < 2.2e-16
+
+sp.soft.filled$LMADISC_AVD <- length(bci.traits$LMALAM_AVD[is.na(bci.traits$LMALAM_AVD) &
+                                                             is.na(bci.traits$LMALEAF_AVD) &
+                                !is.na(bci.traits$LMADISC_AVD)])
+# Only 9 sp can be filled
+k_by_psi.models$LMA.LAM.DISC <- lm(LMALAM_AVD ~ LMADISC_AVD, data = bci.traits)
+summary(k_by_psi.models$LMA.LAM.DISC)
+# Adjusted R-squared:  0.8703 p-value: < 2.2e-16
+
+sp.soft.filled$SG60C_AVG <- length(bci.traits$SG100C_AVG[is.na(bci.traits$SG100C_AVG) & !is.na(bci.traits$SG60C_AVG)])
+## So only 1 sp can be substituted by SG60, it is not filled by WSG_CHAVE, so filling up
+k_by_psi.models$WSG.100.60 <- lm(SG100C_AVG ~ SG60C_AVG, data = bci.traits)
+
+summary(k_by_psi.models$WSG.100.60)
+sp.soft.filled$WSG_CHAVE <- length(bci.traits$SG100C_AVG[is.na(bci.traits$SG100C_AVG) & !is.na(bci.traits$WSG_CHAVE)])
+## so only 10 can be substituted
+k_by_psi.models$WSG.100.Chave <- lm(SG100C_AVG ~ WSG_CHAVE, data = bci.traits)
+summary(k_by_psi.models$WSG.100.Chave)
+plot(SG100C_AVG ~ WSG_CHAVE, data = bci.traits)
+# Adjusted R-squared:  0.7543 ; p-value: < 2.2e-16
+
+## Models tried but not chosen as the explained less variance
+k_by_psi.models$B.WSG <- lm(B ~ polym(SG100C_AVG, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$B.WSG)
+# Adjusted R-squared:  0.547 ; p-value: 0.0006908
+k_by_psi.models$B.LMA <- lm(B ~ polym(LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$B.LMA)
+# Adjusted R-squared:  -0.0857; p-value: 0.6732
+k_by_psi.models$A.LMA <- lm(A ~ polym(LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$A.LMA)
+# Adjusted R-squared:  0.004515 ;   p-value: 0.3831
+k_by_psi.models$A.WSG <- lm(A ~ polym(SG100C_AVG, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$A.WSG)
+#  Adjusted R-squared:  0.2178; p-value: 0.05461
+k_by_psi.models$A.WSG.LMA <- lm(A ~ polym(SG100C_AVG, LMALAM_AVD, degree = 2, raw = TRUE), data = sp.exp.param)
+summary(k_by_psi.models$A.WSG.LMA)
+# Adjusted R-squared:  0.4049; p-value: 0.09674
 save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
 #
 # bci.AB.long <- bci.AB %>% pivot_longer(cols = -sp, names_to = "trait", values_to = "value") %>%
@@ -1081,13 +1123,28 @@ save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
 ###**********
 ## Predict A & B from soft traits and the above models
 ###**********
-bci.AB <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
-bci.AB <- bci.AB %>% mutate(LMALAM_AVD =
-                              ifelse(is.na(LMALAM_AVD),
-                                     predict(k_by_psi.models[[3]], newdata = bci.AB),
+bci.AB <- bci.traits %>% select(sp, SG100C_AVG, SG60C_AVG, WSG_CHAVE,
+                                LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD)
+
+bci.AB <- bci.AB %>% mutate(SG100C_AVG = ifelse(is.na(SG100C_AVG),
+                                     predict(k_by_psi.models$WSG.100.60, newdata = bci.AB),
+                                     SG100C_AVG),
+                            SG100C_AVG = ifelse(is.na(SG100C_AVG),
+                                                predict(k_by_psi.models$WSG.100.Chave, newdata = bci.AB),
+                                                SG100C_AVG),
+                            LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
+                                     predict(k_by_psi.models$LMA.LAM.LEAF, newdata = bci.AB),
                                      LMALAM_AVD),
-                            B = predict(k_by_psi.models[[1]], newdata = bci.AB))
-bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models[[2]], newdata = bci.AB))
+                            LMALAM_AVD =
+                              ifelse(is.na(LMALAM_AVD),
+                                     predict(k_by_psi.models$LMA.LAM.DISC, newdata = bci.AB),
+                                     LMALAM_AVD),
+                            B = predict(k_by_psi.models$B.WSG.LMA, newdata = bci.AB))
+bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models$A.B.LMA, newdata = bci.AB))
+sp.soft.filled$SG100C_AVG.gaps.left <- length(bci.AB$SG100C_AVG[is.na(bci.AB$SG100C_AVG)])
+## 95 species
+sp.soft.filled$LMALEAF_AVD.gaps.left <- length(bci.AB$LMALAM_AVD[is.na(bci.AB$LMALAM_AVD)])
+## 361 left
 
 ###**********
 ## Do params A & B predicted from soft traits match those fitted to data?
@@ -1096,7 +1153,11 @@ data.model.AB <- bci.AB %>%
   subset(B >= 0 & A >= 0) %>%
   rename(model.A = A, model.B = B) %>%
   left_join(sp.exp.param %>% select(sp, A, B) %>%
-              rename(data.A = A, data.B = B), by = "sp")
+              rename(data.A = A, data.B = B), by = "sp") %>%
+  droplevels()
+# species with AB data and modeled A B >= 0
+sp.soft.filled$AB.data.model <- length(unique(data.model.AB$sp[!is.na(data.model.AB$data.A) &
+                                 !is.na(data.model.AB$model.A) & !is.na(data.model.AB$model.B)]))
 
 for (i in 1:nrow(data.model.AB)) {
   params <- data.model.AB[i,]
@@ -1119,13 +1180,16 @@ for (i in 1:nrow(data.model.AB)) {
 }
 
 save(data.model.AB, file = file.path(results.folder, "data.model.AB.Rdata"))
+save(sp.soft.filled, file = file.path(results.folder, "sp.soft.filled.Rdata"))
 
-ggplot(data.model.AB, aes(x = model.B, y = data.B)) +
+data.model.AB.onlyboth <- data.model.AB %>% subset(!is.na(data.A) | !is.na(data.B))
+
+ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
   geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
-  geom_text(data = data.frame(x = 4.6, y = 4.0, label = "1:1"), aes(x = x, y = y, label = label), size =5) +
-  xlim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
-  ylim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
+  geom_text(data = data.frame(x = 4.0, y = 4.5, label = "1:1"), aes(x = x, y = y, label = label), size =5) +
+  xlim(range(c(data.model.AB.onlyboth$model.B, data.model.AB.onlyboth$data.B), na.rm = TRUE)) +
+  ylim(range(c(data.model.AB.onlyboth$model.B, data.model.AB.onlyboth$data.B), na.rm = TRUE)) +
   ylab(expression(italic(B)['Fitted to Data'])) +
   xlab(expression(italic(B)['Predicted from WSG, LMA'])) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -1139,12 +1203,12 @@ ggplot(data.model.AB, aes(x = model.B, y = data.B)) +
 ggsave(file.path(figures.folder.kleaf, paste0("B_data_vs_model.jpeg")),
       device = "jpeg", height = 2.2, width = 2.2, units='in')
 
-ggplot(data.model.AB, aes(x = model.A, y = data.A)) +
+ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
   geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
-  geom_text(data = data.frame(x = 4.6, y = 4.0, label = "1:1"), aes(x = x, y = y, label = label), size = 5) +
-  xlim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
-  ylim(range(c(data.model.AB$model.B, data.model.AB$data.B), na.rm = TRUE)) +
+  geom_text(data = data.frame(x = 8, y = 8.5, label = "1:1"), aes(x = x, y = y, label = label), size = 5) +
+  xlim(range(c(data.model.AB.onlyboth$model.A, data.model.AB.onlyboth$data.A), na.rm = TRUE)) +
+  ylim(range(c(data.model.AB.onlyboth$model.A, data.model.AB.onlyboth$data.A), na.rm = TRUE)) +
   ylab(expression(italic(A)['Fitted to Data'])) +
   xlab(expression(italic(A)['Predicted from LMA & '*italic(B)])) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -1157,8 +1221,6 @@ ggplot(data.model.AB, aes(x = model.A, y = data.A)) +
                   npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kleaf, paste0("A_data_vs_model.jpeg")),
        device = "jpeg", height = 2.2, width = 2.2, units='in')
-
-
 
 ###*****
 ## Plot K by PSI using fitted exponential curves
@@ -1193,7 +1255,7 @@ legend.col.var <- "LMA"
 
 df.plot <- bci.AB %>%
   subset(B >= 0 & A >= 0) %>%
-  subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
+  # subset(sp %in% sp.exp.param.plot$sp) %>% droplevels() %>%
   # subset(sp %in% unique(iso.1.3.join$sp)) %>% droplevels() %>%
   left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
@@ -1224,20 +1286,20 @@ dev.off()
 # df.name <- "predicted_AB_for_data_sp"
 # df.name <- "predicted_AB_for_iso_sp"
 df.name <- "predicted_AB"
-# col.var <- "LMALAM_AVD"
-# order.col.var <- "order.lma"
-# legend.col.var <- "LMALAM_AVD"
+col.var <- "LMALAM_AVD"
+order.col.var <- "order.lma"
+legend.col.var <- "LMA"
 # col.var <- "SG100C_AVG"
 # order.col.var <- "order.wsg"
-# legend.col.var <- "Specific Gravity"
+# legend.col.var <- "Wood Specific Gravity"
 # col.var <- "DeciLvl"
 # order.col.var <- "order.decilvl"
 # legend.col.var <- "DeciLvl"
 # col.var <- "deci"
 # legend.col.var <- "Deciduoousness"
-col.var <- "NILL"
-order.col.var <- "NILL"
-legend.col.var <- "NILL"
+# col.var <- "NILL"
+# order.col.var <- "NILL"
+# legend.col.var <- "NILL"
 std.k <- ""; ylim.k = 7.5
 # std.k <- "std.k.sp"; ylim.k = 1
 # std.k <- "std.k.comm"; ylim.k = 1
@@ -1341,7 +1403,7 @@ dev.off()
 
 ## single explanatory variable
 var.y <- c("A", "A", "A", "A", "A", "A", "A", "A", "B", "B", "B", "B", "B","B", "B", "B")
-var.x <- c("WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "B","data.A", "model.A",
+var.x <- c("WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "B", "data.A", "model.A",
            "WD", "LMA", "SG100C_AVG", "LMALAM_AVD", "LMALEAF_AVD", "A", "data.B", "model.B")
 for(i in 1:length(var.x)){
   jpeg(file.path(figures.folder.kstem, paste0("kmax_by_psi_", var.y[i], "_by_", var.x[i], ".jpeg")),

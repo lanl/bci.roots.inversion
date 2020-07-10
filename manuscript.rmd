@@ -148,9 +148,11 @@ B = b_3WSG^2 + b_2WSG.LMA + b_1LMA^2 + b_0 + error
 
 where $(a_0, a_1, a_2, a_3, b_0, b_1, b_2, b_3)$ are coefficients. $WSG$ & parameter $B$ explained large variation in parameter $A$ (Eq. \@ref(eq:a-mod); Adj. R^2^ = `r signif(glance(k_by_psi.models[[2]])$adj.r.squared, 2)`; *P* = `r  signif(glance(k_by_psi.models[[2]])$p.value, 2)`; also see Fig. \@ref(fig:ab-fit)). $WSG$ & $LMA$ explained large variation in parameter $B$ (Eq. \@ref(eq:b-mod); Adj. *R*^2^ = `r signif(glance(k_by_psi.models[[1]])$adj.r.squared, 2)`; *P* = `r  signif(glance(k_by_psi.models[[1]])$p.value, 2)`). We thus sequentially used Eq. (\#eq:b-mod) and (\#eq:a-mod) to predict parameters $B$ and $A$, respectively, for the `r length(unique(data.model.AB$sp))` species for which WSG and LMA data were available and fitted vulnerability curves (see Fig. \@ref(fig:comm-plc-curves)).
 
-```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "30%", fig.pos = 'H', fig.cap = paste("\\label{lab-comm-plc-curves} Modelled standardized 'Vulnerability curves' for  $K_{x, Leaf}$ vs. $\\Psi_{x, Leaf}$ at community-scale based on communit-scale data on $WSG$ & $LMA$ and their relationships with vulnerability curve parameters measured for a few species. Each line represents a species, color coded by $WSG$.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_Wood Specific Gravity_predicted_AB.jpeg"))
+```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "30%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-comm-plc-curves} Modelled standardized 'Vulnerability curves' ($K_{x, Leaf}$ vs. $\\Psi_{x, Leaf}$) at community-scale (", nrow(data.model.AB$sp)," species) based on species data on $WSG$ & $LMA$ and their relationships with vulnerability curve parameters measured on ", sp.soft.filled$AB.data.model," species. Each line represents a species, color coded by $WSG$.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_SG100C_AVG_predicted_AB.jpeg"))
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_LMALAM_AVD_predicted_AB.jpeg"))
 ```
+
 
 ## Model for Effective Rooting Depths (ERD)
 
@@ -160,7 +162,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/k
 
 Figure \@ref(fig:erd-iso) 
 
-```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE; m) versus dry season stable isotopic concentration $\\delta$^2^H (mean $\\pm$ (add error); ‰) for seven canopy species from Barro Colorado Island (data from [@Meinzer:1999]"}
+```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE; m) versus dry season stable isotopic concentration $\\delta$^2^H (mean $\\pm$ (add error); ‰) for ", length(subset(ml.rsq.combine.sub, source == "Meinzer et al.1999 Fig. 4" & corr.func == "gr.Psi.VPD")$sp)," canopy species from Barro Colorado Island (data from [@Meinzer:1999]")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg"))
 ```
 
@@ -187,7 +189,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/ERD_by_sp_large_ca
 ```
 
 
-```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus hydraulic propertiese for seven large, canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets."}
+```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus hydraulic propertiese for seven large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/Select_traits_depth.jpeg"))
 ```
 
@@ -200,7 +202,7 @@ Species with deeper $ERD$ showed lower mean mortality rates across the 33 year r
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_rate_by rdi.gr.jpeg"))
 ```
 
-```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-time}Species modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{x, z}$ was below $\\Psi_{80,Leaf}$ over 1990-2015, where z is the soil depth matching species ERD--for xx canopy species found on Barro Colorado Island. (Are *R*^2^ and *P*-values needed here?)"}
+```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time} Modelled Species Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{x, z}$ was below $\\Psi_{80,Leaf}$ over 1990-2015, where z is the soil depth matching species ERD--for ", ," canopy species found on Barro Colorado Island. (Are *R*^2^ and *P*-values needed here?)")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mean_mfac vs. rdi.gr.jpeg"))
 ```
 
@@ -238,6 +240,13 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi_model_daily_be
 knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg"))
 ```
 
+
+```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover} Seasonal variation in Leaf Cover Fraction for ", length(unique(sp.leaf_cover.for.model$sp[sp.leaf_cover.for.model$deciduousness != "Evergreen"]))," non-evergreen species at Barro Colorado Island. Leaf Cover Fraction for evergreen species (n = ", length(unique(sp.leaf_cover.for.model$sp[sp.leaf_cover.for.model$deciduousness == "Evergreen"])),") is assumed at 1 through the year.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/leaf.cover_BCI_single_panel_evergreensAt100.jpeg"))
+```
+
+
+
 ```{r other-erd-mods, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-other-erd-mods}All ERD models tested. See Eqns xxxx"}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
 ```
@@ -251,7 +260,6 @@ p1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_b
 p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/B_data_vs_model.jpeg", scale = 1)
 cowplot::plot_grid(p1, p2, ncol = 2, labels = "AUTO")
 ```
-
 
 ```{r erd-growth, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-growth}Scatterplot between Effective Rooting Deoth (ERD) and mean growth rate $\\pm$ (add error)for xx large, canopy species"}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/adult_Growth_vs_udi_with_outliers_sp.jpeg"))

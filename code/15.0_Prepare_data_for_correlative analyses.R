@@ -302,8 +302,7 @@ adult.mrate.long <- adult.mrate.long %>%
               subset(size %in% c("medium", "large")) %>%
               group_by(sp) %>%
               summarize(mean.mrate = mean(mrate, na.rm = TRUE),
-                        mean.grate = mean(grate, na.rm = TRUE)) %>%
-              ungroup(sp), by = "sp") %>%
+                        mean.grate = mean(grate, na.rm = TRUE)), by = "sp") %>%
   mutate(diff.mrate = mrate - mean.mrate)
 grate.long <- grate.long %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
@@ -939,6 +938,7 @@ traits.long <- traits %>% select(-DeciLvl) %>%
   droplevels()
 
 kruskal.list <- list()
+
 for(i in unique(traits.long$trait)) {
   xx <- traits.long %>% subset(trait == i)
   kruskal.list[[i]] <- cbind(trait = i, kruskal(xx$value, xx$deciduousness, alpha = 0.1, group=TRUE, p.adj="bonferroni")$groups,
@@ -1126,7 +1126,9 @@ save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
 bci.AB <- bci.traits %>% select(sp, SG100C_AVG, SG60C_AVG, WSG_CHAVE,
                                 LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD)
 
-bci.AB <- bci.AB %>% mutate(SG100C_AVG = ifelse(is.na(SG100C_AVG),
+bci.AB <- bci.AB %>% mutate(sp.LMA.sub = ifelse(!is.na(LMALAM_AVD), "original", NA),
+                            sp.WSG.sub = ifelse(!is.na(SG100C_AVG), "original", NA),
+                            SG100C_AVG = ifelse(is.na(SG100C_AVG),
                                      predict(k_by_psi.models$WSG.100.60, newdata = bci.AB),
                                      SG100C_AVG),
                             SG100C_AVG = ifelse(is.na(SG100C_AVG),
@@ -1135,12 +1137,18 @@ bci.AB <- bci.AB %>% mutate(SG100C_AVG = ifelse(is.na(SG100C_AVG),
                             LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
                                      predict(k_by_psi.models$LMA.LAM.LEAF, newdata = bci.AB),
                                      LMALAM_AVD),
+                            sp.LMA.sub = ifelse(!is.na(LMALAM_AVD) & is.na(sp.LMA.sub),
+                                                "filled-LEAF", sp.LMA.sub),
                             LMALAM_AVD =
                               ifelse(is.na(LMALAM_AVD),
                                      predict(k_by_psi.models$LMA.LAM.DISC, newdata = bci.AB),
-                                     LMALAM_AVD),
-                            B = predict(k_by_psi.models$B.WSG.LMA, newdata = bci.AB))
-bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models$A.B.LMA, newdata = bci.AB))
+                                     LMALAM_AVD))
+bci.AB <- bci.AB %>% mutate(B = predict(k_by_psi.models$B.WSG.LMA, newdata = bci.AB))
+bci.AB <- bci.AB %>% mutate(A = predict(k_by_psi.models$A.B.LMA, newdata = bci.AB),
+                            sp.LMA.sub = ifelse(!is.na(LMALAM_AVD) & is.na(sp.LMA.sub),
+                                                "filled-DISC", sp.LMA.sub),
+                            sp.WSG.sub = ifelse(!is.na(SG100C_AVG) & is.na(sp.WSG.sub),
+                                                "filled", sp.WSG.sub))
 sp.soft.filled$SG100C_AVG.gaps.left <- length(bci.AB$SG100C_AVG[is.na(bci.AB$SG100C_AVG)])
 ## 95 species
 sp.soft.filled$LMALEAF_AVD.gaps.left <- length(bci.AB$LMALAM_AVD[is.na(bci.AB$LMALAM_AVD)])
@@ -1182,7 +1190,8 @@ for (i in 1:nrow(data.model.AB)) {
 save(data.model.AB, file = file.path(results.folder, "data.model.AB.Rdata"))
 save(sp.soft.filled, file = file.path(results.folder, "sp.soft.filled.Rdata"))
 
-data.model.AB.onlyboth <- data.model.AB %>% subset(!is.na(data.A) | !is.na(data.B))
+data.model.AB.onlyboth <- data.model.AB %>% subset(!is.na(data.A) | !is.na(data.B)) %>%
+  subset(sp.LMA.sub %in% c("original", "filled-LEAF") & sp.WSG.sub == "original")
 
 ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
   geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
@@ -1198,7 +1207,8 @@ ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
+                                                  paste0(" = ", round(..p.value.., digits = 4))))),
                   npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kleaf, paste0("B_data_vs_model.jpeg")),
       device = "jpeg", height = 2.2, width = 2.2, units='in')
@@ -1217,7 +1227,8 @@ ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
+                                                 paste0(" = ", round(..p.value.., digits = 4))))),
                   npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kleaf, paste0("A_data_vs_model.jpeg")),
        device = "jpeg", height = 2.2, width = 2.2, units='in')
@@ -1484,9 +1495,9 @@ save(k_by_psi.models.stem, file = file.path(results.folder, "k_by_psi.models.ste
 ## Predict A & B from soft traits and the above models
 ###**********
 
-bci.AB.stem <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD) %>%
-  mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
-                             predict(k_by_psi.models[[3]], newdata = bci.AB.stem), LMALAM_AVD))
+bci.AB.stem <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
+bci.AB.stem <- bci.AB.stem %>% mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
+                             predict(k_by_psi.models$LMA.LAM.LEAF, newdata = bci.AB.stem), LMALAM_AVD))
 bci.AB.stem <- bci.AB.stem %>% mutate(LMA = predict(k_by_psi.models.stem[[3]], newdata = bci.AB.stem))
 bci.AB.stem <- bci.AB.stem %>% mutate(B = predict(k_by_psi.models.stem[[1]], newdata = bci.AB.stem),
                                       A = predict(k_by_psi.models.stem[[2]], newdata = bci.AB.stem))
@@ -1854,6 +1865,23 @@ f3 <- ggplot(leaf.fall.int,
 ggsave(("leaf.cover_BCI_single_panel.jpeg"),
        plot = f3, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
 
+## Substituting 100% Leaf cover through the year for Evergreens
+sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
+  left_join(deci %>% select(sp, deciduousness), by = "sp") %>%
+  mutate(leaf_cover = ifelse(deciduousness == "Evergreen", 1, leaf_cover.mean)) %>%
+  select(-leaf_cover.sd) %>%
+  as.data.frame()
+f4 <- ggplot(sp.leaf_cover.for.model,
+             aes(x = doy, y = leaf_cover)) +
+  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
+  theme(legend.position = c(0.7, 0.6), legend.title = element_blank(),
+        legend.background = element_rect(fill = "transparent")) +
+  ylab("Leaf Cover Fraction") + xlab("DOY")
+ggsave(("leaf.cover_BCI_single_panel_evergreensAt100.jpeg"),
+       plot = f4, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
+
+save(sp.leaf_cover.for.model, file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
+
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------
 #******************************************************
@@ -1883,7 +1911,7 @@ cohort <- rbind(rama95, rama97) %>%
 coh.plot.base <- ggplot(cohort) +
   guides(color = guide_legend(title = "Deciduousness"))
 
-coh.plot.plot1 <- coh.plot.base +
+coh.plot1 <- coh.plot.base +
   geom_point(aes(x = born, y = deci_sp.plot, color = deciduousness), alpha = 0.5) +
   theme(axis.text.y = element_text(size = 3))
 ggsave(("born.doy_by_sp.jpeg"),
@@ -2005,3 +2033,4 @@ coh.summ <-  cohort %>%
 
 save(cohort, file = file.path(results.folder, "cohort.Rdata"))
 save(coh.sp.summ, file = file.path(results.folder, "coh.sp.summ.Rdata"))
+

@@ -95,12 +95,12 @@ load(file = file.path(results.folder, "coh.sp.summ.Rdata"))
 # #******************************************************
 # ## output
 # #******************************************************
-# load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
-# ###
-# ml.rsq.combine.best <- ml.rsq.combine.best %>% left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
-#   mutate(depth = as.numeric(depth))
-# erd.data <- ml.rsq.combine.best %>%
-#   subset(corr >= 0 & form1 == "T" &
-#            corr.func == "gr.Psi.VPD" &
-#            R2 >= 0.1)
+load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
+###
+ml.rsq.combine.best <- ml.rsq.combine.best %>% left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
+  mutate(depth = as.numeric(depth))
+erd.data <- ml.rsq.combine.best %>%
+  subset(corr >= 0 & form1 == "T" & sp != "guapst" &
+           corr.func == "gr.Psi.VPD" & source == "Meinzer et al.1999 Fig. 4" &
+           R2 >= 0.1)
 

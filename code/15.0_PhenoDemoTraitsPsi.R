@@ -825,10 +825,11 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
 
 p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
        aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
+  coord_cartesian(ylim = c(13, 0.3)) +
   geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
-                 size = 0.5, height = 0.05) +
+                 size = 0.5, height = 0.3) +
   facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
@@ -851,32 +852,42 @@ p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
        plot = p3, file.path(figures.folder), device = "jpeg", height = 4, width = 8, units = 'in')
 
+
+ml.rsq.combine.sub <- ml.rsq.combine.sub %>% transform(models.plot1 = factor(corr.func,
+                                                                            labels = c("A", "B", "C", "D")),
+                                                       models.plot2 = factor(corr.func,
+                                                                            labels = c(expression(italic(K[italic('Leaf')])),
+                                                                                                  expression(italic(K[italic('Leaf')]*'VPD')),
+                                                                                                             expression(italic(K[italic('Leaf')]*'LeafFrac')),
+                                                                                                                        expression(italic(K[italic('Leaf')]*'VPD'*'LeafFrac')))))
+
 p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
              aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
+  coord_cartesian(ylim = c(13, 0.3)) +
   geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = sp),
                  size = 0.5, height = 0.05) +
-  facet_wrap( ~ corr.func, nrow = 1) +
+  facet_wrap( ~ models.plot1, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.15, nudge_x = 0.2,
             size = 3) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.sub$depth) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.9, npcy = 0.2, rr.digits = 2,
+               npcx = 0.98, npcy = 0.13, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.9, npcy = 0.1, size = 4) +
+                  npcx = 0.98, npcy = 0.05, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 1, size = 3) +
   theme(legend.position = "top",
         legend.direction = "horizontal") +
   guides(fill = "none", color = "none")
   # guides(fill = guide_legend(title = "Species"))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
-       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3, width = 8, units = 'in')
+       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3, width = 9, units = 'in')
 
 p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4" &
                                              corr.func == "gr.Psi.VPD"),
@@ -1890,94 +1901,6 @@ mrate.mfac.column.total.int <- mrate.mfac.column %>%
             depth = mean(depth, na.rm = TRUE)) %>%
   ungroup(sp, size, censusint.m)
 
-total.dead.rdi <- dead.long %>%
-  group_by(sp, size) %>%
-  summarise(total.dead = sum(dead, na.rm = TRUE)) %>%
-  ungroup(sp, size) %>%
-  left_join(dead.long %>% subset(census == 1985) %>%
-              dplyr::select(sp, size, abund.1982), by = c("sp", "size")) %>%
-  mutate(pc.dead = total.dead/abund.1982*100) %>%
-  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD") %>%
-              rename(rdi.gr = depth) %>%
-              dplyr::select(sp, size, rdi.gr), by = c("sp", "size")) %>%
-  left_join(subset(depth.rsq.isotopes, corr.func == "mr.Psi.VPD.I") %>%
-              rename(rdi.mr = depth) %>%
-              dplyr::select(sp, size, rdi.mr), by = c("sp", "size")) %>%
-  left_join(bci.traits %>%  dplyr::select(form1, sp), by = "sp") %>%
-  subset(size == "large" & form1 == "T") %>%
-  left_join(mrate.mfac.depth.to.rdi.gr.study, by = c("sp", "size")) %>%
-  left_join(mrate.mfac.depth.to.rdi.gr.total, by = c("sp", "size")) %>%
-  left_join(mrate.mfac.depth.to.rdi.mr.study, by = c("sp", "size")) %>%
-  left_join(mrate.mfac.depth.to.rdi.mr.total, by = c("sp", "size"))
-
-mfac.plot.1 <- ggplot(total.dead.rdi, aes(y = pc.dead, x = rdi.gr)) + #  %>% subset(pc.dead < 60)
-  geom_point() + ylab(expression('% trees dead')) +
-  xlab("Effective Rooting Depth (m)") +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.9, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.8, size = 4) +
-  scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder,
-                        "/sp_pc_trees_dead_during_the_study_period_rdi.gr.jpeg")),
-       plot = mfac.plot.1, height = 3, width = 3, units='in')
-
-mfac.plot.2 <- ggplot(total.dead.rdi, aes(y = pc.dead, x = rdi.mr)) + #  %>% subset(pc.dead < 60)
-  geom_point() + ylab(expression('% trees dead')) +
-  xlab("Effective Rooting Depth (m)") +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.9, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.8, size = 4) +
-  scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder,
-                        "/sp_pc_trees_dead_during_the_study_period_rdi.mr.jpeg")),
-       plot = mfac.plot.2, height = 3, width = 3, units='in')
-
-mfac.plot.3 <- ggplot(total.dead.rdi, aes(y = pc.dead, x = mfac.total.gr)) + #%>% subset(pc.dead < 60)
-  geom_point() + ylab(expression('% trees dead')) +
-  xlab(expression('Days '*Psi['Soil,z=ERD']*'<'*Psi['P80,Leaf'])) +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.9, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.8, size = 4) +
-  scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder,
-                        "/sp_pc_trees_dead_during_the_study_period_total days below kl80_in_rdi.gr.jpeg")),
-       plot = mfac.plot.3, height = 3, width = 3, units='in')
-
-mfac.plot.5 <- ggplot(total.dead.rdi, aes(y = pc.dead, x = mfac.total.mr)) + #  %>% subset(pc.dead < 60)
-  geom_point() + ylab(expression('% trees dead')) +
-  xlab(expression('Days '*Psi['Soil,z = RDI.mr']*'<'*Psi['P80,Leaf'])) +
-  geom_smooth(method = "lm") +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.9, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.8, size = 4) +
-  scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder,
-                        "/sp_total_trees_dead_during_the_study_period_total days below kl80_in_rdi.mr.jpeg")),
-       plot = mfac.plot.5, height = 3, width = 3, units='in')
-
 mfac.plot.7 <- ggplot(mrate.mfac.depth.to.rdi.gr.study,
        aes(x = mfac.total.gr, y = mrate.sum)) +
   # facet_wrap(censusint.m ~ ., nrow = 1) +
@@ -2346,6 +2269,39 @@ rectangles.3 <- data.frame(
   ymin = 0,
   ymax = -2.5
 )
+## For selected depths used in inverse modeling
+# depth.sub, depth.breaks, depth.labels are defined above in section:
+### Calculate Correlation of growth rates with psi by depth
+
+psi.stat.4.select <- psi %>%
+  mutate(doy = format(date, "%j"),
+         year = format(date, "%Y")) %>%
+  ## due to time nneded for model initialisation soil layers deeper than 2.9 m
+  ## are not fully recharged until the end of 1992, layer 2.9 m recharges by the end of 1992
+  subset(!year %in% c("1990")) %>%
+  subset(!year %in% c("1990", "1991") | depth == 2.9) %>%
+  subset(!year %in% c("1990", "1991", "1992") | depth < 2.9) %>%
+  subset(depth %in% depth.sub) %>%
+  mutate(depth = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
+      labels = depth.labels, right = TRUE)) %>%
+  group_by(date, doy, year, interval.yrs, depth) %>%
+  summarise(median = median(psi, na.rm = TRUE),
+            q97.5 = quantile(psi, probs = 0.975),
+            q2.5 = quantile(psi, probs = 0.025),
+            q5 = quantile(psi, probs = 0.05)) %>%
+  ungroup(doy, year, depth) %>%
+  mutate(doy = as.numeric(doy))
+
+psi.stat.5.select <- psi.stat.4.select %>%
+  group_by(doy, depth) %>%
+  summarise(median.clim = median(median, na.rm = TRUE),
+            q97.5.clim = quantile(median, probs = 0.975),
+            q2.5.clim = quantile(median, probs = 0.025),
+            q10.clim = quantile(median, probs = 0.1),
+            q5.clim = quantile(median, probs = 0.05)) %>%
+  ungroup(doy, depth) %>%
+  mutate(doy = as.numeric(doy))
+
 source("code/Utilities/plot.ticks.R")
 plot.psi.stat.5.base <- ggplot(psi.stat.5 %>% droplevels()) +
   # geom_rect(data=rectangles.3, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
@@ -2388,6 +2344,7 @@ for (i in unique(psi.stat.4$year)) {
   print(plot.psi.stat.5.yr)
 }
 dev.off()
+
 #******************************************************
 ### Census Interval psi dynamics versus climatology-------
 #******************************************************
@@ -2400,9 +2357,20 @@ psi.stat.4 <- psi.stat.4 %>%
          below.q2.5 = ifelse(median < q2.5.clim, median, NA),
          depth_year = paste(depth, year, sep = "_"))
 
+psi.stat.4.select <- psi.stat.4.select %>%
+  mutate(interval.yrs.2 = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = c(cut.breaks, max(psi.stat.4$date, na.rm = TRUE)),
+                                                       labels = c(cut.labels.2, "2015-2018"), right = TRUE))) %>%
+  left_join(psi.stat.5.select, by = c("doy", "depth")) %>%
+  mutate(below.q10 = ifelse(median < q10.clim, median, NA),
+         below.q5 = ifelse(median < q5.clim, median, NA),
+         below.q2.5 = ifelse(median < q2.5.clim, median, NA),
+         depth_year = paste(depth, year, sep = "_"))
+
+save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
 
 pct.drought.days <- psi.stat.4 %>%
-  mutate(season =  ifelse(doy < 120, "Dry Season", "Wet Season")) %>%
+  mutate(season = ifelse(doy < 120, "Dry Season", "Wet Season")) %>%
   group_by(depth, interval.yrs, interval.yrs.2, season) %>%
   summarise(pct.days.below.q10 = 100*round(sum(!is.na(below.q10))/n(), 3),
             pct.days.below.q5 = 100*round(sum(!is.na(below.q5))/n(), 3),
@@ -2455,7 +2423,6 @@ heat.fr.drought.days.q5.0.5 <- heat.fr.drought.days.base.q5 +
   geom_tile(aes(fill = pct.days.below.q5.0.5))
 ggsave("pct.days.below.q5.clim.2.5_by depth & intervalyrs&ssn_full.jpeg",
        plot = heat.fr.drought.days.q5.0.5, file.path(figures.folder), device = "jpeg", height = 6.5, width = 5, units='in')
-
 
 rectangles.4 <- data.frame(
   xmin = 120,
@@ -2522,7 +2489,6 @@ plot.psi.stat.7.interval.median <- plot.psi.stat.6.interval.base %+%
                   fill = as.factor(depth)), alpha = 0.7, show.legend = FALSE)
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_all_observed.jpeg",
        plot = plot.psi.stat.7.interval.median, file.path(figures.folder), device = "jpeg", height = 2.5, width = 7, units='in')
-
 
 plot.list.grid <- list()
 for (i in 1:length(unique(psi.stat.4$year))) {

@@ -1864,6 +1864,8 @@ mrate.mfac.depth.to.rdi.gr.study <- mrate.mfac.depth.to.rdi.gr %>%
          mrate.sum = sum(mrate, na.rm = TRUE)) %>%
   ungroup(sp, size)
 
+save(mrate.depth, file = file.path(results.folder, "mrate.depth.Rdata"))
+save(mrate.mfac.depth, file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
 ## for rdi.mr
 mrate.mfac.depth.to.rdi.mr <- mrate.mfac.depth %>%
   group_by(sp, size) %>%
@@ -1947,24 +1949,6 @@ mfac.plot.8 <- ggplot(mrate.mfac.depth %>% subset(depth == rdi.mr),
 ggsave(file.path(paste0(figures.folder, "/diff.mortality_rate_mfac in rdi.mr.jpeg")),
        plot = mfac.plot.8, height = 3, width = 9, units='in')
 
-mrate.mfac.depth.gr.mean.mfac <- subset(mrate.mfac.depth, depth == rdi.gr) %>%
-  group_by(sp) %>%
-  summarise(depth = mean(depth, na.rm = TRUE),
-            mfac = sum(mfac, na.rm = TRUE))
-# ggplot(subset(mrate.mfac.depth, depth == rdi.gr), aes(x = mfac, y = depth)) +
-#   scale_y_reverse() +
-#   geom_point(alpha = 0.7) +
-#   facet_grid(. ~ censusint.m )
-mfac.plot.9.0 <- ggplot(mrate.mfac.depth.gr.mean.mfac, aes(x = mfac, y = depth)) +
-  scale_y_continuous(trans = "rev_sqrt", breaks =
-                       c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
-  geom_jitter(height = 0.1, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
-  ylab("Effective Rooting Depth (m)") +
-  xlab(expression(atop('Time spent below '*Psi['crit'], '(Days over 1990-2015)')))
-  # xlab(expression('Days '*Psi['Soil, z = ERD']*' < '*Psi['P80, Leaf']))
-ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
-       plot = mfac.plot.9.0, height = 3.5, width = 3.5, units='in')
-
 mfac.plot.9 <- mfac.plot.8 %+% subset(mrate.mfac.depth, depth == rdi.gr) +
   xlab(expression('Days '*Psi['Soil, z = ERD']*' < '*Psi['P80, Leaf'])) +
   geom_point(aes(color = depth)) +
@@ -2044,48 +2028,12 @@ mfac.plot.14 <- ggplot(mrate.mfac.depth %>% subset(depth == rdi.mr),
 ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.mr.jpeg")),
        plot = mfac.plot.14, height = 3, width = 9, units='in')
 
-mrate.mfac.depth.mean <- mrate.mfac.depth %>% subset(depth == rdi.gr) %>%
-  group_by(sp, rdi.gr) %>% summarise(mrate = mean(mrate, na.rm = TRUE))
-mfac.plot.15 <- ggplot(mrate.mfac.depth.mean,
-                       aes(y = mrate, x = rdi.gr)) +
-  geom_smooth(method = "lm") +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
-  ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
-  xlab("Effective Rooting Depth (m)") +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 0.95, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 6) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.82, size = 6) #+ scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.jpeg")),
-       plot = mfac.plot.15, height = 3, width = 3, units='in')
 
-mfac.plot.15.1 <- ggplot(mrate.depth %>% subset(!is.na(rdi.gr)) ,
-                       aes(y = mrate, x = rdi.gr)) +
-  coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
-  geom_smooth(method = "lm") +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
-  xlab("Effective Rooting Depth (m)")  + ylab(y.label.1) +
-  facet_grid(. ~ censusint.m) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 0.95, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.82, size = 4)
-ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr.jpeg")),
-       plot = mfac.plot.15.1, height = 2.5, width = 10, units = 'in')
-
-mfac.plot.16 <- mfac.plot.15 %+% subset(mrate.mfac.depth, depth == rdi.gr) +
-  facet_grid(. ~ censusint.m) +
-  ylab(expression('Mortality Rate (% '*'year'^1*')'))
-ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_interval.jpeg")),
-       plot = mfac.plot.16, height = 3, width = 9, units='in')
+# mfac.plot.16 <- mfac.plot.15 %+% subset(mrate.mfac.depth, depth == rdi.gr) +
+#   facet_grid(. ~ censusint.m) +
+#   ylab(expression('Mortality Rate (% '*'year'^1*')'))
+# ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_interval.jpeg")),
+#        plot = mfac.plot.16, height = 3, width = 9, units='in')
 
 adult.mrate.mean <- adult.mrate.long %>%
   group_by(sp, deciduousness) %>%

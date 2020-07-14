@@ -1830,11 +1830,14 @@ mrate.depth <-
   mutate(size = as.character(size)) %>%
   subset(size == "large" & form1 == "T") %>% droplevels()
 mrate.mfac.depth <- mrate.depth %>%
-  right_join(mfac.interval.long[[mfac.on]], by = c("interval.num", "sp", "size")) %>%
+  right_join(mfac.interval.long[[mfac.on]] %>%
+               mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
+                                           `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")),
+             by = c("censusint.m", "sp", "size")) %>%
   mutate(sp_size = paste(sp, size, sep = "_")) %>%
   group_by(sp, size, censusint.m) %>%
   mutate(mfac.soil.column = sum(mfac, na.rm = TRUE)) %>%
-  ungroup(sp, interval.num)
+  ungroup(sp, censusint.m)
 mrate.mfac.depth.to.rdi.gr <- mrate.mfac.depth %>%
   group_by(sp, size) %>%
   subset(!depth > rdi.gr) %>%
@@ -1930,7 +1933,7 @@ y.label.1 <- expression(atop(Mortality[Interval], '-'~Mean[Mortality]~('%'*yr^{-
 mfac.plot.8 <- ggplot(mrate.mfac.depth %>% subset(depth == rdi.mr),
                       aes(y = diff.mrate, x = mfac)) +
   geom_point() + ylab(y.label.1) +
-  xlab(expression('Days '*Psi['Soil, z = RDI.mr']*' < '*Psi['P80, Leaf'])) +
+  xlab(expression('Days '*Psi['Soil, z = RDI.mr']*' < '*Psi['crit'])) +
   geom_smooth(method = "lm") +
   facet_grid(. ~ censusint.m ) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -1957,7 +1960,7 @@ mfac.plot.9.0 <- ggplot(mrate.mfac.depth.gr.mean.mfac, aes(x = mfac, y = depth))
                        c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0.1, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   ylab("Effective Rooting Depth (m)") +
-  xlab(expression(atop('Time spent below '*Psi['P80, Leaf'], '(Days over 1990-2015)')))
+  xlab(expression(atop('Time spent below '*Psi['crit'], '(Days over 1990-2015)')))
   # xlab(expression('Days '*Psi['Soil, z = ERD']*' < '*Psi['P80, Leaf']))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.0, height = 3.5, width = 3.5, units='in')

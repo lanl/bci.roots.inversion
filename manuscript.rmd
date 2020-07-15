@@ -53,12 +53,14 @@ Intensifying droughts threaten tropical forests, a biome that plays a disproport
 \
 Among all the mechanisms plants employ to deal with drought, deep water access is arguably the most commonly invoked, but under-studied mechanism. This mechanism assumes that water availability varies belowground by vertical depth and so do rooting depths of co-occuring trees, by species and size. Consequently trees' in the same forest differ in their drought experience, and thus in their responses in term of growth and mortality. A key bottlneck in testing this mechanism community-wide has been lack of data on trees' rooting or water-sourcing depths, followed by data on water-availability at those depths. A recent meta-analysis documented maximum rooting depths for 318 tree species, that is, less than 0.5% of the World’s 65 thousand tree species [@Fan:2017; @Beech:2017]. Further, only a small fraction of those are tropical, even though ~60-80 % (40 - 53 throusand species) of the World’s tree diversity resides in the tropics [@Slik:2015]. Use of stable isotopes of water as a tracer provides an indirect way of trees' water sourcing depths by matching isotopic concentration in plant tissue to it's gradient vertically belowground. Such data is available only for ~0.05% of World's tree species [@Evaristo:2016]. In general, community-scale data collection for rooting or water-sourcing depths is especially challenging for species-rich tropical forests. Further, to estimate plant available water in the vertical soil column requires hydrological data and modeling, but these are rarely co-located with forest inventory sites (but see [@Johnson:2018fad;@Kumagai:2011;@Ivanov:2012].
 
+\
 Trait-based plant ecology aims to predict impacts of environmental change on community composition and function using relevant plant traits as currency. To reach this goal it is imperative to establish relationships between plant's environment, traits and demographic outcomes, but this remains to be established for trees' realised water environments and water-access through droughts. Huge efforts have been devoted to linking same-for-all-trees drought indices, above-ground traits and demographic rates. These have resulted in above-ground hydraulic traits such as proxies of hydraulic failure as suggested indicators of mortality risk. A recent meta-analysis found greater drought-induced mortality rates in species with high vulnerability to drought-induced embolism ($\Psi_{88,~Stem}$) and narrow safety margins ($\Psi_{min} - \Psi_{88,~Stem}$), but counter examples also exist (Hoffmann 2011; Paddock 2013), indicating whether plants actually reach critical thresholds of hydraulic failure depends on their realised drought intensity. A rare study that accounted for realised water availability for four tree species in a rare, centennial drought (Texas, USA) found that deep rooted species died less despite being more vulnerable to xylem embolism (high $\Psi_{88,~Stem}$) and having narrower safety-margins ($\Psi_{min} - \Psi_{88,~Stem}$). A species sourcing deep water showed lower hydraulic failure and lower mortality in an extreme drought in an Italian Karst system even though it had narrower hydrulic safety margin and high $\Psi_{88,~Stem}$ than other two species limited to shallow-water. Chitra-Tarak et al. (2018) proposed a general model to link realised water availability to demographic outcomes through droughts at tree community-scale. This study found that species accessing deep-water in a tropical dry forest study system died more in a rare, centennial drought compared to shallow-water species. Authors concluded that this was consistent with expectation of deep water usage as an aquisitive strategy relying on stable and reliable water resource at depth, which exhausted in the multi-annual drought resulting in reduced survival, compared to persistent species associated with shallow-water that was relatively more available via infiltration during this drought. However, species estimates of water-access modelled by this study were not corroborated with rooting/water-sourcing depths, or related to hydraulic traits.
 
 \
 Here, we obtained daily dynamics of plant water potential ($\Psi_{x,~z}$) by depth $z$ in the whole-soil column of a neo-tropical forest (BCI, Panama) with a locally parametarised and calibrated 1-D hydrological water balance model. We then estimated the effective rooting depths for xx large, canopy tree species as the depth ($z$) whose soil water dynamics ($\Psi_{x,~z}$) best explained observed dynamics of species growth (six 5-yearly censuses, 1990-2015) with a novel inverse model. This model incorporated impact of atmospheric drought (VPD) on growth and new data on species leaf vulnerability curves ($K_{Leaf}$ vs. $\Psi_{x,~Leaf}$), which we scaled-up to community level via scaling relationships with commonly available traits. We evaluated the inversely estimated ERD against exisiting data on plant and soil water isotopes ($\delta^2H$).
 
-We test an overarching hypothesis that interspecific variation in effective rooting depths of trees aligns them on a conservative-acquisitive trade-off axis. Specifically, in this forest (i) dynamics of soil water potential at depth does not cross catastrophic levels even during multi-annual droughts because of high total annual precipitation to evapotranspiration ratio; (ii) trees with deeper effective rooting depths (ERD) show acquisitive hydraulic architecture: higher maximum stem hydraulic conductance, but greater xylem vulnerability to embolism and narrower hydraulic safety margins; finally, (iii) deeper ERD species have lower mortality rates due to low realised risk of hydraulic failure. To our knowledge this is the first study to demonstrate a mechanistic link between trees' realised drought experience, above-ground hydraulic architecture and mortality outcomes for a tropical forest community.
+\
+We test an overarching hypothesis that interspecific variation in effective rooting depths of trees aligns species on a conservative-acquisitive trade-off axis. Specifically, in this forest (i) dynamics of soil water potential at depth does not cross critical plant thresholds even during multi-annual droughts because of high total annual precipitation to evapotranspiration ratio (not usre if this should be stated as a hypothesis or just an explanation of the results); (ii) trees with deeper effective rooting depths (ERD) show acquisitive hydraulic architecture: higher maximum stem hydraulic conductance, but greater xylem vulnerability to embolism and narrower hydraulic safety margins; finally, (iii) deeper ERD species have lower mortality rates due to low realised risk of hydraulic failure. To our knowledge this is the first study to demonstrate a mechanistic link between trees' realised drought experience, above-ground hydraulic architecture and mortality outcomes for a tropical forest community.
 
 # Materials and Methods
 \
@@ -100,7 +102,7 @@ We ran ELM-FATES for these 10,000 ensembles with hourly climate drivers from 198
 We calibrated the model against three key fluxes in Eq. \@ref(eq:water-balance), namely, (i) evapotranspiration ($E_{v} + E_{g}$) from the eddy flux tower, (ii) stream discharge for the Conrad Catchment ($q_{over} + q_{drai}$) and (iii) Volumetric Water Content (VWC) obtained with Time Domain Reflectometry (TDR) at three depths (10, 40 and 100 cm; relating to $W_{liq, z}$) at point location as well as opportunistic dry season VWC measured over those depths for the entire 50-ha plot (Figure \@ref(fig:hydro-calib). Among the 10,000 parameter ensembles we chose 100 ensembles that best-fit all three fluxes simultaneously (add details...that is those that maximised the sum of regression coefficients between observed and simulated variables.) See [Table 1](#param) for best-fit parameter ranges.
 
 
-```{r hydro-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap ="\\label{lab-hydro-calib}Model evaluation: Observations (red line) of Volumetric Water Content, Evapotranspiration and stream discharge aginst simulations (blue lines) from 100 best-fit parameter ensembles runs of ELM-FATES. This figure will be reformatted to compose individual figures into one."}
+```{r hydro-calib, dev='png', fig.show='hide', eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap ="\\label{lab-hydro-calib}Model evaluation: Observations (red line) of Volumetric Water Content, Evapotranspiration and stream discharge aginst simulations (blue lines) from 100 best-fit parameter ensembles runs of ELM-FATES. This figure will be reformatted to compose individual figures into one."}
 p1 <- cowplot::ggdraw() + cowplot::draw_image("figures/2019-10-14_5000/best-fits/swc_Obs_vs_model_daily_horizontal_with_steph_mean.jpeg", scale = 1)
 p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/2019-10-14_5000/best-fits/QRUNOFF_Obs_vs_model_monthly.jpeg", scale = 1)
 p3 <- cowplot::ggdraw() +
@@ -109,8 +111,9 @@ bottom_row <- cowplot::plot_grid(p2, p3, labels = c('B', 'C'), label_size = 12, 
 cowplot::plot_grid(p1, bottom_row, labels = c('A', ''), label_size = 12, ncol = 1, rel_widths = c(2, 1))
 ```
 
-## Model for Leaf Vulnerability Curves at community-scale
 
+## Model for Leaf Vulnerability Curves at Community-scale
+\
 We measured ($K_{x,~Leaf}$ vs. $\Psi_{x,~Leaf}$) on adult trees of `r length(unique(data.model.AB[!is.na(data.model.AB$data.A),]$sp))` common species (see SI x). We fitted exponential, sigmoidal, logistic forms of equations to species-level data as prescribed by [@Guyot:2011] and based on AIC criteria chose exponential form (Fig. S\@ref(fig:obs-plc-curves)), described as
 
 \begin{equation}
@@ -136,14 +139,14 @@ where $(a_0, a_1, a_2, a_3, b_0, b_1, b_2, b_3)$ are coefficients. $WSG$ & param
 
 ```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "30%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-comm-plc-curves} Modelled standardized 'Vulnerability curves' ($K_{x,~Leaf}$ vs. $\\Psi_{x,~Leaf}$) at community-scale (", nrow(data.model.AB$sp)," species) based on species data on $WSG$ & $LMA$ and their relationships with vulnerability curve parameters measured on ", sp.soft.filled$AB.data.model," species. Each line represents a species, color coded by $WSG$.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_SG100C_AVG_predicted_AB.jpeg"))
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_LMALAM_AVD_predicted_AB.jpeg"))
+# knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_LMALAM_AVD_predicted_AB.jpeg"))
 ```
 
 
 ## Model for Effective Rooting Depths (ERD)
 
+-- Write about why models were designed this way.
 
-With 
 \
 \begin{equation}
 K_{Leaf,z,n} = Ae^{-B\Psi_{z,n}}
@@ -173,33 +176,34 @@ Growth_{t} = \frac{1}{n_{t}}\sum_{day=1}^{n_{t}} StdK_{Leaf,z,n} LeafFrac_{doy}S
 
 ### Model parameterization 
 
-Growth Data: To minimise effect of light variation among trees and census intervals we selected only large trees (>= 30 cm DBH) and species whose maximum height was at least 30 m (hereafter, canopy species). We chose only those trees for which diameter (DBH) record was present across all size censuses (1990, 19905, 2000, 2005, 2010, 2015). We calculated individual tree ($i$) growth rates ($Gr_{i,t}$ cmyr^{-1}) for each of the five census intervals ($t$). As tree growth rates increase with size, to keep growth rates comparable across census intervals, we obtained residuals from a DBH model of tree growth based on a trees' DBH at the beginning of a census onterval ($GrResid_{i,t} = Gr_{i,t} - f(DBH_{i, t})$). The diameter model of growth was fitted based on all trees' data pooled together as there was insufficient species-specific data for large trees (SI ). We then standardised (centered and scaled) an individual tree time series ($GrResid_{i,t}$) and obtained species-level (*n* = 32) times-series of medians ($Growth_{t}$) that had data on at least three trees (median = xx). 
+Growth Data: To minimise effect of light variation among trees and census intervals we selected only large trees (>= 30 cm dbh, diamater at breast height) and species whose maximum height was at least 30 m (hereafter, canopy species). We chose only those trees for which diameter (dbh) record was present across all size censuses (1990, 1995, 2000, 2005, 2010, 2015). We calculated individual tree ($i$) growth rates ($Gr_{i,t}$ (cm.yr^{-1})) for each of the five census intervals ($t$) as the   difference between tree dbh measured in successive censuses, divided by the inter-census interval based on the exact date of measurements. As tree growth rates increase with size, to keep growth rates comparable across census intervals, we obtained residuals from a dbh model of tree growth based on a tree's dbh at the beginning of a census onterval ($Resid_{i,t} = Gr_{i,t} - f(DBH_{i, t})$). The diameter model of growth was fitted based on all trees' data pooled together as there was insufficient species-specific data for large trees (SI ). We then standardised (centered and scaled) an individual tree time series ($Resid_{i,t}$) and obtained species-level (*n* = 32) times-series of medians ($Growth_{t}$) that had data on at least three trees (median = xx). 
 
 As VPD may have a non-linear relationship with growth, we fitted a polynomial curve between GPP (gCm^2^day^-1^) and VPD (kPa; $GPP = f(VPD) + error$;  SI) and used standardised $f(VPD)$ (range 0-1) as $StdVPD$ in Eqs. \@ref(eq:M2)- \@ref(eq:M4). 
 
 Leaf fraction...
 
-For each model (\@ref(eq:M2)- \@ref(eq:M4)) and species combination ($sp$), we obtained goodness-of-fit (*R*^2^) and Pearson's $\rho$ for all soil depths $z$, and for each sp, model we chose the $z$ with highest *R*^2^ as the Effective Rooting Depth (ERD); after retaining species with positive $\rho$ and *R*^2^ >= 0.1.
+For each model \@ref(eq:M1)- \@ref(eq:M4) and species combination ($sp$), we obtained goodness-of-fit (*R*^2^) and Pearson's $\rho$ for all soil depths $z$, and for each sp, model combination we chose the $z$ with highest *R*^2^ as the Effective Rooting Depth (ERD); after retaining species with positive $\rho$ and *R*^2^ >= 0.1.
 
 ### Model evaluation
 
 For each model, species ERD was regressed against species Xylem sap $\delta^2H$ (%~$\circ$~; *n* = 7). We used Xylem sap $\delta^2H$ values given in [@Meinzer:2001] for dry-season (March 1997) as these showed largest seasonal divergence among species, with a corresponding gradient of $\delta^2H$ in the soil. We removed species that are deciduous in March as xylem sap $\delta^2H$ of these species may not be linked with water sourced in March and thus may not comparable to other species with leaves present. Fig. S\@ref(fig:iso-data). We also removed *Guapira* *spp*, whose xylem sap value fell in the uncertain ranges of soil depth.
 
-Models with VPD and without Leaf Fraction (Eqs. \@ref(eq:M2)) had highest goodness-of fit (*R*^2^ = 0.51); followed by model with both VPD and Leaf Fraction (Eq. \@ref(eq:M4); Fig. S\@ref(fig:other-erd-mods)). Models with leaf fraction had only three species with sufficient, indvidual species-level goodness-of-fit (Eqs. \@ref(eq:M3 & eq:M4) versus seven for models without (Eqs. \@ref(eq:M1) & \@ref(eq:M2)). For rest of the analyses we therefore used species ERD estimates from model (\@ref(eq:M2)) as it was also a parsimonious model compared to \@ref(eq:M4) (Fig. \@ref(fig:erd-iso)).
+\
+Model with VPD and without Leaf Fraction (Eq. \@ref(eq:M2)) had highest goodness-of fit (*R*^2^ = 0.51; *p* = 0.072), followed by followed by model without both VPD and and Leaf Fraction (\@ref(eq:M1); Fig. S\@ref(fig:other-erd-mods)). Models with leaf fraction had only three species with sufficient species-level goodness-of-fit (Eqs. \@ref(eq:M3)-\@ref(eq:M4)) versus seven for models without (Eqs. \@ref(eq:M1)-\@ref(eq:M2)). For rest of the analyses we therefore used species ERD estimates from model with VPD and without Leaf Fraction (Eq. \@ref(eq:M2); Fig. \@ref(fig:erd-iso)).
 
 
-```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE; m) versus dry season stable isotopic concentration $\\delta$^2^H (mean $\\pm$ (add error); ‰) for ", length(unique(erd.data$sp))," canopy species from Barro Colorado Island (data from [@Meinzer:1999]")}
+```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE; m) versus dry season stable isotopic concentration $\\delta$^2^H (mean $\\pm$ (add error); ‰) for ", length(unique(erd.iso$sp))," canopy species from Barro Colorado Island (data from [@Meinzer:1999]")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg"))
 ```
 
 
 ## ERD Coordination with Above-ground Hydraulic Traits
 
-To evaluate whether ERD was associated with above-ground hydraulic traits (*n* = 8 species with both datasets), we regressed species ERD with maximum stem hydraulic conductance  ($K_{max, Stem}$), leaf Turgor Loss Point ($\Psi_{TLP}$), vulnerability to embolism from cavitation measured in terms of pressure at which 88% of stem hydraulic conductivity is lost ($\Psi_{88,~Stem}$), and hydraulic safety margins ($\Psi_{min} - \Psi_{88,~Stem}$). 
+To evaluate whether ERD was associated with above-ground hydraulic traits (*n* = 8 species with both datasets), we regressed species ERD with maximum stem hydraulic conductance ($K_{max, Stem}$), leaf Turgor Loss Point ($\Psi_{TLP}$), vulnerability to embolism from cavitation measured in terms of pressure at which 88% of stem hydraulic conductivity is lost ($\Psi_{88,~Stem}$), and hydraulic safety margins ($\Psi_{min} - \Psi_{88,~Stem}$). 
 
 ## Mortality Analyses and Extreme Drought Experience
 
-We calculated mortality rates for large trees (>=10 cm DBH) of xx canopy species for each of the seven census interval ($t$) in the 33 year record (1985-2015; $Mort_{t}$) and a species mean mortality rate across those intervals ($Mort_{mean} = \frac{1}{t}\sum_{t=1}^{6} {Mort_{t}}$). To test whether $ERD$ plays a role in alleviating mortality risk, we regressed species $ERD$ against species ($Mort_{mean}$). To assess whether this may be due to deeper $ERD$ species escaping the experience of catastrophic soil drought, we calculated the proportion of days over the study period (1990-2015) for which soil water potential in the soil zone matching species ERD ($\Psi_{x, ERD}$) were below species $\Psi_{80,Leaf}$.
+We calculated mortality rates for large trees (>= 10 cm dbh) of species with ERD estimates (all canopy species with maximum height >= 30 m) and average adbunance of at least 20 trees (dropped one species with average abundance of 9 trees). For each of the seven census intervals ($t$) in the 33 year record (1982, 1985, 1990, 2000, 2005, 2010, 2015, 2015), species $Mort_{t}$ (%yr^-1^) for two successives censuses (cen~{1}~ and cen~{2}~) was calculated as $Mort_{t} = \frac{D_{cen_{2}}}{N_{cen_{1}}}.\frac{100}{t}$, where $N_{cen_{1}}$ and $D_{cen_{1}}$ are the total number of trees in the 50 ha plot of a species present in cen~{1}~ and dead in cen~{2}~, respectively, and t is the duration based on mean dates of cen~{1}~ and cen~{2}~. We calculated species mean mortality rate across all intervals as $Mort_{mean} = \frac{1}{i}\sum_{i=1}^{6} {Mort_{t}}$ and, finally, species mortality anoamalies by intervals as $Mort_{anomaly}$ = $Mort_{t}$ - $Mort_{mean}$. To test whether $ERD$ plays a role in alleviating mortality risk, we regressed species $ERD$ against species ($Mort_{mean}$). To assess whether this may be due to deeper $ERD$ species escaping the experience of catastrophic soil drought, we calculated the proportion of days over the study period (1990-2015) for which soil water potential in the soil zone matching species ERD ($\Psi_{x, ERD}$) were below species $\Psi_{crit}$, defined as $\Psi_{80,~Leaf}$.
 
 All statistical analyses were done in R statistical environment (version 3.5.3, @R:2020).
 
@@ -222,40 +226,40 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/Select_traits_dept
 ## Effective Rooting Depths, Experienced Drought and Mortality
 
 \
-Species with deeper $ERD$ showed lower mean mortality rates across the 33 year record (1982-2015; *R*^2^ = 0.13, *P* = 0.029, *n* = xx; Figure \@ref(fig:erd-mort)). For five out of seven census intervals, species with shallower $ERD$ had significantly higher mortality anomalies ($Mort_{int}$ - $Mort{mean}$ than deeper ERD species; Figure (\@ref(fig:erd-mort-anom)). Analysis of time spent under catastrophic soil drought showed that the proportion of days species $\Psi_{x,~ERD}$ was more negative than species $\Psi_{80, Leaf}$ decreased with species ERD (Figure \@ref(fig:erd-time)). Species with ERD deeper than 1 m did not cross species $\Psi_{80, Leaf}$ at all for the entire 25 year period for which soil water potential $\Psi_{x,~z}$ was modelled (1990-2015). 
+Species with deeper $ERD$ showed lower mean mortality rates across the 33 year record (1982-2015; *R*^2^ = 0.13, *P* = 0.029, *n* = xx; Figure \@ref(fig:erd-mort)). For five out of seven census intervals, species with shallower $ERD$ had significantly higher mortality anomalies than deeper ERD species; Figure (\@ref(fig:erd-mort-anom)). Analysis of time spent under catastrophic soil drought showed that the proportion of days species $\Psi_{x,~ERD}$ was more negative than species $\Psi_{crit}$ decreased with species ERD (Figure \@ref(fig:erd-time)). Species with ERD deeper than 1 m did not cross species $\Psi_{crit}$ for the entire 25 year period for which soil water potential $\Psi_{x,~z}$ was modelled (1990-2015), as soil depths at and below 1.7 m remained above `r round(psi.1.7.min$median, 2)` [`r round(as.numeric(psi.1.7.min$q97.5), 2)`, `r round(as.numeric(psi.1.7.min$q2.5), 2)`] (median [95% CI]) through all the dryseason and drought periods, which is above ($\Psi_{crit}$) of the most sensitive tree species (-0.28 MPa).
 
-```{r erd-mort, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort}Mortality rate (mean $\\pm$ (add error)) versus Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for xx canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets."}
+```{r erd-mort, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort}Mortality rate (mean $\\pm$ 1SE) versus Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for xx canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_rate_by rdi.gr.jpeg"))
 ```
 
-```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time} Modelled Species Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{x, z}$ was below $\\Psi_{80,Leaf}$ over 1990-2015, where z is the soil depth matching species ERD--for xx canopy species found on Barro Colorado Island. EAch circle resepresents a species. Circles are jittered vertically around the named depths (ticks) to be able to distinguish visually. (Are *R*^2^ and *P*-values needed here?)")}
+```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time} Modelled Species Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{x, z}$ was below $\\Psi_{crit}$, defined as $\\Psi_{80,~Leaf}$, over 1990-2015, where z is the soil depth matching species ERD--for xx canopy species found on Barro Colorado Island. Each circle resepresents a species. Circles are jittered vertically around the named depths (ticks) to be able to distinguish visually. (Are *R*^2^ and *P*-values needed here?)")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mean_mfac vs. rdi.gr.jpeg"))
 ```
 
-
 # Discussion
 
-### ERD not correlated with growth
-# Limitations & Future directions: 
+Our analyses revealed that trees with deeper effective rooting depths (ERD) showed acquisitive hydraulic architecture, with higher maximum stem hydraulic conductance, but greater xylem vulnerability to embolism and narrower hydraulic safety margins compared to shallow ERD species. Yet, deeper ERD species showed lower mortality rates over the 33 year record (1982-2015). Analysis of time spent below ($\Psi_{crit}$) in the soil zone of ERD showed that this was likely due to low realised risk of hydraulic failure for deeper ERD species. In this moist forest ($\Psi_{z}$) for depths at and below 1.7 m remained above ($\Psi_{crit}$) of the most sensitive tree species through all the dryseason and drought periods over 1990-2015, period over which ($\Psi_{z}$) was modelled. We thus show, for the first time, that interspecific variation in effective rooting depths of trees aligns species on a conservative-acquisitive trade-off axism, by demonstrating a mechanistic link between trees' realised drought experience, above-ground hydraulic architecture and long-term mortality outcomes for a tropical forest community. 
 
-- not hydrodynamics, 1D to 3D
+## Limitations & Future directions
 
-- Temperate rooting depths shallow?  Shenk and Jackson
+Our modeling framework had a few limitations. 
+- The inverse model for ERD was parametarised on 5-yr growth rates, which vastly increased the degree of freedom to fit the model. Future studies should use high-frequency growth time series such as those obtained from dendrometer bands. To infer growth from such diameter time series, however, would especially require accounting for diameter changes due to hydrostatic flexing [@Chitra-Tarak:2015]. 
 
-- lightening explains 1/3rd of mortality
-- forest is realtively stable over 40 years.
+- Future studies should investigate seasonality in water-sourcing depths investigated. 
 
--transient depth of water uptake, which is known to vary seasonally (Ellsworth & Sternberg, 2015), 
-In fact, associations between soil water access by roots and aboveground drought survival traits such as resistance of xylem to drought‐induced cavitation (Pockman & Sperry, 2000; Pratt et al ., 2007) or phenology (Jackson et al ., 1995; Hasselquist et al ., 2010), are fairly reliable trade‐off functions in plant eco‐physiology.
+- Although we attempted a coarse estimate of species leaf cover seasonality by combining  leaf-fall data from litter traps and forest-level LAI data for leaf-on periods, more accuarate estimations of leaf-cover seasonality are required, such as those obtained from drone images [@Park: 2019] 
 
-- Deep ERD species may possibly be associated with locations of greater water availability rather than having deep rootedness. Future studies should employ a distributed hydrological model to separate these factors.
+-To enable estimation of inverse model for the larger community across size classes would need accounting for changing light environments on growth; we minimised this issue by limiting our ERD inversion to large trees of species with max height >= 30m and thus whose canopy's are most likely to be fully exposed to light. 
 
-Future studies: high resolution growth data to better constrain the model. 
-  -water storage (capacitance) should be considered
-  -shifts in root water-uptake by depth
-  -deci
+- Future studies would benefit from modeling the complete hydrodynamics of water potential gradients from soil through plant tissues (roots-stems-leaves) to atmosphere continuum (SPAC) [@Johnson:2017]. However, to parameterise such a model at community-scale would need community-scale data on hard traits such as stem and root vulnerability curves; if not, model development to up-scale data from a few species, for example, via softer traits as we did for leaf vulnerability curves. (Note that In this forest LMA and WSG did not scale with stem vulnerability curves). Water storage (capacitance) should also be considered.
 
+- Deep ERD species may possibly be associated with locations of greater water availability rather than having deep rootedness. A 3-D hydrology model would provide spatially distributed estimates of water dynamics in the whole-soil/rock column and depth to water table to link with individual trees water experience [@Schwantes:2018]. Forest inventory sites would benefit from investing data collection efforts on water availability dynamics by depth and water tables covering spatial heterogeneity so as to better constrain such models.
 
+- Variation in mortality explained by ERD is low. Other causes.... Based on a year-long study, lightening explains ~4.5 % of mortality for trees >=10 cm dbh and ~ 40% for trees >=60 cm dbh.
+
+-Forest is realtively stable over 35 years. Future studies could investigate if ongoing change in the duration, frequency and intensity of droughts entails sufficient exhaustion of deep water availablity so as to cause mortality of deep ERD species.
+
+## Conclusions:
 
 ## Acknowledgements
 ## Data Availability
@@ -263,7 +267,7 @@ Future studies: high resolution growth data to better constrain the model.
 
 
 ```{r swp-droughts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-droughts}Extreme droughts by census interval and some representative depths"}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5.jpeg"))
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.jpeg"))
 ```
 
 
@@ -272,10 +276,9 @@ knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Dept
 ```
 
 
-```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover} Seasonal variation in Leaf Cover Fraction for ", length(unique(sp.leaf_cover.for.model$sp[sp.leaf_cover.for.model$deciduousness != "Evergreen"]))," non-evergreen species at Barro Colorado Island. Leaf Cover Fraction for evergreen species (n = ", length(unique(sp.leaf_cover.for.model$sp[sp.leaf_cover.for.model$deciduousness == "Evergreen"])),") is assumed at 1 through the year.")}
+```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover} Seasonal variation in Leaf Cover Fraction for ", length(unique(sp.leaf_cover.for.model$sp[sp.leaf_cover.for.model$deciduousness != "Evergreen"]))," non-evergreen species at Barro Colorado Island. Leaf Cover Fraction for evergreen species (*n* = ", length(unique(sp.leaf_cover.for.model$sp[sp.leaf_cover.for.model$deciduousness == "Evergreen"])),") is assumed at 1 through the year.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/leaf.cover_BCI_single_panel_evergreensAt100.jpeg"))
 ```
-
 
 ```{r other-erd-mods, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-other-erd-mods}All ERD models tested. See Eqns xxxx"}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))

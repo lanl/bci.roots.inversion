@@ -1178,12 +1178,14 @@ for (i in 1:nrow(data.model.AB)) {
   data.model.AB$psi_kl20[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.8*Kmax)$y
   data.model.AB$psi_kl50[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.5*Kmax)$y
   data.model.AB$psi_kl80[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.2*Kmax)$y
+  data.model.AB$psi_kl88[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.12*Kmax)$y
   data.model.AB$psi_kl95[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.05*Kmax)$y
 
   data.model.AB$Kmax[i] <- Kmax
   data.model.AB$Kmax_at_0.1[i] <- Kmax_at_0.1
   data.model.AB$psi_at_0.1_kl50[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.5*Kmax_at_0.1)$y
   data.model.AB$psi_at_0.1_kl80[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.2*Kmax_at_0.1)$y
+  data.model.AB$psi_at_0.1_kl88[i] <- -approx(x = df$k.predict, y = df$psi, xout=0.12*Kmax_at_0.1)$y
 
 }
 

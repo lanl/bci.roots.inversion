@@ -35,7 +35,7 @@ load(file = file.path(results.folder, "lwp.diff.Rdata"))
 ## Load BCI traits---
 #******************************************************
 bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
-  rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>% mutate(sp = tolower(sp))
+  dplyr::rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>% mutate(sp = tolower(sp))
 
 #******************************************************
 ### Load hydraulic traits -----
@@ -103,3 +103,13 @@ load(file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
 
 load(file = file.path(results.folder, "cohort.Rdata"))
 load(file = file.path(results.folder, "coh.sp.summ.Rdata"))
+
+#******************************************************
+### Supporting data referenced in the manuscript
+#******************************************************
+# Number of species ------
+richness.database <- read.csv("data-raw/global_tree_search_trees_1_4.csv", header = TRUE)
+richness <- nrow(richness.database)
+tot.rich.k <- signif(richness/1000, 2)
+tropics.low <- signif(round(40000/richness*100, 0), 1)
+tropics.high <- signif(round(53000/richness*100, 0), 1)

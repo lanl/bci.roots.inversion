@@ -268,6 +268,7 @@ save(juve.mrate.long, file = ("results/juve.mrate.long.RData"))
 
 ##---------Combinging growth rates mean acros all size and at juvenile and adult level
 ## Only those for which avg.abundance greater than 10
+
 sp.mrate.adult.juve <- sp.mrate.mean %>% subset(avg.abund >= 10) %>%
   full_join(juve.mrate.mean %>% subset(avg.abund >= 10) %>% rename(mrate.juve = mrate) %>% select(-avg.abund), by = "sp") %>%
   full_join(adult.mrate.mean %>% subset(avg.abund >= 10) %>% rename(mrate.adult = mrate)%>% select(-avg.abund), by = "sp")
@@ -275,7 +276,8 @@ sp.mrate.adult.juve <- sp.mrate.mean %>% subset(avg.abund >= 10) %>%
 ###***********************
 ## growth-----------------
 ###***********************
-growth.name <-load(file = paste0("results/sp_size.med_growth_dbh.residuals_off_5_size_class_varying_non_cc.Rdata"))
+
+growth.name <- load(file = paste0("results/sp_size.med_growth_dbh.residuals_off_5_size_class_varying_non_cc.Rdata"))
 growth <- get(growth.name); rm(growth.name)
 sp_size  <- names(growth) #.full %>% subset(size == "large" || size == "small") %>% select(-size, -sp, -interval.2) %>% as.matrix()
 sp_size.growth.mean.named <- growth %>% lapply(function(x) {mean(x$growth, na.rm = TRUE)}) %>%

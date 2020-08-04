@@ -537,7 +537,7 @@ gpp.daily <- ggplot(obs.gpp.d) +
   scale_x_date(breaks = c(rectangles$xmin, rectangles$xmax), date_labels = "%b-%y") +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 ggsave(("gpp.daily.jpeg"),
-       plot = gpp.daily, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 9, units='in')
+       plot = gpp.daily, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 9, units='in')
 
 obs.qet.d <- bci.hydromet::forcings %>% select(date, AET, AET.flag.day) %>% # in mm/day
   rename(AET.gap.tower = AET.flag.day,
@@ -796,35 +796,35 @@ traits.labels.table.1 <- data.frame(trait = factor(c("lwp.min_Predawn", "lwp.min
                                                               "Fcap_Xylem", "Fcap_Bark","WD",
                                                               "Panama.moist.pref", "Plot.swp.pref", "LMA", "vc_a", "vc_b"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
-                                                  expression(italic('K')['max, Stem']),  expression(italic('P')['50, Stem']),  expression(italic('P')['88, Stem']),
+                                                  expression(italic('K')['max, stem']),  expression(italic('P')['50, stem']),  expression(italic('P')['88, stem']),
                                                   expression(Psi[min]*' - '*Psi[TLP]),
-                                                  expression(Psi[min]*' - '*italic('P')['50, Stem']),
-                                                  expression(Psi[min]*' - '*italic('P')['88, Stem']),
-                                                  expression(Psi[TLP]*' - '*italic('P')['50, Stem']),
-                                                  expression(Psi[TLP]*' - '*italic('P')['88, Stem']),
-                                                  expression('CWR'['Total']), expression('CWR'['Xylem']), expression('CWR'['Bark']),
-                                                  expression(italic('F')['Elbow, Xylem']), expression(italic('F')['Elbow, Bark']),
+                                                  expression(Psi[min]*' - '*italic('P')['50, stem']),
+                                                  expression(Psi[min]*' - '*italic('P')['88, stem']),
+                                                  expression(Psi[TLP]*' - '*italic('P')['50, stem']),
+                                                  expression(Psi[TLP]*' - '*italic('P')['88, stem']),
+                                                  expression('CWR'['total']), expression('CWR'['xylem']), expression('CWR'['bark']),
+                                                  expression(italic('F')['elbow, xylem']), expression(italic('F')['elbow, bark']),
                                                   expression(Psi[min]*'-'*italic('F')['Elbow, Xylem']),
                                                   expression(Psi[min]*'-'*italic('F')['Elbow, Bark']),
-                                                  expression(italic('F')['Cap, Xylem']), expression(italic('F')['Cap, Bark']),
+                                                  expression(italic('F')['cap, xylem']), expression(italic('F')['cap, bark']),
                                                   expression('WD'[stem]),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), "LMA",
-                                                  expression('A'['vc, Stem']), expression('B'['vc, Stem']))),
+                                                  expression('A'['vc, stem']), expression('B'['vc, stem']))),
             trait.plot.chart = factor(trait, labels = c(expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
-                                                        expression(italic('K')['max, Stem']),  expression(italic('P')['50,Stem']),  expression(italic('P')['88,Stem']),
+                                                        expression(italic('K')['max, stem']),  expression(italic('P')['50,stem']),  expression(italic('P')['88,stem']),
                                                         expression(Psi[min]*'-'*Psi[TLP]),
-                                                        expression(Psi[min]*'-'*italic('P')['50,Stem']),
-                                                        expression(Psi[min]*'-'*italic('P')['88,Stem']),
-                                                        expression(Psi[TLP]*'-'*italic('P')['50,Stem']),
-                                                        expression(Psi[TLP]*'-'*italic('P')['88,Stem']),
-                                                        expression('CWR'['Total']), expression('CWR'['Xylem']), expression('CWR'['Bark']),
-                                                        expression(italic('F')['Elbow, Xylem']), expression(italic('F')['Elbow,Bark']),
+                                                        expression(Psi[min]*'-'*italic('P')['50,stem']),
+                                                        expression(Psi[min]*'-'*italic('P')['88,stem']),
+                                                        expression(Psi[TLP]*'-'*italic('P')['50,stem']),
+                                                        expression(Psi[TLP]*'-'*italic('P')['88,stem']),
+                                                        expression('CWR'['total']), expression('CWR'['xylem']), expression('CWR'['bark']),
+                                                        expression(italic('F')['elbow, xylem']), expression(italic('F')['Elbow,bark']),
                                                         expression(Psi[min]*'-'*italic('F')['Elbow,Xylem']),
                                                         expression(Psi[min]*'-'*italic('F')['Elbow,Bark']),
-                                                        expression(italic('F')['Cap,Xylem']), expression(italic('F')['Cap,Bark']),
+                                                        expression(italic('F')['Cap,xylem']), expression(italic('F')['Cap,bark']),
                                                         expression('WD'[stem]),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), "LMA",
-                                                        expression('A'['vc, Stem']), expression('B'['vc, Stem'])))) %>% droplevels()
+                                                        expression('A'['vc, stem']), expression('B'['vc, stem'])))) %>% droplevels()
 
 
 #******************************************************
@@ -908,20 +908,20 @@ traits.labels.table.2 <- data.frame(trait = factor(c("KmaxL", "lwp.min_Predawn",
                                                               "HSMLWP.80L", "HSMTLP.80L",
                                                               "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(italic(K)[max]), expression(Psi[predawn]), expression(Psi[min]),
-                                                  expression(Psi[TLP]), expression(italic('P')['50, Leaf']), expression(italic('P')['80, Leaf']),
+                                                  expression(Psi[TLP]), expression(italic('P')['50, leaf']), expression(italic('P')['80, leaf']),
                                                   expression(Psi[min]*' - '*Psi[TLP]),
-                                                  expression(Psi[min]*' - '*italic('P')['50, Leaf']),
-                                                  expression(Psi[TLP]*' - '*italic('P')['50, Leaf']),
-                                                  expression(Psi[min]*' - '*italic('P')['80, Leaf']),
-                                                  expression(Psi[TLP]*' - '*italic('P')['80, Leaf']),
+                                                  expression(Psi[min]*' - '*italic('P')['50, leaf']),
+                                                  expression(Psi[TLP]*' - '*italic('P')['50, leaf']),
+                                                  expression(Psi[min]*' - '*italic('P')['80, leaf']),
+                                                  expression(Psi[TLP]*' - '*italic('P')['80, leaf']),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(italic(K)[max]), expression(Psi[predawn]), expression(Psi[min]),
-                                                        expression(Psi[TLP]), expression(italic('P')['50,Leaf']), expression(italic('P')['80,Leaf']),
+                                                        expression(Psi[TLP]), expression(italic('P')['50,leaf']), expression(italic('P')['80,leaf']),
                                                         expression(Psi[min]*'-'*Psi[TLP]),
-                                                        expression(Psi[min]*'-'*italic('P')['50,Leaf']),
-                                                        expression(Psi[TLP]*'-'*italic('P')['50,Leaf']),
-                                                        expression(Psi[min]*'-'*italic('P')['80,Leaf']),
-                                                        expression(Psi[TLP]*'-'*italic('P')['80,Leaf']),
+                                                        expression(Psi[min]*'-'*italic('P')['50,leaf']),
+                                                        expression(Psi[TLP]*'-'*italic('P')['50,leaf']),
+                                                        expression(Psi[min]*'-'*italic('P')['80,leaf']),
+                                                        expression(Psi[TLP]*'-'*italic('P')['80,leaf']),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")))
 
 # > with(traits, table(deciduousness))

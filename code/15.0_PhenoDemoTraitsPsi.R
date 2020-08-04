@@ -33,6 +33,7 @@ figures.folder <- paste0("figures/PhenoDemoTraitsPsi")
 if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
 results.folder <- paste0("results/PhenoDemoTraitsPsi")
 if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder))}
+
 #****************************
 ###   Custom Functions   ####
 #****************************
@@ -76,7 +77,7 @@ reverselog_trans <- function(base = exp(1)) {
 # X3=sum(min(0, psi-psi_threshold)), max/mean
 # X4=sum(I(psi<psi_threshold)*PET),max/mean
 
-## funciton used to estimate K_leaf from Psi and species specific parameters
+## Function used to estimate K_leaf from Psi and species specific parameters
 Exponential <- function (A, B, psi) {
   A * exp(-B * psi)
 }
@@ -123,6 +124,10 @@ psi.corr.fun.ls.2 <- list(
       return(list(result.df = result.df))
   }
 )
+
+###************************************************************
+### Functions explored earlier but not used anymore : psi.corr.fun.ls
+###************************************************************
 
 psi.corr.fun.ls <- list(
   "gr.Psi" =
@@ -267,7 +272,7 @@ get.mfac.ls <- list(
       return(result.df)
     }
 )
-# Originally written by Sean
+# Originally written by Sean M McMahon, then modified
 get.ts.lk <- function(df) {
   demo.ts <- df$demo.rate
   k <- length(demo.ts)

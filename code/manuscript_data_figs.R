@@ -2,10 +2,12 @@
 ## output
 #******************************************************
 load(file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+load(file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 load(file = file.path(results.folder, "mrate.depth.Rdata"))
 load(file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
 load(file = file.path(results.folder, "erd.stem.traits.Rdata"))
+load(file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 
 #****************************
 ###   Custom Functions   ####
@@ -44,6 +46,17 @@ erd.sp.names <- bci.traits %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
   select(Code, Genus, Species, Family)
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
+
+erd.sp.plot <- ggplot(df.erd.to.plot,
+                      aes(x = sp, y = depth)) +
+  geom_point(aes(color = sp), show.legend = FALSE, size = 3) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.2, size = 0.2) +
+  ylab("Effective Rooting Depth (m)") + xlab("Species") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine$depth)
+ggsave("ERD_by_sp_large_canopy.jpeg",
+       plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 3.5, width = 5, units='in')
+
 #******************************************************
 
 mrate.depth.select <- subset(mrate.depth, !is.na(rdi.gr) & avg.abund >= 20) %>%
@@ -54,14 +67,14 @@ mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) & avg.abund >
 mrate.depth.mean <- mrate.depth.select %>%
   group_by(sp, rdi.gr) %>% summarise(avg.abund = mean(avg.abund, na.rm = TRUE),
                                      se = sd(mrate, na.rm = TRUE)/sqrt(n()),
-                                     mrate = mean(mrate, na.rm = TRUE)) %>% droplevels()
+                                     mrate = mean(mrate, na.rm = TRUE), .groups = "drop_last") %>% droplevels()
 erd.mrate.sp <- unique(mrate.depth.mean$sp)
 mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
   subset(depth == rdi.gr) %>%
   group_by(sp) %>%
   summarise(avg.abund = mean(avg.abund, na.rm = TRUE),
             depth = mean(depth, na.rm = TRUE),
-            mfac = sum(mfac, na.rm = TRUE))
+            mfac = sum(mfac, na.rm = TRUE),.groups = "drop_last")
 # save.image("results/manuWorkSpace.RData")
 
 ## Minimum Soil water potential reached at depth 1.7 + CI
@@ -186,3 +199,4 @@ mfac.plot.9.0.sub <- mfac.plot.9.0 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               sp %in% erd.stem.traits.sp)
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.jpeg")),
        plot = mfac.plot.9.0.sub, height = 3.5, width = 3.5, units = 'in')
+

@@ -87,8 +87,8 @@ psi.corr.fun.ls.2 <- list(
     function(df, dflc) {
       result.df <-
         psi.study[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod, na.rm = TRUE))][
-              , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
+            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod, na.rm = TRUE))]#[
+              # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
@@ -96,8 +96,8 @@ psi.corr.fun.ls.2 <- list(
     function(df, dflc) {
       result.df <-
         psi.study[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.VPD, na.rm = TRUE))]#[
+            # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
@@ -107,8 +107,8 @@ psi.corr.fun.ls.2 <- list(
       result.df <-
         as.data.table(psi.study)[data.table(dflc), on = 'doy'][,
           psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*leaf_cover, na.rm = TRUE))][
-              , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
+            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*leaf_cover, na.rm = TRUE))]#[
+              # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
@@ -118,8 +118,8 @@ psi.corr.fun.ls.2 <- list(
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
         psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod*std.VPD*leaf_cover), na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod*std.VPD*leaf_cover), na.rm = TRUE))]#[
+            # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
   }
@@ -273,10 +273,12 @@ get.mfac.ls <- list(
     }
 )
 # Originally written by Sean M McMahon, then modified
+
 get.ts.lk <- function(df) {
   demo.ts <- df$demo.rate
   k <- length(demo.ts)
   psi.dat <- df[, grep("[0-9]", names(df))]
+  psi.dat <- psi.dat[, colSums(!is.na(psi.dat)) > 0]
   loglk <- apply(psi.dat, 2, function(x) sum(dnorm(demo.ts, mean = scale(x), 1, log = TRUE)))
   R2 <- apply(psi.dat, 2,
               function(x)  summary(lm(demo.ts ~ x))$r.squared)
@@ -307,6 +309,7 @@ get.ml.depth.rsq.top <- function(result) {
   return(list(depth = result$depth[r2.sorted$ix[which(r2.sorted$x >= r2.sorted$x[1] - 0.1)]],
               R2 = r2.sorted$x[which(r2.sorted$x >= r2.sorted$x[1] - 0.1)]))
 }
+
 
 # Defines function to color according to correlation
 
@@ -456,6 +459,9 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
       doy := as.numeric(as.character(doy))][depth %chin% depth.sub][, ':='(depth = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
                                                                                                    labels = depth.labels, right = TRUE))][, by = .(date, interval, interval.yrs, par.sam, depth),
                                                                                                                                           lapply(.SD, median, na.rm = TRUE)]
+##*******************************************
+## There are lines above at the far right end
+##*******************************************
 
 # psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 #   ':='(doy = format(date, "%j"),
@@ -539,7 +545,7 @@ ml.ls <- vector("list", length(gfac.interval))
 ml.dens <- vector("list", length(gfac.interval))
 ml.rsq.ls <- vector("list", length(gfac.interval))
 ml.corr.ls <- vector("list", length(gfac.interval))
-
+names(ml.dens) <- names(ml.rsq.ls) <- names(ml.corr.ls) <- names(ml.ls) <- names.gfac
 for (i in names(gfac.interval)) {
   if(grepl("gr.", i)) {
     demo <- growth.sub
@@ -551,7 +557,7 @@ for (i in names(gfac.interval)) {
     inner_join(gfac.interval[[i]], by = c("interval", "sp")) %>%
     subset(!is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
   demo.psi.ls <- split(demo.psi,
-                       f = list(demo.psi$sp), drop = TRUE)
+                       f = list(demo.psi$sp, demo.psi$par.sam), drop = TRUE)
   ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
   ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
   ml.corr.ls[[i]] <- do.call(rbind.data.frame, ml.ls[[i]])
@@ -566,11 +572,13 @@ for (i in names(gfac.interval)) {
 
 ml.corr <- vector("list", length(gfac.interval))
 ml.corr.best <- vector("list", length(gfac.interval))
+ml.corr.best.parsam <- vector("list", length(gfac.interval))
+names(ml.corr) <- names(ml.corr.best) <- names(ml.corr.best.parsam) <- names.gfac
 for (i in names(gfac.interval)) {
   ml.corr[[i]] <- ml.corr.ls[[i]] %>%
-    mutate(sp.depth = row.names(ml.corr.ls[[i]])) %>%
-    separate(sp.depth, c("sp", "depth.fac", sep = "."), remove = FALSE, extra = "drop", fill = "right") %>%
-    dplyr::select(-".", -depth.fac) %>%
+    mutate(sp.parsam.row = row.names(ml.corr.ls[[i]])) %>%
+    separate(sp.parsam.row, c("sp", "par.sam", "row", sep = "."), remove = FALSE, extra = "drop", fill = "right") %>%
+    dplyr::select(-".", -row) %>%
     mutate(size = "large",
            depth = as.numeric(as.character(depth))) %>%
     arrange(sp, depth) %>%
@@ -584,19 +592,35 @@ for (i in names(gfac.interval)) {
            deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
 
   # left_join(traits.long.hyd %>% select(deci_sp, deci_sp.plot, sp, sp.plot,  deciduousness), by = "sp") #%>%
-  ml.corr.best[[i]] <- ml.corr[[i]] %>% group_by(sp) %>%
+  # Select best corr within each sp and par.sam
+  ml.corr.best.parsam[[i]] <- ml.corr[[i]] %>% group_by(sp, par.sam) %>%
     mutate(corr.max = max(corr, na.rm = TRUE)) %>%
     subset(corr == corr.max) %>% dplyr::select(-corr.max) %>%
-    ungroup(sp)
+    ungroup(sp, par.sam)
+
+  # Get sumamy corr across the best corr within each sp and par.sam
+  ml.corr.best[[i]] <- ml.corr.best.parsam[[i]] %>% group_by(sp) %>%
+    summarise(corr.upper.CI = -quantile(corr, probs = 0.975),
+              corr.lower.CI = -quantile(corr, probs = 0.025),
+              corr = -median(corr, na.rm = TRUE), .groups = "drop_last")
 }
 ## species by depth by heat rsq
 ml.rsq.combine <- dplyr::bind_rows(ml.corr, .id = "corr.func") %>%
   transform(corr.func = factor(corr.func, levels = names.gfac))
-ml.rsq.combine.best <- dplyr::bind_rows(ml.corr.best, .id = "corr.func") %>%
+ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.func") %>%
   transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
-  unite(corr.func_sp_depth, corr.func,sp, depth, remove = FALSE)
-
-
+  unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
+ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
+  group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp.plot) %>%
+  subset(corr >= 0 & R2 >= 0.1) %>%
+  summarise(depth.se = sd(depth, na.rm = TRUE)/sqrt(n()),
+            depth = mean(depth, na.rm = TRUE),
+            corr.se = sd(corr, na.rm = TRUE)/sqrt(n()),
+            corr = mean(corr, na.rm = TRUE),
+            R2.se = sd(R2, na.rm = TRUE)/sqrt(n()),
+            R2 = mean(R2, na.rm = TRUE), .groups = "drop_last") %>%
+  select(sp, depth, corr, R2, everything()) %>%
+  unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 ## Plot chosen ERD
 
 df.erd.to.plot <- ml.rsq.combine.best %>%
@@ -607,15 +631,8 @@ df.erd.to.plot <- ml.rsq.combine.best %>%
            corr >= 0 & R2 >= 0.1 & !duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
   transform(sp = reorder(sp, depth))
 length(unique(df.erd.to.plot$sp))
-# 32
-erd.sp.plot <- ggplot(df.erd.to.plot,
-       aes(x = sp, y = depth)) +
-  geom_point(aes(color = sp), show.legend = FALSE) +
-  ylab("Effective Rooting Depth (m)") + xlab("Species") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine.best$depth)
-ggsave("ERD_by_sp_large_canopy.jpeg",
-       plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 3.5, width = 5, units='in')
+# 36
+save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 
 grate.gfac <- gfac.interval.long <- vector(mode = "list", length = length(names.gfac))
 names(gfac.interval.long) <- names(grate.gfac) <- names.gfac
@@ -636,7 +653,7 @@ grate.gfac.best <- dplyr::bind_rows(grate.gfac, .id = "corr.func") %>%
   mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
                               `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")) %>%
   transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
-  unite(corr.func_sp_depth, corr.func,sp, depth, remove = FALSE) %>%
+  unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE) %>%
   left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   subset(form1 = "T") %>%
   group_by(sp, size, corr.func, depth) %>%
@@ -783,7 +800,7 @@ p0 <- ggplot(ml.rsq.combine.sub,
   geom_text(aes(x =  Xylem_sap_deltaD_permil.mean, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine.sub$depth) +
+  scale_y_continuous(trans = reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -808,7 +825,7 @@ p1 <- ggplot(ml.rsq.combine.sub,
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.sub$depth) +
+  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.9, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -833,14 +850,14 @@ p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
   geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
-                 size = 0.5, height = 0.3) +
+                 size = 0.5, height = 0.1) +
   facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   # position=position_jitter(width=ifelse(ml.rsq.combine.sub$sp=='cordal',1,0),
   #                        height=ifelse(ml.rsq.combine.sub$sp=='cordal',1,0))
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.sub$depth) +
+  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.9, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -873,10 +890,10 @@ p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 
                      xmin = Xylem_sap_deltaD_permil - se, color = sp),
                  size = 0.5, height = 0.05) +
   facet_wrap( ~ models.plot1, nrow = 1) +
-  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.15, nudge_x = 0.2,
+  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.07, nudge_x = 0,
             size = 3) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.sub$depth) +
+  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.98, npcy = 0.13, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -891,7 +908,7 @@ p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 
   guides(fill = "none", color = "none")
   # guides(fill = guide_legend(title = "Species"))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
-       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3, width = 9, units = 'in')
+       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 9, units = 'in')
 
 p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4" &
                                              corr.func == "gr.Psi.VPD"),
@@ -901,7 +918,7 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
                  size = 0.5, height = 0.05, show.legend = FALSE) +
   geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans=reverselog_trans(10), breaks = ml.rsq.combine.sub$depth) +
+  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.9, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -923,7 +940,7 @@ g3 <- ggplot(ml.rsq.combine.best %>% subset(R2 >= 0.1 & !duplicated(sp) & !is.na
   theme(legend.position = "top") +
   ylab("Depth (m)") + xlab("Species") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine.best$depth)
+  scale_y_continuous(trans = reverselog_trans(10), breaks = unique(ml.rsq.combine$depth))
 g4 <- g3 + coord_flip() +
   theme(axis.text.x = element_text(angle = 0, vjust = 0.5))
 ggsave("psi.corr_best.depth_phenology.jpeg",
@@ -960,32 +977,32 @@ traits.labels.table.1 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                               "Panama.moist.pref", "Plot.swp.pref", "LMA"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
                                                   expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
-                                                  expression(italic('K')['max, Stem']),  expression(Psi['50, Stem']),  expression(Psi['88, Stem']),
+                                                  expression(italic('K')['max, stem']),  expression(Psi['50, stem']),  expression(Psi['88, stem']),
                                                   expression(Psi[min]*' - '*Psi[TLP]),
-                                                  expression(Psi[min]*' - '*Psi['50, Stem']),
-                                                  expression(Psi[min]*' - '*Psi['88, Stem']),
-                                                  expression(Psi[TLP]*' - '*Psi['50, Stem']),
-                                                  expression(Psi[TLP]*' - '*Psi['88, Stem']),
-                                                  expression('CWR'['Total']), expression('CWR'['Xylem']), expression('CWR'['Bark']),
-                                                  expression(italic('F')['Elbow, Xylem']), expression(italic('F')['Elbow, Bark']),
-                                                  expression(Psi[min]*'-'*italic('F')['Elbow, Xylem']),
-                                                  expression(Psi[min]*'-'*italic('F')['Elbow, Bark']),
-                                                  expression(italic('F')['Cap, Xylem']), expression(italic('F')['Cap, Bark']),
+                                                  expression(Psi[min]*' - '*Psi['50, stem']),
+                                                  expression(Psi[min]*' - '*Psi['88, stem']),
+                                                  expression(Psi[TLP]*' - '*Psi['50, stem']),
+                                                  expression(Psi[TLP]*' - '*Psi['88, stem']),
+                                                  expression('CWR'['total']), expression('CWR'['xylem']), expression('CWR'['bark']),
+                                                  expression(italic('F')['Elbow, xylem']), expression(italic('F')['Elbow, bark']),
+                                                  expression(Psi[min]*'-'*italic('F')['elbow, xylem']),
+                                                  expression(Psi[min]*'-'*italic('F')['elbow, bark']),
+                                                  expression(italic('F')['cap, xylem']), expression(italic('F')['cap, bark']),
                                                   expression('WD'[stem]),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
                                                         expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
-                                                        expression(italic('K')['max, Stem']), expression(Psi['50,Stem']),  expression(Psi['88,Stem']),
+                                                        expression(italic('K')['max, stem']), expression(Psi['50,stem']),  expression(Psi['88,stem']),
                                                         expression(Psi[min]*'-'*Psi[TLP]),
-                                                        expression(Psi[min]*'-'*Psi['50,Stem']),
-                                                        expression(Psi[min]*'-'*Psi['88,Stem']),
-                                                        expression(Psi[TLP]*'-'*Psi['50,Stem']),
-                                                        expression(Psi[TLP]*'-'*Psi['88,Stem']),
-                                                        expression('CWR'['Total']), expression('CWR'['Xylem']), expression('CWR'['Bark']),
-                                                        expression(italic('F')['Elbow, Xylem']), expression(italic('F')['Elbow,Bark']),
-                                                        expression(Psi[min]*'-'*italic('F')['Elbow,Xylem']),
-                                                        expression(Psi[min]*'-'*italic('F')['Elbow,Bark']),
-                                                        expression(italic('F')['Cap,Xylem']), expression(italic('F')['Cap,Bark']),
+                                                        expression(Psi[min]*'-'*Psi['50,stem']),
+                                                        expression(Psi[min]*'-'*Psi['88,stem']),
+                                                        expression(Psi[TLP]*'-'*Psi['50,stem']),
+                                                        expression(Psi[TLP]*'-'*Psi['88,stem']),
+                                                        expression('CWR'['total']), expression('CWR'['Xylem']), expression('CWR'['bark']),
+                                                        expression(italic('F')['elbow, xylem']), expression(italic('F')['Elbow,bark']),
+                                                        expression(Psi[min]*'-'*italic('F')['Elbow,xylem']),
+                                                        expression(Psi[min]*'-'*italic('F')['Elbow,bark']),
+                                                        expression(italic('F')['cap,xylem']), expression(italic('F')['cap,bark']),
                                                         expression('WD'[stem]),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), "LMA"))) %>% droplevels()
 
@@ -1038,22 +1055,22 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                               "HSMLWP.80L", "HSMTLP.80L",
                                                               "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
-                                                  expression(italic(K)['max, Leaf']), expression(Psi[predawn]), expression(Psi[min]),
-                                                  expression(Psi[TLP]), expression(Psi['50, Leaf']), expression(Psi['80, Leaf']),
+                                                  expression(italic(K)['max, leaf']), expression(Psi[predawn]), expression(Psi[min]),
+                                                  expression(Psi[TLP]), expression(Psi['50, leaf']), expression(Psi['80, leaf']),
                                                   expression(Psi[min]*' - '*Psi[TLP]),
-                                                  expression(Psi[min]*' - '*Psi['50, Leaf']),
-                                                  expression(Psi[TLP]*' - '*Psi['50, Leaf']),
-                                                  expression(Psi[min]*' - '*Psi['80, Leaf']),
-                                                  expression(Psi[TLP]*' - '*Psi['80, Leaf']),
+                                                  expression(Psi[min]*' - '*Psi['50, leaf']),
+                                                  expression(Psi[TLP]*' - '*Psi['50, leaf']),
+                                                  expression(Psi[min]*' - '*Psi['80, leaf']),
+                                                  expression(Psi[TLP]*' - '*Psi['80, leaf']),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
-                                                        expression(italic(K)['max, Leaf']), expression(Psi[predawn]), expression(Psi[min]),
-                                                        expression(Psi[TLP]), expression(Psi['50,Leaf']), expression(Psi['80,Leaf']),
+                                                        expression(italic(K)['max, leaf']), expression(Psi[predawn]), expression(Psi[min]),
+                                                        expression(Psi[TLP]), expression(Psi['50,leaf']), expression(Psi['80,leaf']),
                                                         expression(Psi[min]*'-'*Psi[TLP]),
-                                                        expression(Psi[min]*'-'*Psi['50,Leaf']),
-                                                        expression(Psi[TLP]*'-'*Psi['50,Leaf']),
-                                                        expression(Psi[min]*'-'*Psi['80,Leaf']),
-                                                        expression(Psi[TLP]*'-'*Psi['80,Leaf']),
+                                                        expression(Psi[min]*'-'*Psi['50,leaf']),
+                                                        expression(Psi[TLP]*'-'*Psi['50,leaf']),
+                                                        expression(Psi[min]*'-'*Psi['80,leaf']),
+                                                        expression(Psi[TLP]*'-'*Psi['80,leaf']),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")))
 
 

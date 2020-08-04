@@ -394,7 +394,6 @@ mort.sub <- mrate.long %>% subset(size == "large") %>%
 ## Using k_leaf_by_LWP curve parameters directly fitted to data, rather than predicted from soft traits, when available
 
 ## combining psi, PET and VPD
-soil.depths <- unique(psi$depth)
 
 clim.daily.effect <- clim.daily %>%
   mutate(Rs.pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.rad.pet.gam, newdata = clim.daily)),
@@ -1278,35 +1277,13 @@ hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
   rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
   gather(trait, se, -sp) ## But note that for TLP it's not se but sd
 
-depth.traits.select <- depth.traits.hyd %>% subset(trait %in% c("KmaxS", "TLP", "p88S", "HSM88S")) %>%
+erd.stem.traits <- depth.traits.hyd %>% subset(trait %in% c("KmaxS", "TLP", "p88S", "HSM88S")) %>%
   select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%
   # bind_rows(depth.traits.kunert %>% subset(trait == "KmaxL") %>%
   #             select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value)) %>%
   left_join(traits.labels.select %>% select(trait, trait.plot), by = "trait") %>%
   droplevels() %>%
   left_join(hyd.error, by = c("sp", "trait"))
-
-formula <- y ~ x
-depth.traits.select.plot <- ggplot(depth.traits.select,
-                                   aes(y = `Depth[italic("Rsq")]`, x = value)) +
-  geom_smooth(method = "lm") +
-  # geom_errorbar(aes(ymax = value + se, ymin = value - se), width = 0.05) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
-  scale_y_reverse() +
-  coord_cartesian(ylim = c(10, 0)) +
-  ylab("Effective Rooting Depth (m)") + xlab("") +
-  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.85, npcy = 0.2, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 3) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.85, npcy = 0.1, size = 3) +
-  theme(panel.spacing = unit(1, "lines"))
-ggsave(file.path(figures.folder, paste0("Select_traits_depth.jpeg")),
-       plot = depth.traits.select.plot, height = 4, width = 3.5, units ='in')
 
 tlp.hyd.kunert <- hyd.pairs.1 %>% select(sp, `Psi[TLP]`) %>%
   rename(`Wolfe et al. Psi[TLP]` = `Psi[TLP]`) %>%

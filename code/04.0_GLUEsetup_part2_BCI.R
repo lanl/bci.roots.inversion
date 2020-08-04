@@ -20,6 +20,7 @@ GLUEsetup_part2 <- function(growth.type, dbh.residuals, solar.residuals, growth.
     n.ensembles <- length(info.3$btran.int.sam[[1]])
     ## Observed growth
     ## individual, species or sp by size level
+
     growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_ci_", intervals, "_", growth.selection, ".Rdata"))
     growth <- get(growth.name); rm(growth.name)
     sp_size.name <- load(file = paste0("results/sp_size.", growth.type, ".names_", intervals, "_", growth.selection, ".Rdata"))

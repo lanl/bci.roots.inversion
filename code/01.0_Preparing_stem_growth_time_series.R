@@ -430,8 +430,8 @@ g10 <- ggplot(gro.long.cc %>% subset(stemID %in% gro.long.cc.sub$stemID),
   scale_y_log10() +
   ylab("DBH (cm)")  + xlab("Interval")
 #geom_line(data = gro.long.mod.med.allsp %>% subset(interval == 7), aes(y = predict.growth.allsp/10), color = "red")
-g10 +   geom_line(aes(y = dbh/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
-g10 +   geom_line(aes(y = dbh.residuals/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
+g10 + geom_line(aes(y = dbh/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
+g10 + geom_line(aes(y = dbh.residuals/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
 
 gro.long.cc.norm.stem <- gro.long.cc %>% group_by(stemID) %>%
   mutate(dbh.resid.range = range01(dbh.residuals),

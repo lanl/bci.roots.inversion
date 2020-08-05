@@ -65,14 +65,17 @@ mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) & avg.abund >
   subset(sp %in% erd.sp) %>% droplevels()
 
 mrate.depth.mean <- mrate.depth.select %>%
-  group_by(sp, rdi.gr) %>% summarise(avg.abund = mean(avg.abund, na.rm = TRUE),
+  group_by(sp) %>% summarise(rdi.gr = mean(rdi.gr, na.rm = TRUE),
+                             depth.se = mean(depth.se, na.rm = TRUE),
+                                     avg.abund = mean(avg.abund, na.rm = TRUE),
                                      se = sd(mrate, na.rm = TRUE)/sqrt(n()),
                                      mrate = mean(mrate, na.rm = TRUE), .groups = "drop_last") %>% droplevels()
 erd.mrate.sp <- unique(mrate.depth.mean$sp)
 mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
   subset(depth == rdi.gr) %>%
   group_by(sp) %>%
-  summarise(avg.abund = mean(avg.abund, na.rm = TRUE),
+  summarise(depth.se = mean(depth.se, na.rm = TRUE),
+            avg.abund = mean(avg.abund, na.rm = TRUE),
             depth = mean(depth, na.rm = TRUE),
             mfac = sum(mfac, na.rm = TRUE),.groups = "drop_last")
 # save.image("results/manuWorkSpace.RData")
@@ -112,28 +115,30 @@ ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatolo
        plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
 
 erd.stem.traits.only <- erd.stem.traits %>%
-  subset(!is.na(erd.stem.traits$`Depth[italic("Rsq")]`)) %>%
+  left_join(df.erd.to.plot %>% select(sp, depth, depth.se), by = "sp") %>%
+  subset(!is.na(depth)) %>%
   droplevels()
 erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
 
 formula <- y ~ x
 depth.traits.select.plot <- ggplot(erd.stem.traits.only,
-                                   aes(y = `Depth[italic("Rsq")]`, x = value)) +
-  geom_smooth(method = "lm") +
+                                   aes(y = depth, x = value)) +
+  geom_smooth(method = "lm", formula = formula) +
   # geom_errorbar(aes(ymax = value + se, ymin = value - se), width = 0.05) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.1, size = 0.2) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   scale_y_reverse() +
   coord_cartesian(ylim = c(10, 0)) +
   ylab("Effective Rooting Depth (m)") + xlab("") +
   facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.85, npcy = 0.2, rr.digits = 2,
+               npcx = 0.87, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 3) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.85, npcy = 0.1, size = 3) +
+                  npcx = 0.87, npcy = 0.1, size = 3) +
   theme(panel.spacing = unit(1, "lines"))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
        plot = depth.traits.select.plot, height = 4, width = 3.5, units ='in')
@@ -142,8 +147,9 @@ ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
 
 mfac.plot.15 <- ggplot(mrate.depth.mean,
                        aes(y = mrate, x = rdi.gr)) +
-  geom_smooth(method = "lm") +
-  geom_errorbar(aes(ymin = mrate - se, ymax = mrate + se), width = 0.2, size = 0.1) +
+  geom_smooth(method = "lm", formula = formula) +
+  geom_errorbar(aes(ymin = mrate - se, ymax = mrate + se), width = 0.15, size = 0.1) +
+  geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
   ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
   xlab("Effective Rooting Depth (m)") +
@@ -165,7 +171,8 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_only_with_ste
 y.label.1 <- expression(Mort[anomaly]~('%'*yr^{-1}))
 mfac.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
-  geom_smooth(method = "lm") +
+  geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
+  geom_smooth(method = "lm", formula = formula) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  + ylab(y.label.1) +
   facet_grid(. ~ censusint.m) +

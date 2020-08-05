@@ -612,9 +612,9 @@ ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
   group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp.plot) %>%
-  subset(corr >= 0 & R2 >= 0.1) %>%
+  subset(corr >= 0 & R2 >= 0.5) %>%
   summarise(depth.se = sd(depth, na.rm = TRUE)/sqrt(n()),
-            depth = mean(depth, na.rm = TRUE),
+            depth = median(depth, na.rm = TRUE),
             corr.se = sd(corr, na.rm = TRUE)/sqrt(n()),
             corr = mean(corr, na.rm = TRUE),
             R2.se = sd(R2, na.rm = TRUE)/sqrt(n()),
@@ -628,7 +628,8 @@ df.erd.to.plot <- ml.rsq.combine.best %>%
   mutate(size = as.character(size)) %>%
   left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   subset(form1 == "T" &
-           corr >= 0 & R2 >= 0.1 & !duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
+           corr >= 0 & R2 >= 0.1 &
+           !duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
   transform(sp = reorder(sp, depth))
 length(unique(df.erd.to.plot$sp))
 # 36
@@ -749,7 +750,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
 
 depth.rsq.isotopes <- ml.rsq.combine.best %>%
   group_by(corr.func, sp, size) %>%
-  summarise_at(c("depth", "Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE) %>%
+  summarise_at(c("depth", "depth.se","Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE) %>%
   ungroup(corr.func, sp, size)
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
@@ -796,31 +797,34 @@ p0 <- ggplot(ml.rsq.combine.sub,
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil.mean + se.mean,
                      xmin = Xylem_sap_deltaD_permil.mean - se.mean, color = deciduousness),
                  size = 0.5, height = 0.05) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness), size = 0.5, height = 0.05) +
   facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil.mean, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
   ylab(expression("Best Correlated Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans = reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.2, rr.digits = 2,
+               npcx = 0.05, npcy = 0.95, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.1, size = 4) +
+                  npcx = 0.05, npcy = 0.85, size = 4) +
   geom_point(size = 1, show.legend = TRUE, aes(color = deciduousness)) +
   theme(legend.position = "top", legend.title = element_blank(),
         legend.direction = "horizontal") + #, strip.text = element_blank()) +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_mean_isotope_source.jpeg",
-       plot = p0, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
+       plot = p0, file.path(figures.folder), device = "jpeg", height = 3.5, width = 8, units = 'in')
 
 p1 <- ggplot(ml.rsq.combine.sub,
              aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
                  size = 0.5, height = 0.05) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness),
+                size = 0.5, height = 0.05) +
   facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
@@ -839,18 +843,19 @@ p1 <- ggplot(ml.rsq.combine.sub,
         legend.direction = "horizontal") + #, strip.text = element_blank()) +
   scale_color_brewer(palette = "Dark2")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_two_isotope_sources.jpeg",
-       plot = p1, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
+       plot = p1, file.path(figures.folder), device = "jpeg", height = 3.5, width = 8, units = 'in')
 p2 <- p1 %+% subset(ml.rsq.combine.sub, source == "Meinzer et al.1999 Fig. 4")
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
-       plot = p2, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units = 'in')
+       plot = p2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 8, units = 'in')
 
 p3 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
        aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
   coord_cartesian(ylim = c(13, 0.3)) +
-  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = deciduousness),
                  size = 0.5, height = 0.1) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness), size = 0.5, height = 0.05) +
   facet_wrap( ~ corr.func, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = deciduousness), nudge_y = 0.1, nudge_x = 0.2,
             size = 4, show.legend = FALSE) +
@@ -877,18 +882,19 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer.jpeg",
 ml.rsq.combine.sub <- ml.rsq.combine.sub %>% transform(models.plot1 = factor(corr.func,
                                                                             labels = c("A", "B", "C", "D")),
                                                        models.plot2 = factor(corr.func,
-                                                                            labels = c(expression(italic(K[italic('Leaf')])),
-                                                                                                  expression(italic(K[italic('Leaf')]*'VPD')),
-                                                                                                             expression(italic(K[italic('Leaf')]*'LeafFrac')),
-                                                                                                                        expression(italic(K[italic('Leaf')]*'VPD'*'LeafFrac')))))
+                                                                            labels = c(expression(italic(K[italic('leaf')])),
+                                                                                                  expression(italic(K[italic('leaf')]*'VPD')),
+                                                                                                             expression(italic(K[italic('leaf')]*'LeafCover')),
+                                                                                                                        expression(italic(K[italic('leaf')]*'VPD'*'LeafCover')))))
 
 p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
              aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
   coord_cartesian(ylim = c(13, 0.3)) +
-  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = sp),
                  size = 0.5, height = 0.05) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness), size = 0.5, height = 0.05) +
   facet_wrap( ~ models.plot1, nrow = 1) +
   geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.07, nudge_x = 0,
             size = 3) +
@@ -916,7 +922,7 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = sp),
                  size = 0.5, height = 0.05, show.legend = FALSE) +
-  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -928,7 +934,11 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 1, size = 3.5) +
-  guides(fill = guide_legend(title = "Species"))
+  # geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = sp),
+  #               size = 0.5, height = 0.05) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), color = "black",
+                size = 0.3, width = 0.2) +
+  guides(fill = guide_legend(title = "Species"), color = FALSE)
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
        plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4, units = 'in')
 
@@ -952,7 +962,7 @@ ggsave("psi.corr_best.depth_phenology.jpeg",
 ## Soil preference vs traits
 hyd <- hyd %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
                            subset(corr.func == "gr.Psi.VPD") %>%
-                           select(sp, depth), by = "sp") %>%
+                           select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
   droplevels()
@@ -976,13 +986,13 @@ traits.labels.table.1 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                               "Fcap_Xylem", "Fcap_Bark","WD",
                                                               "Panama.moist.pref", "Plot.swp.pref", "LMA"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
-                                                  expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
+                                                  expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[tlp]),
                                                   expression(italic('K')['max, stem']),  expression(Psi['50, stem']),  expression(Psi['88, stem']),
-                                                  expression(Psi[min]*' - '*Psi[TLP]),
+                                                  expression(Psi[min]*' - '*Psi[tlp]),
                                                   expression(Psi[min]*' - '*Psi['50, stem']),
                                                   expression(Psi[min]*' - '*Psi['88, stem']),
-                                                  expression(Psi[TLP]*' - '*Psi['50, stem']),
-                                                  expression(Psi[TLP]*' - '*Psi['88, stem']),
+                                                  expression(Psi[tlp]*' - '*Psi['50, stem']),
+                                                  expression(Psi[tlp]*' - '*Psi['88, stem']),
                                                   expression('CWR'['total']), expression('CWR'['xylem']), expression('CWR'['bark']),
                                                   expression(italic('F')['Elbow, xylem']), expression(italic('F')['Elbow, bark']),
                                                   expression(Psi[min]*'-'*italic('F')['elbow, xylem']),
@@ -991,13 +1001,13 @@ traits.labels.table.1 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                   expression('WD'[stem]),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
-                                                        expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[TLP]),
+                                                        expression(Psi[Predawn]), expression(Psi[min]), expression(Psi[tlp]),
                                                         expression(italic('K')['max, stem']), expression(Psi['50,stem']),  expression(Psi['88,stem']),
-                                                        expression(Psi[min]*'-'*Psi[TLP]),
+                                                        expression(Psi[min]*'-'*Psi[tlp]),
                                                         expression(Psi[min]*'-'*Psi['50,stem']),
                                                         expression(Psi[min]*'-'*Psi['88,stem']),
-                                                        expression(Psi[TLP]*'-'*Psi['50,stem']),
-                                                        expression(Psi[TLP]*'-'*Psi['88,stem']),
+                                                        expression(Psi[tlp]*'-'*Psi['50,stem']),
+                                                        expression(Psi[tlp]*'-'*Psi['88,stem']),
                                                         expression('CWR'['total']), expression('CWR'['Xylem']), expression('CWR'['bark']),
                                                         expression(italic('F')['elbow, xylem']), expression(italic('F')['Elbow,bark']),
                                                         expression(Psi[min]*'-'*italic('F')['Elbow,xylem']),
@@ -1039,7 +1049,7 @@ hyd.long <- hyd.long %>%
 ##
 traits <- traits %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
                                  subset(corr.func == "gr.Psi.VPD") %>%
-                                 select(sp, depth), by = "sp") %>%
+                                 select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
   droplevels()
@@ -1056,21 +1066,21 @@ traits.labels.table.2 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                               "Panama.moist.pref", "Plot.swp.pref", "SG100C_AVG", "Chl"), ordered = TRUE)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
                                                   expression(italic(K)['max, leaf']), expression(Psi[predawn]), expression(Psi[min]),
-                                                  expression(Psi[TLP]), expression(Psi['50, leaf']), expression(Psi['80, leaf']),
-                                                  expression(Psi[min]*' - '*Psi[TLP]),
+                                                  expression(Psi[tlp]), expression(Psi['50, leaf']), expression(Psi['80, leaf']),
+                                                  expression(Psi[min]*' - '*Psi[tlp]),
                                                   expression(Psi[min]*' - '*Psi['50, leaf']),
-                                                  expression(Psi[TLP]*' - '*Psi['50, leaf']),
+                                                  expression(Psi[tlp]*' - '*Psi['50, leaf']),
                                                   expression(Psi[min]*' - '*Psi['80, leaf']),
-                                                  expression(Psi[TLP]*' - '*Psi['80, leaf']),
+                                                  expression(Psi[tlp]*' - '*Psi['80, leaf']),
                                                   expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")),
             trait.plot.chart = factor(trait, labels = c(expression(Depth[italic('Rsq')]), expression(italic(delta)^2*H[Xylem]),
                                                         expression(italic(K)['max, leaf']), expression(Psi[predawn]), expression(Psi[min]),
-                                                        expression(Psi[TLP]), expression(Psi['50,leaf']), expression(Psi['80,leaf']),
-                                                        expression(Psi[min]*'-'*Psi[TLP]),
+                                                        expression(Psi[tlp]), expression(Psi['50,leaf']), expression(Psi['80,leaf']),
+                                                        expression(Psi[min]*'-'*Psi[tlp]),
                                                         expression(Psi[min]*'-'*Psi['50,leaf']),
-                                                        expression(Psi[TLP]*'-'*Psi['50,leaf']),
+                                                        expression(Psi[tlp]*'-'*Psi['50,leaf']),
                                                         expression(Psi[min]*'-'*Psi['80,leaf']),
-                                                        expression(Psi[TLP]*'-'*Psi['80,leaf']),
+                                                        expression(Psi[tlp]*'-'*Psi['80,leaf']),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), expression('SG'[100*~degree*C]), "LMA")))
 
 
@@ -1291,9 +1301,9 @@ ggsave(file.path(figures.folder, paste0("Kunert_traits_depth.jpeg")),
 
 traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
                                         levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE)) %>%
-  transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, Stem']), expression(Psi[TLP]),
-                                                  expression(Psi['88, Stem']),
-                                                  expression(Psi[min]*' - '*Psi['88, Stem']))))
+  transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, stem']), expression(Psi[tlp]),
+                                                  expression(Psi['88, stem']),
+                                                  expression(Psi[min]*' - '*Psi['88, stem']))))
 
 hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
   rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
@@ -1307,15 +1317,17 @@ erd.stem.traits <- depth.traits.hyd %>% subset(trait %in% c("KmaxS", "TLP", "p88
   droplevels() %>%
   left_join(hyd.error, by = c("sp", "trait"))
 
-tlp.hyd.kunert <- hyd.pairs.1 %>% select(sp, `Psi[TLP]`) %>%
-  rename(`Wolfe et al. Psi[TLP]` = `Psi[TLP]`) %>%
-  left_join(traits.pairs.2 %>% select(sp, `Psi[TLP]`) %>%
-              rename(`Kunert et al. Psi[TLP]` = `Psi[TLP]`), by = "sp")
-tlp.min.plot = min(c(tlp.hyd.kunert$`Kunert et al. Psi[TLP]`, tlp.hyd.kunert$`Wolfe et al. Psi[TLP]`), na.rm = TRUE)
-tlp.max.plot = max(c(tlp.hyd.kunert$`Kunert et al. Psi[TLP]`, tlp.hyd.kunert$`Wolfe et al. Psi[TLP]`), na.rm = TRUE)
-tlp.hyd.kunert.plot <- ggplot(tlp.hyd.kunert, aes(x = `Wolfe et al. Psi[TLP]`, y = `Kunert et al. Psi[TLP]`)) +
+save(erd.stem.traits, file = file.path(results.folder, "erd.stem.traits.Rdata"))
+
+tlp.hyd.kunert <- hyd.pairs.1 %>% select(sp, `Psi[tlp]`) %>%
+  rename(`Wolfe et al. Psi[tlp]` = `Psi[tlp]`) %>%
+  left_join(traits.pairs.2 %>% select(sp, `Psi[tlp]`) %>%
+              rename(`Kunert et al. Psi[tlp]` = `Psi[tlp]`), by = "sp")
+tlp.min.plot = min(c(tlp.hyd.kunert$`Kunert et al. Psi[tlp]`, tlp.hyd.kunert$`Wolfe et al. Psi[tlp]`), na.rm = TRUE)
+tlp.max.plot = max(c(tlp.hyd.kunert$`Kunert et al. Psi[tlp]`, tlp.hyd.kunert$`Wolfe et al. Psi[tlp]`), na.rm = TRUE)
+tlp.hyd.kunert.plot <- ggplot(tlp.hyd.kunert, aes(x = `Wolfe et al. Psi[tlp]`, y = `Kunert et al. Psi[tlp]`)) +
   geom_point() +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   geom_abline(intercept = 0, slope = 1, lty = "dashed") +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.05, npcy = 0.95, rr.digits = 2,
@@ -1338,7 +1350,7 @@ ggplot(lwp.all, aes(x = LWP_coll_time, y = lwp.min)) +
   facet_grid(location ~ .) +
   geom_point(aes(color = as.factor(date))) +
   geom_line(aes(group = c(sp_date), color = as.factor(date)), show.legend = FALSE) +
-  geom_smooth(method = "loess", formula = y ~ x, se = FALSE) +
+  geom_smooth(method = "loess", formula = y ~ x, se = FALSE, formula = formula) +
   guides(color = guide_legend(title = "Date"))
 ggsave(file.path(figures.folder, paste0("LWP_time_series_all_Data.jpeg")), height = 6, width = 5, units ='in')
 
@@ -1503,7 +1515,7 @@ p.d0 <- ggplot(demo.sp_size %>% subset(size != "NA"),
                aes(y = mrate, x = grate)) +
   geom_point() +
   facet_wrap(. ~ size, scales = "free_y") +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   scale_x_log10() + scale_y_log10() +
   xlab(expression("Mean Growth Rate (mm/yr)")) +  ylab(expression("Mean Mortality Rate (% per year)"))
 p.d0.1 <- p.d0 +  stat_poly_eq(npcx = 0.1, npcy = 0.2, size = 4, aes(label = paste(..rr.label..)), rr.digits = 2, formula = formula, parse = TRUE) +
@@ -1582,7 +1594,7 @@ m3.base <- ggplot(subset(mrate.long.hyd, size == "large" & sp %in% c("cordal", "
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 0.5, hjust = 1),
         strip.text.y = element_text(face = "plain", size = 8))
 m3.1 <- m3.base + geom_col(aes(x = sp.plot, y = diff.mrate, fill = deciduousness)) +
-  ggtitle(expression('Species leafless in early wet season, with increasing HSM '*Psi[TLP]*' - '*Psi['88,Stem']))
+  ggtitle(expression('Species leafless in early wet season, with increasing HSM '*Psi[tlp]*' - '*Psi['88,stem']))
   #  does not work: fill = "Facultative Deciduous"
   # guides(fill = guide_legend(title = "Deciduousness",
   #                            override.aes = list(fill = c("Facultative Deciduous" = "#35B779FF"))))
@@ -1592,27 +1604,27 @@ ggsave(file.path(paste0(figures.folder,
 
 m4.1 <- m3.base %+% subset(mrate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
   geom_col(aes(x = sp.plot, y = diff.mrate, fill = deciduousness)) +
-  ggtitle(expression('Mortality for Evergreen Species with increasing HSM '*Psi[TLP]*' - '*Psi['88,Stem']))
+  ggtitle(expression('Mortality for Evergreen Species with increasing HSM '*Psi[tlp]*' - '*Psi['88,stem']))
 ggsave(file.path(paste0(figures.folder,
                         "/sp_Mortality_rate_by_period_HSMTLP.88S_increasing_evergreens.jpeg")),
        plot = m4.1, height = 3, width = 9, units='in')
 
 mrate.long.hyd <- mrate.long.hyd %>% mutate(sp.plot = factor(sp, levels=unique(sp[order(-p88S)]), ordered=TRUE))
 m3.2 <- m3.base + geom_col(aes(x = sp.plot, y = diff.mrate, fill = deciduousness)) +
-  ggtitle(expression('Species leafless in early wet season, with increasingly more negative '*Psi['88,Stem']))
+  ggtitle(expression('Species leafless in early wet season, with increasingly more negative '*Psi['88,stem']))
 ggsave(file.path(paste0(figures.folder, "/sp_Mortality_rate_by_period_deci_p88S_increasing_spp_leafless in early wet season.jpeg")),
        plot = m3.2, height = 3, width = 9, units='in')
 
 m4.2 <- m3.base %+% subset(mrate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
   geom_col(aes(x = sp.plot, y = diff.mrate, fill = deciduousness)) +
-  ggtitle(expression('Mortality for Evergreen Species with increasingly more negative '*Psi['88,Stem']))
+  ggtitle(expression('Mortality for Evergreen Species with increasingly more negative '*Psi['88,stem']))
 ggsave(file.path(paste0(figures.folder,
                         "/sp_Mortality_rate_by_period_p88S_increasing_evergreens.jpeg")),
        plot = m4.2, height = 3, width = 9, units='in')
 mrate.long.hyd <- mrate.long.hyd %>% mutate(sp.plot = factor(sp, levels=unique(sp[order(-HSM50S)]), ordered=TRUE))
 m4.3 <- m3.base %+% subset(mrate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
   geom_col(aes(x = sp.plot, y = diff.mrate, fill = deciduousness)) +
-  ggtitle(expression('Mortality for Evergreen Species with increasing HSM '*Psi[min]*' - '*Psi['50,Stem']))
+  ggtitle(expression('Mortality for Evergreen Species with increasing HSM '*Psi[min]*' - '*Psi['50,stem']))
 ggsave(file.path(paste0(figures.folder,
                         "/sp_Mortality_rate_by_period_HSMLWP.50S_increasing_evergreens.jpeg")),
        plot = m4.3, height = 3, width = 9, units='in')
@@ -1737,7 +1749,7 @@ g3.base <- ggplot(subset(grate.long.hyd, size == "large" & sp %in% c("cordal", "
   guides(fill = guide_legend(title = "Deciduousness")) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 0.5, hjust = 1))
 g3.1 <- g3.base + geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
-  ggtitle(expression('Species leafless in early wet season, with increasing HSM '*Psi[TLP]*' - '*Psi['88,Stem']))
+  ggtitle(expression('Species leafless in early wet season, with increasing HSM '*Psi[tlp]*' - '*Psi['88,stem']))
 #  does not work: fill = "Facultative Deciduous"
 # guides(fill = guide_legend(title = "Deciduousness",
 #                            override.aes = list(fill = c("Facultative Deciduous" = "#35B779FF"))))
@@ -1747,20 +1759,20 @@ ggsave(file.path(paste0(figures.folder,
 
 g4.1 <- g3.base %+% subset(grate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
   geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
-  ggtitle(expression('Growth for Evergreen Species with increasing HSM '*Psi[TLP]*' - '*Psi['88,Stem']))
+  ggtitle(expression('Growth for Evergreen Species with increasing HSM '*Psi[tlp]*' - '*Psi['88,stem']))
 ggsave(file.path(paste0(figures.folder,
                         "/sp_Growth_rate_by_period_HSMTLP.88S_increasing_evergreens.jpeg")),
        plot = g4.1, height = 4, width = 9, units='in')
 
 grate.long.hyd <- grate.long.hyd %>% mutate(sp.plot = factor(sp, levels=unique(sp[order(-p88S)]), ordered=TRUE))
 g3.2 <- g3.base + geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
-  ggtitle(expression('Species leafless in early wet season, with increasingly more negative '*Psi['88,Stem']))
+  ggtitle(expression('Species leafless in early wet season, with increasingly more negative '*Psi['88,stem']))
 ggsave(file.path(paste0(figures.folder, "/sp_Growth_rate_by_period_deci_p88S_increasing_spp_leafless in early wet season.jpeg")),
        plot = g3.2, height = 4, width = 9, units='in')
 
 g4.2 <- g3.base %+% subset(grate.long.hyd, sp %in% hyd$sp & size == "large" & deciduous == "E") +
   geom_col(aes(x = sp.plot, y = median, fill = deciduousness)) +
-  ggtitle(expression('Growth for Evergreen Species with increasingly more negative '*Psi['88,Stem']))
+  ggtitle(expression('Growth for Evergreen Species with increasingly more negative '*Psi['88,stem']))
 ggsave(file.path(paste0(figures.folder,
                         "/sp_Growth_rate_by_period_p88S_increasing_evergreens.jpeg")),
        plot = g4.2, height = 4, width = 9, units='in')
@@ -1820,7 +1832,7 @@ mrate.depth <-
   # mrate.long %>%
   left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD") %>%
               rename(rdi.gr = depth) %>%
-              dplyr::select(sp, size, rdi.gr), by = c("sp", "size")) %>%
+              dplyr::select(sp, size, rdi.gr, depth.se), by = c("sp", "size")) %>%
   left_join(subset(depth.rsq.isotopes, corr.func == "mr.Psi.VPD.I") %>%
               rename(rdi.mr = depth) %>%
               dplyr::select(sp, size, rdi.mr), by = c("sp", "size")) %>%
@@ -1850,18 +1862,15 @@ mrate.mfac.depth.to.rdi.gr.total.int <- mrate.mfac.depth.to.rdi.gr %>%
   summarise(mfac.soil.column.gr = mean(mfac.soil.column.gr, na.rm = TRUE),
             mrate = mean(mrate, na.rm = TRUE),
             diff.mrate = mean(diff.mrate, na.rm = TRUE),
-            depth = mean(depth, na.rm = TRUE)) %>%
-  ungroup(sp, size, censusint.m)
+            depth = mean(depth, na.rm = TRUE), .groups = "drop_last")
 mrate.mfac.depth.to.rdi.gr.total <- mrate.mfac.depth.to.rdi.gr.total.int %>%
   group_by(sp, size) %>%
-  summarise(mfac.soil.column.total.gr = sum(mfac.soil.column.gr, na.rm = TRUE)) %>%
-  ungroup(sp, size)
+  summarise(mfac.soil.column.total.gr = sum(mfac.soil.column.gr, na.rm = TRUE), .groups = "drop_last")
 mrate.mfac.depth.to.rdi.gr.study <- mrate.mfac.depth.to.rdi.gr %>%
   subset(depth == rdi.gr) %>%
   group_by(sp, size) %>%
   summarise(mfac.total.gr = sum(mfac, na.rm = TRUE),
-         mrate.sum = sum(mrate, na.rm = TRUE)) %>%
-  ungroup(sp, size)
+         mrate.sum = sum(mrate, na.rm = TRUE), .groups = "drop_last")
 
 save(mrate.depth, file = file.path(results.folder, "mrate.depth.Rdata"))
 save(mrate.mfac.depth, file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
@@ -1909,7 +1918,7 @@ mfac.plot.7 <- ggplot(mrate.mfac.depth.to.rdi.gr.study,
        aes(x = mfac.total.gr, y = mrate.sum)) +
   # facet_wrap(censusint.m ~ ., nrow = 1) +
   geom_point() +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   ylab(expression('Total Mortality Rate (% '*'year'^1*')')) +
   xlab(expression('Days '*Psi['Soil,z = ERD']*'<'*Psi['P80,Leaf'])) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -1935,7 +1944,7 @@ mfac.plot.8 <- ggplot(mrate.mfac.depth %>% subset(depth == rdi.mr),
                       aes(y = diff.mrate, x = mfac)) +
   geom_point() + ylab(y.label.1) +
   xlab(expression('Days '*Psi['Soil, z = RDI.mr']*' < '*Psi['crit'])) +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   facet_grid(. ~ censusint.m ) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -1961,7 +1970,7 @@ mfac.plot.10 <- ggplot(mrate.mfac.depth.to.rdi.mr.total.int,
   scale_color_continuous(trans = "reverse", guide = guide_colorbar(title = "Depth\n(m)")) +
   ylab(y.label.1) +
   xlab(expression('Days '*Psi['Soil, z <= RDI.mr']*' < '*Psi['P80, Leaf'])) +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   facet_grid(. ~ censusint.m ) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -1980,7 +1989,7 @@ mfac.plot.11 <- ggplot(mrate.mfac.depth.to.rdi.gr.total.int,
   scale_color_continuous(trans = "reverse", guide = guide_colorbar(title = "Depth\n(m)")) +
   ylab(y.label.1) +
   xlab(expression('Mean Days '*Psi['Soil, z <= ERD']*' < '*Psi['P80, Leaf'])) +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   facet_grid(. ~ censusint.m ) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -1997,7 +2006,7 @@ mfac.plot.12 <- ggplot(mrate.mfac.column.total.int,
                        aes(y = mrate, x = mfac.soil.column)) +
   geom_point() + ylab(expression('Mortality Rate (% '*'year'^1*')')) +
   xlab(expression('Mean Days '*Psi['Soil, all z']*' < '*Psi['P80, Leaf'])) +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   facet_grid(. ~ censusint.m ) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2014,7 +2023,7 @@ mfac.plot.14 <- ggplot(mrate.mfac.depth %>% subset(depth == rdi.mr),
                       aes(y = mrate, x = rdi.mr)) +
   geom_point() + ylab(expression('Mortality Rate (% '*'year'^1*')')) +
   xlab("Depth best-correlated with Mortality Rate (m)") +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   facet_grid(. ~ censusint.m ) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2062,7 +2071,7 @@ pm.2 <- ggplot(adult.mrate.mean %>%
   ylab(expression('Mean Mortality Rate (% '*'year'^1*')')) +
   xlab("Effective Rooting Depth (m)") +
   facet_grid(. ~ deciduousness)  +
-  geom_smooth(method = "lm", se = TRUE) +
+  geom_smooth(method = "lm", se = TRUE, formula = formula) +
   theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
   ggtitle("Adult tree mortality (>= 10 cm DBH)") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -2083,7 +2092,7 @@ pg.2 <- ggplot(adult.mrate.mean,
                   npcx = 0.9, npcy = 0.8, size = 5) +
   ylab(expression('Mean Growth Rate (cm.'*'year'^1*')')) +
   xlab("Effective Rooting Depth (m)") +
-  geom_smooth(method = "lm", se = TRUE) +
+  geom_smooth(method = "lm", se = TRUE, formula = formula) +
   theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
   ggtitle("Adult Trees (>=10cm DBH)") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -2510,7 +2519,7 @@ mrate.drought.plot <- ggplot(mrate.drought %>%
   geom_point(aes(color = sp), show.legend = FALSE) + ylab(expression('Mortality Rate (% '*'year'^1*')')) +
   # xlab('% Drought Days (below 2.5% Quantile)') +
   xlab(expression('% Drought Days ('*Psi['z, DOY']*' < '*italic(Q)[italic(p)*'=0.025, '*Psi['Soil, DOY']]*')')) +
-  geom_smooth(method = "loess") +
+  geom_smooth(method = "loess", formula = formula) +
   facet_grid(depth  ~ .) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2532,7 +2541,7 @@ mrate.drought.plot.2 <- ggplot(mrate.drought %>%
   guides(color = guide_legend(title = '% Drought Days (below 2.5% Quantile)')) +
   scale_color_continuous(trans = "reverse") +
   theme(legend.position = "top") +
-  geom_smooth(method = "loess") +
+  geom_smooth(method = "loess", formula = formula) +
   facet_grid(depth  ~ .) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2553,7 +2562,7 @@ mrate.drought.plot.3 <- ggplot(mrate.drought %>%
   geom_point(aes(color = sp), show.legend = FALSE) + ylab(expression('Mortality Rate (% '*'year'^1*')')) +
   # xlab('% Drought Days (below 2.5% Quantile)') +
   xlab(expression('% Drought Days ('*Psi['z, DOY']*' < '*italic(Q)[italic(p)*'=0.025, '*Psi['Soil, DOY']]*' & < 0.5 MPa)')) +
-  geom_smooth(method = "loess") +
+  geom_smooth(method = "loess", formula = formula) +
   facet_grid(depth  ~ .) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2577,7 +2586,7 @@ mrate.drought.plot.4 <- ggplot(mrate.drought %>%
   guides(color = guide_legend(title = '% Drought Days (<2.5% Quantile & <0.5MPa)')) +
   scale_color_continuous(trans = "reverse") +
   theme(legend.position = "top") +
-  geom_smooth(method = "loess") +
+  geom_smooth(method = "loess", formula = formula) +
   facet_grid(depth  ~ .) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2599,7 +2608,7 @@ mrate.drought.plot.5 <- ggplot(mrate.drought.ssn %>%
   ylab(expression('Mortality Rate (% '*'year'^1*')')) +
   # xlab('% Drought Days (below 2.5% Quantile)') +
   xlab(expression('% Drought Days ('*Psi['z, DOY']*' < '*italic(Q)[italic(p)*'=0.025, '*Psi['Soil, DOY']]*')')) +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = formula) +
   facet_grid(depth  ~ season) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,
@@ -2623,7 +2632,7 @@ mrate.drought.plot.6 <- ggplot(mrate.drought.ssn %>%
   guides(color = guide_legend(title = '% Drought Days (below 2.5% Quantile)')) +
   scale_color_continuous(trans = "reverse") +
   theme(legend.position = "top") +
-  geom_smooth(method = "loess") +
+  geom_smooth(method = "loess", formula = formula) +
   facet_grid(depth  ~ season) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.8, npcy = 0.9, rr.digits = 2,

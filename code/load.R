@@ -137,7 +137,7 @@ symbols.table <-
       "Water potential of leaf or stem",
       "Bulk leaf turgor loss point, the $\\Psi_{leaf}$ where turgor potential = 0",
       "Hydraulic conductivity of leaf or stem",
-      "Maximum hydraulic conductivity of leaf or stem",
+      "Maximum area-specific hydraulic conductivity of leaf or stem",
       "$\\Psi_{leaf}$ at 88% loss of leaf conductivity",
       "$\\Psi_{stem}$ at 50% loss of stem conductivity",
       "$\\Psi_{stem}$ at 88% loss of stem conductivity",

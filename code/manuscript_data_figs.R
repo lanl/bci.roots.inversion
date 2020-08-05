@@ -128,17 +128,27 @@ erd.stem.traits.only <- erd.stem.traits %>%
   droplevels()
 erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
 
-formula <- y ~ x
-depth.traits.select.plot <- ggplot(erd.stem.traits.only,
+traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
+                                                  levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE)) %>%
+  transform(trait.plot = factor(trait, labels = c(expression(atop(italic('K')['max, stem'], ""^(kg*s^-1*MPa^-1*m^-1))),
+                                                  expression(atop(Psi[tlp], ""^(MPa))),
+                                                  expression(atop(Psi['88, stem'], ""^(MPa))),
+                                                  expression(atop(Psi[min]*' - '*Psi['88, stem'], ""^(MPa))))))
+erd.stem.traits.only.lab <- erd.stem.traits.only %>%
+  left_join(traits.labels.select %>% select(trait, trait.plot), by = "trait") %>%
+  droplevels()
+
+depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                    aes(y = depth, x = value)) +
   geom_smooth(method = "lm", formula = formula) +
   # geom_errorbar(aes(ymax = value + se, ymin = value - se), width = 0.05) +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.1, size = 0.2) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  # geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 0.8, size = 2.5) +
   scale_y_reverse() +
   coord_cartesian(ylim = c(10, 0)) +
   ylab("Effective Rooting Depth (m)") + xlab("") +
-  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed) +
+  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed, strip.position = 'bottom') +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.87, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 3) +
@@ -147,9 +157,10 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only,
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.87, npcy = 0.1, size = 3) +
-  theme(panel.spacing = unit(1, "lines"))
+  theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
+        strip.text.x = element_text(size = 12, vjust = 2.5))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
-       plot = depth.traits.select.plot, height = 4, width = 3.5, units ='in')
+       plot = depth.traits.select.plot, height = 4.5, width = 3.5, units ='in')
 ## lowest Psi_crit_
 # max(subset(data.model.AB, sp %in% unique(mort.erd.to.plot$sp)$psi_kl80, na.rm = TRUE)
 

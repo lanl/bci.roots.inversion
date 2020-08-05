@@ -232,8 +232,8 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/ERD_by_sp_large_ca
 ```
 
 
-```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus hydraulic properties for eight large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets.[X-Axis labels to be added: $K_{max}$ units as in Fig. 2. Water Potentials are in MPa.]")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/Select_traits_depth.jpeg"))
+```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus hydraulic properties for eight large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits.jpeg"))
 ```
 
 ## Effective Rooting Depths, Experienced Drought and Mortality

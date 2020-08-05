@@ -24,6 +24,14 @@ rev_sqrt_trans <- function() {
     transform = function(x) -sqrt(abs(x)),
     inverse = function(x) x^2);
 }
+reverselog_trans <- function(base = exp(1)) {
+  scales::trans_new(name = paste0("reverselog-", format(base)),
+                    log_breaks(base = base),
+                    domain = c(1e-100, Inf),
+                    transform = function(x) -log(x, base),
+                    inverse = function(x) base^(-x))
+}
+
 formula <- y ~ x
 #****************************
 

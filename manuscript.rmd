@@ -161,7 +161,7 @@ Growth_{t} = \frac{1}{n_{t}}\sum_{day=1}^{n_{t}} StdK_{leaf,~z,~n} + error
 \end{equation}
 
 \begin{equation}
-Growth_{t} = \frac{1}{n_{t}}\sum_{day=1}^{n_{t}} StdK_{leaf,~n} StdVPD_{n} + error
+Growth_{t} = \frac{1}{n_{t}}\sum_{day=1}^{n_{t}} StdK_{leaf,~z,~n} StdVPD_{n} + error
 (\#eq:M2)
 \end{equation}
 
@@ -205,7 +205,7 @@ For each model, species ERD was regressed against species Xylem sap $\delta^2H$ 
 The model with VPD and without Leaf Cover (Eq. \@ref(eq:M2)) had highest goodness-of fit (*R*^2^ = 0.51; *p* = 0.072), followed by followed by model without both VPD and Leaf Cover (Eq. \@ref(eq:M1); Fig. S\@ref(fig:other-erd-mods)). Models with Leaf Cover had only three species with sufficient species-level goodness-of-fit (Eqs. \@ref(eq:M3)-\@ref(eq:M4)) versus seven for models without (Eqs. \@ref(eq:M1)-\@ref(eq:M2)). For rest of the analyses we therefore used species ERD estimates from the model with VPD and without Leaf Cover (Eq. \@ref(eq:M2); Fig. \@ref(fig:erd-iso)).
 
 
-```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ add error; m) versus dry season stable isotopic concentration $\\delta^2H$ (mean $\\pm$ 1SE; ‰) for ", length(unique(erd.iso$sp))," canopy species from Barro Colorado Island. Data from [@Meinzer:1999]. See Table  \\@ref(tab:spcodes) for scientific names corresponding to species codes.")}
+```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE; m) versus dry season stable isotopic concentration $\\delta^2H$ (mean $\\pm$ 1SE; ‰) for ", length(unique(erd.iso$sp))," canopy species from Barro Colorado Island. Data from [@Meinzer:1999]. See Table  \\@ref(tab:spcodes) for scientific names corresponding to species codes.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg"))
 ```
 
@@ -227,12 +227,12 @@ All statistical analyses were done in R statistical environment (version 3.5.3, 
 \
 In this forest modelled Effective Rooting Depths (ERD) for the `r length(erd.sp)` large, canopy tree species varied from 0.5 m to 13 m (Fig. \@ref(fig:sp-erd)). For the subset of species for which hydraulic properties were available, species with deeper ERD showed greater maximum stem hydraulic conductance ($K_{max,~stem}$; *R*^2^ = 0.39, *P* = 0.098, *n* = 8; Fig. \@ref(fig:erd-hyd)A), less negative leaf  ($\Psi_{tlp}$); *R*^2^ = 0.6, p = 0.024, *n* = 8; Fig. \@ref(fig:erd-hyd)B), greater vulnerability to embolism from cavitation with less negative ($\Psi_{88,~stem}$) (*R*^2^ = 0.72, p = 0.007, *n* = 8; Fig. \@ref(fig:erd-hyd)C), and narrower hydraulic safety margins ($\Psi_{min} - \Psi_{88,~stem}$; *R*^2^ = 0.74, p = 0.013, *n* = 8; Fig. \@ref(fig:erd-hyd)D). 
 
-```{r sp-erd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap= paste0("\\label{lab-sp-erd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for ", length(erd.sp)," large, canopy species of Barro Colorado Island. See Table  \\@ref(tab:spcodes) for scientific names corresponding to species codes.")}
+```{r sp-erd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap= paste0("\\label{lab-sp-erd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) for ", length(erd.sp)," large, canopy species of Barro Colorado Island. See Table  \\@ref(tab:spcodes) for scientific names corresponding to species codes.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/ERD_by_sp_large_canopy.jpeg"))
 ```
 
 
-```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus hydraulic properties for eight large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets.[X-Axis labels to be added: $K_{max}$ units as in Fig. 2. Water Potentials are in MPa.]")}
+```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus hydraulic properties for eight large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets.[X-Axis labels to be added: $K_{max}$ units as in Fig. 2. Water Potentials are in MPa.]")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/Select_traits_depth.jpeg"))
 ```
 
@@ -241,11 +241,11 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/Select_traits_dept
 \
 Species with deeper $ERD$ showed lower mean mortality rates across the 34-yr record (1982-2015; *R*^2^ = 0.11, *P* = 0.075, *n* = `r length(erd.mrate.sp)`; Fig. \@ref(fig:erd-mort)). For five out of seven census intervals, species with shallower $ERD$ had significantly higher mortality anomalies than deeper ERD species; Fig. (\@ref(fig:erd-mort-anom)). Analysis of time spent under catastrophic soil drought showed that the proportion of days species $\Psi_{ERD}$ was more negative than species $\Psi_{crit}$ decreased with species ERD (Fig. \@ref(fig:erd-time)). Species with ERD deeper than 1 m did not cross species $\Psi_{crit}$ for the entire 25-yr period for which soil water potential $\Psi_{soil,~z}$ was modelled (1990-2015), as soil depths below 1 m remained above `r round(psi.1.7.min$median, 2)` (`r round(as.numeric(psi.1.7.min$q97.5), 2)`, `r round(as.numeric(psi.1.7.min$q2.5), 2)`) (median, 95% CI) through all the dry seasons and drought periods, which is above ($\Psi_{crit}$) of the most sensitive tree species (-0.28 MPa).
 
-```{r erd-mort, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-mort}Mortality rate (mean $\\pm$ 1SE) versus Modelled Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) for ", length(erd.mrate.sp)," canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets.")}
+```{r erd-mort, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-mort}Mortality rate (mean $\\pm$ 1SE) versus Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) for ", length(erd.mrate.sp)," canopy species found on Barro Colorado Island. *R*^2^ and *P*-values are given in panel insets.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_rate_by rdi.gr.jpeg"))
 ```
 
-```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time} Modelled Species Effective Rooting Depth (ERD; mean $\\pm$ (add error) in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{soil,~z}$ was below $\\Psi_{crit}$, defined as $\\Psi_{80,~leaf}$, over 1990-2015, where z is the soil depth matching species ERD--for ", length(erd.mrate.sp), " canopy species found on Barro Colorado Island. Each circle represents a species. Circles are colored and jittered vertically around the named depths (ticks) for clarity. (Are *R*^2^ and *P*-values needed here?)")}
+```{r erd-time, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time} Modelled Species Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus time spent below critical hydraulic threhold--the number of days for which $\\Psi_{soil,~z}$ was below $\\Psi_{crit}$, defined as $\\Psi_{80,~leaf}$, over 1990-2015, where z is the soil depth matching species ERD--for ", length(erd.mrate.sp), " canopy species found on Barro Colorado Island. Each circle represents a species. Circles are colored and jittered vertically around the named depths (ticks) for clarity. (Are *R*^2^ and *P*-values needed here?)")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mean_mfac vs. rdi.gr.jpeg"))
 ```
 
@@ -309,7 +309,7 @@ p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_b
 cowplot::plot_grid(p1, p2, ncol = 2, labels = "AUTO")
 ```
 
-```{r erd-growth, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-growth}Scatterplot between Effective Rooting Deoth (ERD) and mean growth rate $\\pm$ (add error) for xx large, canopy species."}
+```{r erd-growth, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-growth}Scatterplot between Effective Rooting Deoth (ERD) and mean growth rate $\\pm$ 1SE for xx large, canopy species."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/adult_Growth_vs_udi_with_outliers_sp.jpeg"))
 ```
 

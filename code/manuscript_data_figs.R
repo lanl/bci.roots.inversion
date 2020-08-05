@@ -158,9 +158,10 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.87, npcy = 0.1, size = 3) +
   theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
-        strip.text.x = element_text(size = 12, vjust = 2.5))
+        strip.text.x = element_text(size = 12, vjust = 2.5),
+        plot.margin = margin(0.2, 0.2, -1, 0.2, "cm"))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
-       plot = depth.traits.select.plot, height = 4.5, width = 3.5, units ='in')
+       plot = depth.traits.select.plot, height = 4.5, width = 3.8, units ='in')
 ## lowest Psi_crit_
 # max(subset(data.model.AB, sp %in% unique(mort.erd.to.plot$sp)$psi_kl80, na.rm = TRUE)
 

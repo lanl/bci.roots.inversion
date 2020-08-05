@@ -1299,12 +1299,6 @@ depth.traits.kunert.plot <- ggplot(depth.traits.kunert %>%
 ggsave(file.path(figures.folder, paste0("Kunert_traits_depth.jpeg")),
        plot = depth.traits.kunert.plot, height = 6.5, width = 7, units ='in')
 
-traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
-                                        levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE)) %>%
-  transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, stem']), expression(Psi[tlp]),
-                                                  expression(Psi['88, stem']),
-                                                  expression(Psi[min]*' - '*Psi['88, stem']))))
-
 hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
   rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
   gather(trait, se, -sp) ## But note that for TLP it's not se but sd
@@ -1313,9 +1307,7 @@ erd.stem.traits <- depth.traits.hyd %>% subset(trait %in% c("KmaxS", "TLP", "p88
   select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%
   # bind_rows(depth.traits.kunert %>% subset(trait == "KmaxL") %>%
   #             select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value)) %>%
-  left_join(traits.labels.select %>% select(trait, trait.plot), by = "trait") %>%
-  droplevels() %>%
-  left_join(hyd.error, by = c("sp", "trait"))
+   left_join(hyd.error, by = c("sp", "trait"))
 
 save(erd.stem.traits, file = file.path(results.folder, "erd.stem.traits.Rdata"))
 

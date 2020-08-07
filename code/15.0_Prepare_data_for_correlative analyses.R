@@ -585,13 +585,13 @@ gpp.rel.weekly <- gpp.rel.daily %>%
 data.scale.on <- "monthly"
 
 if (data.scale.on == "monthly"){
-  point.size <- 3
+  point.size <- 2
   gpp.rel <- gpp.rel.monthly
 } else if (data.scale.on == "weekly"){
-  point.size <- 3
+  point.size <- 2
   gpp.rel <- gpp.rel.weekly
   } else if (data.scale.on == "daily"){
-  point.size <- 2
+  point.size <- 1
   gpp.rel <- gpp.rel.daily
 }
 
@@ -606,17 +606,22 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula = formula, colour = "red") +
-  stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
-               npcx = 0.95, npcy = 0.98, rr.digits = 2,
+  stat_poly_eq(aes(label = stat(eq.label)),
+               npcx = 0.95, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4, colour = "red") +
+  stat_poly_eq(aes(label = stat(adj.rr.label)),
+               npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4, colour = "red") +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, colour = "red") +
+                  npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.jpeg"),
-       plot = gpp.vpd, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+       plot = gpp.vpd, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
+ggsave(paste0(data.scale.on,"_gpp.vpd.tiff"),
+       plot = gpp.vpd, file.path(figures.folder.gpp), device = "tiff", height = 3, width = 3, units='in')
 
 if(data.scale.on == "monthly") {
   mapping.gpp.aet <- aes(y = gpp.tower, x = AET.tower)
@@ -637,7 +642,7 @@ gpp.aet <- ggplot(gpp.rel, mapping.gpp.aet) +
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("AET (mm)")#xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.aet.jpeg"),
-       plot = gpp.aet, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+       plot = gpp.aet, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 
 gpp.pet <- ggplot(gpp.rel, aes(y = gpp.tower, x = pet.PM.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
@@ -653,7 +658,7 @@ gpp.pet <- ggplot(gpp.rel, aes(y = gpp.tower, x = pet.PM.tower)) +
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.pet.jpeg"),
-       plot = gpp.pet, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+       plot = gpp.pet, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 
 gpp.pan <- ggplot(gpp.rel, aes(y = gpp.tower, x = Pan.Evap)) +
   geom_point(size = point.size, alpha = 0.7) +
@@ -669,7 +674,7 @@ gpp.pan <- ggplot(gpp.rel, aes(y = gpp.tower, x = Pan.Evap)) +
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Pan Evaporation (mm)")#xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.pan.jpeg"),
-       plot = gpp.pan, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+       plot = gpp.pan, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 
 gpp.rad <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
@@ -685,7 +690,7 @@ gpp.rad <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab(expression('Solar Radiation (MJ'*m^-2*day^-1*')'))
 ggsave(paste0(data.scale.on,"_gpp.rad.jpeg"),
-       plot = gpp.rad, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+       plot = gpp.rad, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 
 if(data.scale.on == "monthly") {
   mapping.aet.pet <- aes(y = AET.tower, x = pet.PM.tower)
@@ -708,7 +713,7 @@ aet.pet <- ggplot(gpp.rel, mapping.aet.pet) +
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab("AET (mm)") +xlab("Penman-Monteith PET (mm)") #xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_aet.pet.jpeg"),
-       plot = aet.pet, file.path(figures.folder.gpp), device = "jpeg", height = 4.5, width = 4.5, units='in')
+       plot = aet.pet, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 
 eq.gpp.vpd.tower <- lm(gpp.tower ~ poly(VPD.tower, 2, raw = TRUE), data = gpp.rel)
 eq.gpp.aet.tower <- lm(gpp.tower ~ poly(AET.gap.tower, 2, raw = TRUE), data = gpp.rel)
@@ -1195,7 +1200,7 @@ save(sp.soft.filled, file = file.path(results.folder, "sp.soft.filled.Rdata"))
 data.model.AB.onlyboth <- data.model.AB %>% subset(!is.na(data.A) | !is.na(data.B)) %>%
   subset(sp.LMA.sub %in% c("original", "filled-LEAF") & sp.WSG.sub == "original")
 
-ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
+plot.A <- ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
   geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
   geom_text(data = data.frame(x = 4.0, y = 4.5, label = "1:1"), aes(x = x, y = y, label = label), size =5) +
@@ -1212,10 +1217,10 @@ ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
                   aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
                                                   paste0(" = ", round(..p.value.., digits = 4))))),
                   npcx = 0.05, npcy = 0.8, size = 4)
-ggsave(file.path(figures.folder.kleaf, paste0("B_data_vs_model.jpeg")),
-      device = "jpeg", height = 2.2, width = 2.2, units='in')
+ggsave(plot = plot.A, file.path(figures.folder.kleaf, paste0("B_data_vs_model.tiff")),
+      device = "tiff", height = 2.2, width = 2.2, units='in')
 
-ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
+plot.B <- ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
   geom_abline(intercept = 0, slope = 1, color = "dodgerblue") +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 3) +
   geom_text(data = data.frame(x = 8, y = 8.5, label = "1:1"), aes(x = x, y = y, label = label), size = 5) +
@@ -1232,8 +1237,15 @@ ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
                   aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
                                                  paste0(" = ", round(..p.value.., digits = 4))))),
                   npcx = 0.05, npcy = 0.8, size = 4)
-ggsave(file.path(figures.folder.kleaf, paste0("A_data_vs_model.jpeg")),
-       device = "jpeg", height = 2.2, width = 2.2, units='in')
+ggsave(plot = plot.B, file.path(figures.folder.kleaf, paste0("A_data_vs_model.tiff")),
+       device = "tiff", height = 2.2, width = 2.2, units='in')
+
+plot.AB <- cowplot::plot_grid(plot.A, plot.B, labels = c('A', 'B'),
+                                  label_size = 14, ncol = 2, rel_widths = c(1, 1))
+ggsave("A_B_data_vs_model.tiff", plot = plot.AB, path =
+         file.path(figures.folder.kleaf), device = "tiff", height = 2.2, width = 4.4, units ='in')
+ggsave("A_B_data_vs_model.jpeg", plot = plot.AB, path =
+         file.path(figures.folder.kleaf), device = "jpeg", height = 2.2, width = 4.4, units ='in')
 
 ###*****
 ## Plot K by PSI using fitted exponential curves
@@ -1241,6 +1253,10 @@ ggsave(file.path(figures.folder.kleaf, paste0("A_data_vs_model.jpeg")),
 
 # Define colour pallete
 pal = colorRampPalette(c("red", "blue"))
+# pal = colorRampPalette(c("red", "grey", "blue")) #"#D60F73", "#8119D1",
+# pal = colorRampPalette(c("#7F0000", "#00007F")) #colorRampPalette(c("red", "blue"))
+
+
 # Use the following line with RColorBrewer
 # pal = colorRampPalette(cols)
 
@@ -1296,13 +1312,14 @@ df.plot <- bci.AB %>%
 #         ylab = expression('LMA'['Lamina']), notch = TRUE, boxwex = 0.5)
 # dev.off()
 
-var.list <- list(df.name = c("predicted_AB", "predicted_AB_for_data_sp", "predicted_AB_for_iso_sp"),
+var.list <- list(df.name = c("predicted_AB", "predicted_AB_for_data_sp"), #, "predicted_AB_for_iso_sp"
                  col.var = c("LMALAM_AVD", "SG100C_AVG", "DeciLvl", "NILL"),
                  order.col.var = c("order.lma", "order.wsg", "order.decilvl", "NILL"),
                  legend.col.var = c(expression("LMA ("*g*m^-2*")"),
                                     expression("WSG ("*g*cm^-3*")"), "Deciduoousness", ""),
                  std.k = c("", "std.k.sp", "std.k.comm"),
-                 ylim.k = c(7.5, 1, 1))
+                 ylim.k = c(7.5, 100, 100),
+                 legend.pos = c("topright", "bottomright", "bottomright"))
 
 for (i in 1:length(var.list$df.name)) {
   df.name <- var.list$df.name[i]
@@ -1314,10 +1331,10 @@ for (i in 1:length(var.list$df.name)) {
     df.plot <- df.plot %>%
       subset(sp %in% sp.exp.param.plot$sp) %>% droplevels()
   }
-  if (df.name == "predicted_AB_for_iso_sp") {
-    df.plot <- df.plot %>%
-      subset(sp %in% unique(iso.1.3.join$sp)) %>% droplevels()
-  }
+  # if (df.name == "predicted_AB_for_iso_sp") {
+  #   df.plot <- df.plot %>%
+  #     subset(sp %in% unique(iso.1.3.join$sp)) %>% droplevels()
+  # }
   df.plot <- df.plot %>%
     left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
     mutate(order.wsg = findInterval(SG100C_AVG, sort(SG100C_AVG)),
@@ -1333,11 +1350,11 @@ for (i in 1:length(var.list$df.name)) {
   ###
   Kmax.predict.max <- max(df.plot$Kmax.predict, na.rm = TRUE)
 
-  if(df.name == "predicted_AB_for_iso_sp") {
-    xlim.to.plot <- c(-1, 3)
-  } else {
-    xlim.to.plot <- c(0, 3)
-  }
+  # if(df.name == "predicted_AB_for_iso_sp") {
+  #   xlim.to.plot <- c(-1, 3)
+  # } else {
+  #   xlim.to.plot <- c(0, 3)
+  # }
 
   for (j in 1:length(var.list$col.var)) {
     col.var <- var.list$col.var[j]
@@ -1346,6 +1363,8 @@ for (i in 1:length(var.list$df.name)) {
     for (k in 1:length(var.list$std.k)) {
       std.k <- var.list$std.k[k]
       ylim.k <- var.list$ylim.k[k]
+      legend.pos <- var.list$legend.pos[k]
+
       jpeg(file.path(figures.folder.kleaf, paste0(std.k, "kmax_by_psi_color_by_", col.var, "_", df.name, ".jpeg")),
            width = 2.7, height = 2.7, units = "in", pointsize = 10,
            quality = 100, res = 300)
@@ -1358,7 +1377,7 @@ for (i in 1:length(var.list$df.name)) {
       } else {
         par(mar = c(4.5, 4.5, 1.5, 1.5))
         plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)", ylab =
-               expression("Std. Leaf Hydraulic Conductance"),
+               expression("Loss of Conductivity (%)"),
              xlim = xlim.to.plot, ylim = c(0, ylim.k))
       }
       for (m in 1:nrow(df.plot)) {
@@ -1373,10 +1392,10 @@ for (i in 1:length(var.list$df.name)) {
           mutate(k.predict = Exponential(A = params$A, B = params$B, psi = psi)) %>%
           cbind.data.frame(params, row.names = NULL)
         if(std.k == "std.k.sp") {
-          df <- df %>% mutate(k.predict = range01(k.predict))
+          df <- df %>% mutate(k.predict = 100 - range01(k.predict)*100)
         }
         if(std.k == "std.k.comm") {
-          df <- df %>% mutate(k.predict = k.predict/Kmax.predict.max)
+          df <- df %>% mutate(k.predict = 100 - k.predict/Kmax.predict.max*100)
         }
         if(col.var == "NILL") {
           lines(k.predict ~ psi, data = df) # "darkorange"
@@ -1395,18 +1414,26 @@ for (i in 1:length(var.list$df.name)) {
 
       if(col.var == "deci") {
         ## using levels in deciduousness used by color
-        legend("topright", legend = levels(df.plot$deciduousness),
+        legend(x = legend.pos, legend = levels(df.plot$deciduousness),
                col = 1:4, pch=19, bty = "n")
       } else if(col.var != "NILL") {
-        legend("topright", title = legend.col.var, col=pal(2), pch=19,
-               legend=c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
-                                   decreasing = TRUE), 1)), bty = "n")
+        lgd_ <- rep(NA, 4)
+        lgd_[c(1,4)] <- c(round(sort(range(df.plot[, col.var], na.rm = TRUE),
+                            decreasing = TRUE), 1))
+        fill.col <- pal(4)#colorRampPalette(colors = c('red', 'blue'))(4)
+         legend(x = legend.pos, title = legend.col.var, fill=fill.col,
+               legend = lgd_, bty = "n", y.intersp = 0.5)
+        # legend("topright",
+        #        legend = lgd_,
+        #        fill = colorRampPalette(colors = c('black','red3','grey96'))(11),
+        #        border = NA,
+        #        y.intersp = 0.5,
+        #        cex = 2, text.font = 2)
       }
       dev.off()
     }
   }
 }
-
 
 #******************************************************
 ## Predictors of KmaxS-SWP relationship --------

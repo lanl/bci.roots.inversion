@@ -126,7 +126,7 @@ symbols.table <-
       "$\\Psi_{leaf}$, $\\Psi_{stem}$",
       "$\\Psi_{tlp}$",
       "$K_{leaf}$, $K_{stem}$",
-      "$K_{max, leaf}$ , $K_{leaf, max}$",
+      "$K_{max, leaf}$, $K_{leaf, max}$",
       "$\\Psi_{88, leaf}$",
       "$\\Psi_{50, stem}$",
       "$\\Psi_{88, stem}$",

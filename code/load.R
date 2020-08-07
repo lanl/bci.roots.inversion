@@ -105,6 +105,7 @@ load(file = file.path(results.folder, "cohort.Rdata"))
 load(file = file.path(results.folder, "coh.sp.summ.Rdata"))
 
 soil.depths <- unique(psi$depth)
+
 #******************************************************
 ### Supporting data referenced in the manuscript
 #******************************************************
@@ -115,6 +116,14 @@ tot.rich.k <- signif(richness/1000, 2)
 tropics.low <- signif(round(40000/richness*100, 0), 1)
 tropics.high <- signif(round(53000/richness*100, 0), 1)
 
+## Climate
+
+clim <- clim.daily %>%
+  subset(Year != 1984) %>% #since only one day available
+  group_by(Year) %>%
+  summarise(Precip = sum(Precip, na.rm = TRUE),
+            pet.PM = sum(pet.PM, na.rm = TRUE), .groups = "drop_last")
+range(clim$Year)
 #******************************************************
 ### Tables
 #******************************************************

@@ -62,8 +62,8 @@ erd.sp.plot <- ggplot(df.erd.to.plot,
   ylab("Effective Rooting Depth (m)") + xlab("Species") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine$depth)
-ggsave("ERD_by_sp_large_canopy.jpeg",
-       plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 3.5, width = 5, units='in')
+ggsave("ERD_by_sp_large_canopy.tiff",
+       plot = erd.sp.plot, file.path(figures.folder), device = "tiff", height = 3.5, width = 5, units='in')
 
 #******************************************************
 
@@ -119,8 +119,8 @@ plot.psi.stat.7.interval.q2.5.select <- plot.psi.stat.6.interval.base.select %+%
   facet_wrap(. ~ interval.yrs, nrow = 1) +
   geom_ribbon(aes(x = doy, ymin = below.q2.5, ymax = median.clim, group = as.factor(depth_year),
                   fill = as.factor(depth)), alpha = 0.7, show.legend = FALSE)
-ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.jpeg",
-       plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.tiff",
+       plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "tiff", height = 2.5, width = 6, units='in')
 
 erd.stem.traits.only <- erd.stem.traits %>%
   left_join(df.erd.to.plot %>% select(sp, depth, depth.se), by = "sp") %>%
@@ -160,7 +160,7 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
   theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
         strip.text.x = element_text(size = 12, vjust = 2.5),
         plot.margin = margin(0.2, 0.2, -1, 0.2, "cm"))
-ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
+ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
        plot = depth.traits.select.plot, height = 4.5, width = 3.8, units ='in')
 ## lowest Psi_crit_
 # max(subset(data.model.AB, sp %in% unique(mort.erd.to.plot$sp)$psi_kl80, na.rm = TRUE)
@@ -181,11 +181,11 @@ mfac.plot.15 <- ggplot(mrate.depth.mean,
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.82, size = 6) #+ scale_y_sqrt()
-ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.tiff")),
        plot = mfac.plot.15, height = 3, width = 3, units='in')
 
 mfac.plot.15.sub <- mfac.plot.15 %+% subset(mrate.depth.mean, sp %in% erd.stem.traits.sp)
-ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_only_with_stem_traits.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.15.sub, height = 3, width = 3, units = 'in')
 
 y.label.1 <- expression(Mort[anomaly]~('%'*yr^{-1}))
@@ -204,12 +204,12 @@ mfac.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.82, size = 4)
-ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr.tiff")),
        plot = mfac.plot.15.1, height = 2.5, width = 10, units = 'in')
 
 mfac.plot.15.1.sub <- mfac.plot.15.1 %+% subset(mrate.depth.select, sp %in% erd.stem.traits.sp & avg.abund >= 50) +
   geom_text(aes(label = avg.abund), size = 2, nudge_y = 0.4)
-ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr_only_with_stem_traits.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.15.1.sub, height = 2.5, width = 10, units = 'in')
 
 mfac.plot.9.0 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
@@ -219,11 +219,11 @@ mfac.plot.9.0 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   geom_jitter(height = 0.1, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   ylab("Effective Rooting Depth (m)") +
   xlab(expression(atop('Time spent below '*Psi['crit'], '(Days over 1990-2015)')))
-ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.tiff")),
        plot = mfac.plot.9.0, height = 3.5, width = 3.5, units = 'in')
 
 mfac.plot.9.0.sub <- mfac.plot.9.0 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               sp %in% erd.stem.traits.sp)
-ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.9.0.sub, height = 3.5, width = 3.5, units = 'in')
 

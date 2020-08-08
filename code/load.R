@@ -124,6 +124,22 @@ clim <- clim.daily %>%
   summarise(Precip = sum(Precip, na.rm = TRUE),
             pet.PM = sum(pet.PM, na.rm = TRUE), .groups = "drop_last")
 range(clim$Year)
+
+## A & B data models based on soft traits
+# https://stats.stackexchange.com/questions/95939/how-to-interpret-coefficients-from-a-polynomial-model-fit
+# models had raw = TRUE
+acf <- vector() ; bcf <- vector()
+for (i in 1: (length(k_by_psi.models$A.B.LMA$coefficients) - 1)) {
+    acf[i] <- as.numeric(round(k_by_psi.models$A.B.LMA$coefficients[i], 2))
+}
+acf.6 <- as.numeric(round(k_by_psi.models$A.B.LMA$coefficients[6], 3))
+for (i in 1: length(k_by_psi.models$B.WSG.LMA$coefficients)) {
+  if (i == 6){
+    bcf[i] <- formatC(k_by_psi.models$B.WSG.LMA$coefficients[i], format = "f")
+  } else {
+    bcf[i] <- as.numeric(round(k_by_psi.models$B.WSG.LMA$coefficients[i], 2))
+  }
+}
 #******************************************************
 ### Tables
 #******************************************************

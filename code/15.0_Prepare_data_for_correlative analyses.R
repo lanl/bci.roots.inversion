@@ -1365,9 +1365,9 @@ for (i in 1:length(var.list$df.name)) {
       ylim.k <- var.list$ylim.k[k]
       legend.pos <- var.list$legend.pos[k]
 
-      jpeg(file.path(figures.folder.kleaf, paste0(std.k, "kmax_by_psi_color_by_", col.var, "_", df.name, ".jpeg")),
+      tiff(file.path(figures.folder.kleaf, paste0(std.k, "kmax_by_psi_color_by_", col.var, "_", df.name, ".tiff")),
            width = 2.7, height = 2.7, units = "in", pointsize = 10,
-           quality = 100, res = 300)
+           res = 300) #quality = 100,
       if (std.k == "") {
         par(mar = c(4, 4.5, 1.5, 1.5))
         plot(1, type = "n", xlab = "Leaf Water Potential (-MPa)",
@@ -1404,7 +1404,7 @@ for (i in 1:length(var.list$df.name)) {
         if(col.var == "deci") {
           lines(k.predict ~ psi, data = df, col = deciduousness) # "darkorange"
         } else {
-          lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[n, order.col.var]]) # "darkorange"
+          lines(k.predict ~ psi, data = df, col = pal(nrow(df.plot))[df.plot[n, order.col.var]], size = 0.3) # "darkorange"
         }
         if(df.name == "predicted_AB_for_iso_sp") {
           text(labels = params$sp, x = -0.2, y = df$k.predict[df$psi == df$psi[1]],

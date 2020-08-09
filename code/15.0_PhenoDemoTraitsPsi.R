@@ -92,12 +92,21 @@ psi.corr.fun.ls.2 <- list(
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
-  "gr.Psi.VPD" =
+  "gr.Psi.VPD.multi" =
     function(df, dflc) {
       result.df <-
-        psi.study[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
+        psi.study[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
           , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.VPD, na.rm = TRUE))]#[
             # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(list(result.df = result.df))
+    },
+  "gr.Psi.VPD.add" =
+    function(df, dflc) {
+      result.df <-
+        psi.study[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod + std.VPD), na.rm = TRUE))]#[
+      # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
@@ -112,7 +121,7 @@ psi.corr.fun.ls.2 <- list(
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
-  "gr.Psi.VPD.leaf" =
+  "gr.Psi.VPD.leaf.multi" =
     function(df, dflc) {
       dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
       result.df <-
@@ -122,7 +131,18 @@ psi.corr.fun.ls.2 <- list(
             # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
-  }
+  },
+  "gr.Psi.VPD.leaf.add" =
+    function(df, dflc) {
+      dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
+      result.df <-
+        as.data.table(psi.study)[dflc.dt, on = 'doy'][,
+                                                      psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
+                                                        , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod + std.VPD)*leaf_cover, na.rm = TRUE))]#[
+      # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
+      return(list(result.df = result.df))
+    }
 )
 
 ###************************************************************
@@ -362,7 +382,7 @@ growth.sub <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
   rename(demo.rate = median) %>%
   # rename(demo.rate = dbh.residuals) %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  dplyr::select(-sp_size, -"_") %>%
+  dplyr::select(-sp_size, -"_", -mean, -sd, -trees, -se) %>%
   # remove species taht are not canopy
   subset(sp %in% bci.traits$sp[bci.traits$form1 == "T"])
 length(unique(growth.sub$sp))
@@ -624,7 +644,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
 ## Plot chosen ERD
 
 df.erd.to.plot <- ml.rsq.combine.best %>%
-  subset(corr.func == "gr.Psi.VPD") %>%
+  subset(corr.func == "gr.Psi.VPD.multi") %>%
   mutate(size = as.character(size)) %>%
   left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   subset(form1 == "T" &
@@ -917,7 +937,7 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
        plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 9, units = 'in')
 
 p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4" &
-                                             corr.func == "gr.Psi.VPD"),
+                                             corr.func == "gr.Psi.VPD.multi"),
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = sp),
@@ -961,7 +981,7 @@ ggsave("psi.corr_best.depth_phenology.jpeg",
 
 ## Soil preference vs traits
 hyd <- hyd %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
-                           subset(corr.func == "gr.Psi.VPD") %>%
+                           subset(corr.func == "gr.Psi.VPD.multi") %>%
                            select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
@@ -1048,7 +1068,7 @@ hyd.long <- hyd.long %>%
 
 ##
 traits <- traits %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
-                                 subset(corr.func == "gr.Psi.VPD") %>%
+                                 subset(corr.func == "gr.Psi.VPD.multi") %>%
                                  select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
@@ -1822,7 +1842,7 @@ mfac.on <- "mr.kl50.I"
 mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%
   # mrate.long %>%
-  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD.multi") %>%
               rename(rdi.gr = depth) %>%
               dplyr::select(sp, size, rdi.gr, depth.se), by = c("sp", "size")) %>%
   left_join(subset(depth.rsq.isotopes, corr.func == "mr.Psi.VPD.I") %>%
@@ -2041,7 +2061,7 @@ adult.mrate.mean <- adult.mrate.long %>%
   mutate(mean.mrate = ifelse(!is.finite(mean.mrate),
                         rep(NA, length(mean.mrate)), mean.mrate)) %>%
   mutate(size = "large") %>%
-  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD.multi") %>%
               dplyr::select(sp, size, depth), by = c("sp", "size")) %>%
   left_join(bci.traits %>% dplyr::select(form1, sp), by = "sp") %>%
   subset(size == "large" & form1 == "T")
@@ -2069,26 +2089,6 @@ pm.2 <- ggplot(adult.mrate.mean %>%
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(file.path(paste0(figures.folder, "/adult_Mortality_vs_udi_with_outliers_avg.abund_above",
                         n.threshold, "_sp_deci.jpeg")), plot = pm.2, height = 4, width = 6, units='in')
-
-pg.2 <- ggplot(adult.mrate.mean,
-               aes(x = depth, y = mean.grate)) +
-  geom_point() +
-  scale_x_continuous(trans="sqrt", breaks = soil.depths[-c(2,3, 4, 6, 7, 9)]) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.9, npcy = 0.95, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 5) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                  npcx = 0.9, npcy = 0.8, size = 5) +
-  ylab(expression('Mean Growth Rate (cm.'*'year'^1*')')) +
-  xlab("Effective Rooting Depth (m)") +
-  geom_smooth(method = "lm", se = TRUE, formula = formula) +
-  theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
-  ggtitle("Adult Trees (>=10cm DBH)") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_udi_with_outliers_sp.jpeg")), plot = pg.2, height = 4, width = 4, units='in')
 
 pg.2.deci <- pg.2 %+% subset(adult.mrate.mean,!is.na(deciduousness)) +
   facet_grid(. ~ deciduousness)

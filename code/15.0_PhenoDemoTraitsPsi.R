@@ -907,60 +907,6 @@ ml.rsq.combine.sub <- ml.rsq.combine.sub %>% transform(models.plot1 = factor(cor
                                                                                                              expression(italic(K[italic('leaf')]*'LeafCover')),
                                                                                                                         expression(italic(K[italic('leaf')]*'VPD'*'LeafCover')))))
 
-p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
-             aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
-  coord_cartesian(ylim = c(13, 0.3)) +
-  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
-  geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
-                     xmin = Xylem_sap_deltaD_permil - se, color = sp),
-                 size = 0.5, height = 0.05) +
-  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness), size = 0.5, height = 0.05) +
-  facet_wrap( ~ models.plot1, nrow = 1) +
-  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.07, nudge_x = 0,
-            size = 3) +
-  ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.98, npcy = 0.13, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.98, npcy = 0.05, size = 4) +
-  geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 1, size = 3) +
-  theme(legend.position = "top",
-        legend.direction = "horizontal") +
-  guides(fill = "none", color = "none")
-  # guides(fill = guide_legend(title = "Species"))
-ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
-       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 9, units = 'in')
-
-p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4" &
-                                             corr.func == "gr.Psi.VPD.multi"),
-             aes(x = Xylem_sap_deltaD_permil, y = depth)) +
-  geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
-                     xmin = Xylem_sap_deltaD_permil - se, color = sp),
-                 size = 0.5, height = 0.05, show.legend = FALSE) +
-  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
-  ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.9, npcy = 0.2, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.9, npcy = 0.1, size = 4) +
-  geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 1, size = 3.5) +
-  # geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = sp),
-  #               size = 0.5, height = 0.05) +
-  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), color = "black",
-                size = 0.3, width = 0.2) +
-  guides(fill = guide_legend(title = "Species"), color = FALSE)
-ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
-       plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4, units = 'in')
 
 g3 <- ggplot(ml.rsq.combine.best %>% subset(R2 >= 0.1 & !duplicated(sp) & !is.na(depth)),
              aes(x = deci_sp.plot, y = depth)) +

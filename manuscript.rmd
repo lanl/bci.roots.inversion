@@ -3,13 +3,13 @@ title: "Drought-sensitive trees survive on deep-water access in a tropical fores
 author: ''
 date: ''
 output:
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
   bookdown::pdf_document2: default
 bibliography: references.bib
 csl: new-phytologist.csl
@@ -193,6 +193,8 @@ For the combination of each model \@ref(eq:M1)- \@ref(eq:M4), species and hydrol
 
 For each model, species ERD was regressed against species Xylem sap $\delta^2H$ (%~$\circ$~; *n* = 7). We used Xylem sap $\delta^2H$ values given in [@Meinzer:2001] for the dry-season (March 1997) as these showed largest seasonal divergence among species, with a corresponding gradient of $\delta^2H$ in the soil. We removed species that are deciduous in March as xylem sap $\delta^2H$ of these species may not be linked with water sourced in March and thus may not comparable to other species with leaves present. Fig. S\@ref(fig:iso-data). We also removed *Guapira* *standleyana*, whose xylem sap isotope value was not well constrained by the soil water isotope depth profile.
 
+The model with VPD and without Leaf Cover had highest goodness-of fit (*R*^2^ = 0.51; *p* = 0.072), followed by model without both VPD and Leaf Cover (Eq. \@ref(eq:M1); Fig. S\@ref(fig:other-erd-mods)). Models with Leaf Cover had only three species with sufficient species-level goodness-of-fit (Eqs. \@ref(eq:M3)-\@ref(eq:M4)) versus seven for models without (Eqs. \@ref(eq:M1)-\@ref(eq:M2)). For rest of the analyses we therefore used species ERD estimates from the model with VPD and without Leaf Cover (Eq. \@ref(eq:M2)).
+
 ## ERD Coordination with Above-ground Hydraulic Traits
 \
 To evaluate whether ERD was associated with above-ground hydraulic traits (*n* = 8 species with both datasets), we regressed species ERD with maximum stem hydraulic conductance ($K_{max, stem}$), leaf turgor loss point ($\Psi_{tlp}$), vulnerability to embolism from cavitation measured in terms of pressure at which 88% of stem hydraulic conductivity is lost ($\Psi_{88,~stem}$), and hydraulic safety margins ($\Psi_{min} - \Psi_{88,~stem}$). See SI for data collection and estimation of these variables (--Brett please add a section).
@@ -208,16 +210,16 @@ All statistical analyses were done in R statistical environment (version 3.5.3, 
 ## Effective Rooting Depths, Vulnerability to Embolism and Hydraulic Safety Margins
 
 \
-In comparison to the measured isotopic signal, our results showed that the model with VPD and without Leaf Cover (Eq. \@ref(eq:M2)) had highest goodness-of fit (*R*^2^ = 0.51; *p* = 0.072), followed by followed by model without both VPD and Leaf Cover (Eq. \@ref(eq:M1); Fig. S\@ref(fig:other-erd-mods)). Models with Leaf Cover had only three species with sufficient species-level goodness-of-fit (Eqs. \@ref(eq:M3)-\@ref(eq:M4)) versus seven for models without (Eqs. \@ref(eq:M1)-\@ref(eq:M2)). For rest of the analyses we therefore used species ERD estimates from the model with VPD and without Leaf Cover (Eq. \@ref(eq:M2); Fig. \@ref(fig:erd-iso)).
+In comparison to the measured isotopic signal, our results showed that the ERD model with VPD and without Leaf Cover (Eq. \@ref(eq:M2)) had highest goodness-of fit (*R*^2^ = 0.51; *p* = 0.072) and was thus the chosen model of ERD for rest of the analyses. Notably, two species, *Luehea* *seemannii* and *Trichilia tuberculata*, that @Meinzer:1999 found to have xylem sap $\delta^2H$ values between soil water and groundwater, suggesting that these species sourced most of the water from depths > 1 m, were also identified by our model with ERD > 1 m (2.9 m for both species). (Fig. \@ref(fig:erd-iso)).
 
 ```{r erd-iso, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-iso}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE; m) versus dry season stable isotopic concentration $\\delta^2H$ (mean $\\pm$ 1SE; ‰) for ", length(unique(erd.iso$sp))," canopy species from Barro Colorado Island. Data from [@Meinzer:1999]. See Table  \\@ref(tab:spcodes) for scientific names corresponding to species codes.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg"))
 ```
 
 \
-In this forest modelled effective rooting depths (ERD) for the `r length(erd.sp)` large, canopy tree species varied from 0.5 m to 13 m (Fig. \@ref(fig:sp-erd)). For the subset of species for which hydraulic properties were available, species with deeper ERD showed greater maximum stem hydraulic conductance ($K_{max,~stem}$; *R*^2^ = 0.39, *P* = 0.098, *n* = 8; Fig. \@ref(fig:erd-hyd)A), less negative leaf ($\Psi_{tlp}$); *R*^2^ = 0.6, p = 0.024, *n* = 8; Fig. \@ref(fig:erd-hyd)B), greater vulnerability to embolism from cavitation with less negative ($\Psi_{88,~stem}$) (*R*^2^ = 0.72, p = 0.007, *n* = 8; Fig. \@ref(fig:erd-hyd)C), and narrower hydraulic safety margins ($\Psi_{min} - \Psi_{88,~stem}$; *R*^2^ = 0.74, p = 0.013, *n* = 8; Fig. \@ref(fig:erd-hyd)D). 
+In this forest modelled effective rooting depths (ERD) for the `r length(erd.sp)` large, canopy tree species varied from `r min(df.erd.to.plot$depth)` m to `r max(df.erd.to.plot$depth)` m (Fig. \@ref(fig:sp-erd)). For the subset of species for which hydraulic properties were available, species with deeper ERD showed greater maximum stem hydraulic conductance ($K_{max,~stem}$; *R*^2^ = 0.39, *P* = 0.098, *n* = 8; Fig. \@ref(fig:erd-hyd)A), less negative leaf ($\Psi_{tlp}$); *R*^2^ = 0.6, p = 0.024, *n* = 8; Fig. \@ref(fig:erd-hyd)B), greater vulnerability to embolism from cavitation with less negative ($\Psi_{88,~stem}$) (*R*^2^ = 0.72, p = 0.007, *n* = 8; Fig. \@ref(fig:erd-hyd)C), and narrower hydraulic safety margins ($\Psi_{min} - \Psi_{88,~stem}$; *R*^2^ = 0.74, p = 0.013, *n* = 8; Fig. \@ref(fig:erd-hyd)D). 
 
-```{r sp-erd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap= paste0("\\label{lab-sp-erd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) for ", length(erd.sp)," large, canopy species of Barro Colorado Island. See Table  \\@ref(tab:spcodes) for scientific names corresponding to species codes.")}
+```{r sp-erd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap= paste0("\\label{lab-sp-erd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) for ", length(erd.sp)," large, canopy species of Barro Colorado Island. See Table  \\@ref(tab:spcodes) for complete scientific names.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/ERD_by_sp_large_canopy.jpeg"))
 ```
 
@@ -284,7 +286,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/gpp_by_env_variabl
 ```
 
 
-```{r iso-data, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-iso-data}Stable isotopic concetration ($\\delta^2H$) of soil water by depth measured in March 1997. Data from @Meinzer:1999."}
+```{r iso-data, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-iso-data}Stable isotopic ratio ($\\delta^2H$) of soil water by depth measured at Barro Colorado Island in March 1997. Data from @Meinzer:1999."}
 knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg"))
 ```
 
@@ -305,7 +307,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/A
 ```
 
 ```{r dbh-model, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-dbh-model} A scatterplot of tree growth rates (circles) from all census intervals versus dbh at the beginning of the cenus interval is overlaid with a dbh model of growth (spline). Growth rates are color coded by census interval. The model equation is shown in inset along with goodness-of-fit(*R*^2^)")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/dbh/growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model.jpeg"))
+knitr::include_graphics(file.path("figures/dbh/growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model.jpeg"))
 ```
 
 ```{r erd-mort-anom, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-anom}Mortality anomaly in each census interval during the study period plotted against ERD."}

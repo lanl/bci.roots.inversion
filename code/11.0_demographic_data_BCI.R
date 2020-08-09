@@ -146,9 +146,13 @@ head(mrate)
 ## default can be 0
 mrate$avg.abund <- round(rowMeans(abund), 0)
 mrate$sp_size <- all.sp_size$sp_size
+abund$sp_size <- all.sp_size$sp_size
 
+abund.long <- pivot_longer(abund, cols = 1:7, names_to = "census",
+                           values_to = "trees")
 mrate.long <- pivot_longer(mrate, cols = 1:7, names_to = "census",
              values_to = "mrate") %>%
+  left_join(abund.long, by = c("census", "sp_size")) %>%
   mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
                               `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
          interval.num = as.numeric(recode(census, `1985` = "1",
@@ -164,6 +168,7 @@ dead$abund.1982 <- abund$`1982`
 
 dead.long <- pivot_longer(dead, cols = 1:7, names_to = "census",
                            values_to = "dead") %>%
+  left_join(abund.long, by = c("census", "sp_size")) %>%
   mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
                               `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
          interval.num = as.numeric(recode(census, `1985` = "1",
@@ -195,8 +200,12 @@ colnames(sp.mrate) <- colnames(D.wide)[-1]
 head(sp.mrate)
 sp.mrate$avg.abund <- round(rowMeans(sp.abund), 0)
 sp.mrate$sp <- all.sp
+sp.abund$sp <- all.sp
+sp.abund.long <- pivot_longer(sp.abund, cols = 1:7, names_to = "census",
+                           values_to = "trees")
 sp.mrate.long <- pivot_longer(sp.mrate, cols = 1:7, names_to = "census",
                            values_to = "mrate") %>%
+  left_join(sp.abund.long, by = c("census", "sp")) %>%
   mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
                            `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
          interval.num = as.numeric(recode(census, `1985` = "1",
@@ -212,6 +221,46 @@ sp.mrate.mean <- sp.mrate.long %>%
   summarize_at(vars(mrate, avg.abund), mean, na.rm = TRUE) %>%
   mutate(mrate = ifelse(!is.finite(mrate),
                         rep(NA, length(mrate)), mrate))
+###------- for large
+## for sp:
+large.abund <- A.wide %>% separate(sp_size, into = c("sp", "size"), "_") %>%
+  subset(size %in% c("medium", "large")) %>% select(-size) %>%
+  group_by(sp) %>%
+  summarise_all(list(~sum(., na.rm = TRUE)))
+all.sp <- data.frame(sp = large.abund$sp)
+large.abund <- large.abund %>% select(-sp, -`2015`)
+large.dead <- new.dead %>% separate(sp_size, into = c("sp", "size"), "_") %>%
+  subset(size %in% c("medium", "large")) %>% select(-size) %>%
+  group_by(sp) %>%
+  summarise_all(list(~sum(., na.rm = TRUE))) %>% select(-sp)
+large.mrate <- large.dead/large.abund*100/duration
+colnames(large.mrate) <- colnames(D.wide)[-1]
+head(large.mrate)
+large.mrate$avg.abund <- round(rowMeans(large.abund), 0)
+large.mrate$sp <- all.sp$sp
+large.abund$sp <- all.sp$sp
+large.abund.long <- pivot_longer(large.abund, cols = 1:7, names_to = "census",
+                                 values_to = "trees")
+large.mrate.long <- pivot_longer(large.mrate, cols = 1:7, names_to = "census",
+                                 values_to = "mrate") %>%
+  left_join(large.abund.long, by = c("census", "sp")) %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
+                              `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
+         interval.num = as.numeric(recode(census, `1985` = "1",
+                                          `1990` = "2", `1995` = "3",
+                                          `2000` = "4", `2005` = "5",
+                                          `2010` = "6", `2015` = "7")))
+
+large.mrate.mean <- large.mrate.long %>%
+  group_by(sp) %>%
+  summarize(sd = sd(mrate, na.rm = TRUE),
+            se = sd/sqrt(n()),
+            mrate = mean(mrate, na.rm = TRUE),
+            avg.abund = mean(mrate, na.rm = TRUE), .groups = "drop_last") %>%
+  mutate(mrate = ifelse(!is.finite(mrate),
+                        rep(NA, length(mrate)), mrate))
+
+save(large.mrate.long, file = ("results/large.mrate.long.RData"))
 ###------- for adult
 ## for sp:
 adult.abund <- A.wide %>% separate(sp_size, into = c("sp", "size"), "_") %>%
@@ -229,12 +278,25 @@ colnames(adult.mrate) <- colnames(D.wide)[-1]
 head(adult.mrate)
 adult.mrate$avg.abund <- round(rowMeans(adult.abund), 0)
 adult.mrate$sp <- all.sp$sp
+adult.abund$sp <- all.sp$sp
+adult.abund.long <- pivot_longer(adult.abund, cols = 1:7, names_to = "census",
+                              values_to = "trees")
 adult.mrate.long <- pivot_longer(adult.mrate, cols = 1:7, names_to = "census",
-                              values_to = "mrate")
-head(adult.mrate.long)
+                              values_to = "mrate") %>%
+  left_join(adult.abund.long, by = c("census", "sp")) %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
+                              `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
+         interval.num = as.numeric(recode(census, `1985` = "1",
+                                          `1990` = "2", `1995` = "3",
+                                          `2000` = "4", `2005` = "5",
+                                          `2010` = "6", `2015` = "7")))
+
 adult.mrate.mean <- adult.mrate.long %>%
   group_by(sp) %>%
-  summarize_at(vars(mrate, avg.abund), mean, na.rm = TRUE) %>%
+  summarize(sd = sd(mrate, na.rm = TRUE),
+            se = sd/sqrt(n()),
+            mrate = mean(mrate, na.rm = TRUE),
+            avg.abund = mean(mrate, na.rm = TRUE), .groups = "drop_last") %>%
   mutate(mrate = ifelse(!is.finite(mrate),
                         rep(NA, length(mrate)), mrate))
 
@@ -256,49 +318,87 @@ colnames(juve.mrate) <- colnames(D.wide)[-1]
 head(juve.mrate)
 juve.mrate$avg.abund <- round(rowMeans(juve.abund), 0)
 juve.mrate$sp <- all.sp$sp
+juve.abund$sp <- all.sp$sp
+juve.abund.long <- pivot_longer(juve.abund, cols = 1:7, names_to = "census",
+                                 values_to = "trees")
 juve.mrate.long <- pivot_longer(juve.mrate, cols = 1:7, names_to = "census",
-                                 values_to = "mrate")
-head(juve.mrate.long)
+                                 values_to = "mrate") %>%
+  left_join(juve.abund.long, by = c("census", "sp")) %>%
+  mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95",
+                              `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
+         interval.num = as.numeric(recode(census, `1985` = "1",
+                                          `1990` = "2", `1995` = "3",
+                                          `2000` = "4", `2005` = "5",
+                                          `2010` = "6", `2015` = "7")))
+
 juve.mrate.mean <- juve.mrate.long %>%
   group_by(sp) %>%
-  summarize_at(vars(mrate, avg.abund), mean, na.rm = TRUE) %>%
+  summarize(sd = sd(mrate, na.rm = TRUE),
+            se = sd/sqrt(n()),
+            mrate = mean(mrate, na.rm = TRUE),
+            avg.abund = mean(mrate, na.rm = TRUE), .groups = "drop_last") %>%
   mutate(mrate = ifelse(!is.finite(mrate),
                         rep(NA, length(mrate)), mrate))
+
 save(juve.mrate.long, file = ("results/juve.mrate.long.RData"))
 
-##---------Combinging growth rates mean acros all size and at juvenile and adult level
+##---------Combinging growth rates mean across all size and at juvenile and adult level
 ## Only those for which avg.abundance greater than 10
 
 sp.mrate.adult.juve <- sp.mrate.mean %>% subset(avg.abund >= 10) %>%
-  full_join(juve.mrate.mean %>% subset(avg.abund >= 10) %>% rename(mrate.juve = mrate) %>% select(-avg.abund), by = "sp") %>%
-  full_join(adult.mrate.mean %>% subset(avg.abund >= 10) %>% rename(mrate.adult = mrate)%>% select(-avg.abund), by = "sp")
+  full_join(juve.mrate.mean %>% subset(avg.abund >= 10) %>%
+              rename(mrate.juve = mrate, m.juve.se = se, m.juve.avg.abund = avg.abund) %>% select(-sd), by = "sp") %>%
+  full_join(adult.mrate.mean %>% subset(avg.abund >= 10) %>%
+              rename(mrate.adult = mrate, m.adult.se = se, m.adult.avg.abund = avg.abund) %>% select(-sd), by = "sp") %>%
+  full_join(large.mrate.mean %>% subset(avg.abund >= 10) %>%
+              rename(mrate.large = mrate, m.large.se = se, m.large.avg.abund = avg.abund) %>% select(-sd), by = "sp")
+
 
 ###***********************
 ## growth-----------------
 ###***********************
 
-growth.name <- load(file = paste0("results/sp_size.med_growth_dbh.residuals_off_5_size_class_varying_non_cc.Rdata"))
+growth.name <- load(file = paste0("results/sp_size.stats_growth_dbh.residuals_off_5_size_class_varying_non_cc.df.Rdata"))
 growth <- get(growth.name); rm(growth.name)
-sp_size  <- names(growth) #.full %>% subset(size == "large" || size == "small") %>% select(-size, -sp, -interval.2) %>% as.matrix()
-sp_size.growth.mean.named <- growth %>% lapply(function(x) {mean(x$growth, na.rm = TRUE)}) %>%
-  unlist() %>% data.frame()
-sp_size.growth.mean <- data.frame(sp_size = row.names(sp_size.growth.mean.named),
-                                  grate = sp_size.growth.mean.named$.) %>%
+large.growth.name <- load(file = paste0("results/large.stats_growth_dbh.residuals_off_5_size_class_varying_non_cc.df.Rdata"))
+large.growth <- get(large.growth.name); rm(large.growth.name)
+adult.growth.name <- load(file = paste0("results/adult.stats_growth_dbh.residuals_off_5_size_class_varying_non_cc.df.Rdata"))
+adult.growth <- get(adult.growth.name); rm(adult.growth.name)
+juve.growth.name <- load(file = paste0("results/juvenile.stats_growth_dbh.residuals_off_5_size_class_varying_non_cc.df.Rdata"))
+juve.growth <- get(juve.growth.name); rm(juve.growth.name)
+
+sp_size.growth <- growth %>%
   separate(sp_size, into = c("sp", "size"), remove = FALSE) %>%
-  mutate(size = factor(size, levels = c("tiny", "small", "medium", "large")))
-sp.growth <- sp_size.growth.mean %>% group_by(sp) %>%
-  summarise(grate = mean(grate, na.rm = TRUE))
-sp.growth.adult <- sp_size.growth.mean %>% subset(size %in% c("medium", "large")) %>%
-  group_by(sp) %>%
-  summarise(grate.adult = mean(grate, na.rm = TRUE))
-sp.growth.juvenile <- sp_size.growth.mean %>% subset(size %in% c("tiny", "small")) %>%
-  group_by(sp) %>%
-  summarise(grate.juve = mean(grate, na.rm = TRUE))
+  mutate(size = factor(size, levels = c("tiny", "small", "medium", "large")),
+         grate = median,
+         grate.trees = trees,
+         grate.se = se,
+         grate.sd = sd) %>%
+  select(-median,  -mean, -n, -trees, -se, -sd)
+
+sp.growth.large <- large.growth %>%
+  mutate(grate.large = median,
+         g.large.se = se,
+         g.trees.large = trees) %>%
+  select(sp, grate.large, g.large.se, g.trees.large)
+sp.growth.adult <- adult.growth %>%
+  mutate(grate.adult = median,
+         g.adult.se = se,
+         g.trees.adult = trees) %>%
+  select(sp, grate.adult, g.adult.se, g.trees.adult)
+sp.growth.juve <- juve.growth %>%
+  mutate(grate.juve = median,
+         g.juve.se = se,
+         g.trees.juve = trees) %>%
+  select(sp, grate.juve, g.juve.se, g.trees.juve)
+
 demo.sp_size <- sp_size.mrate.mean %>%
-  full_join(sp_size.growth.mean %>% select(-sp, -size), by = "sp_size") %>%
+  full_join(sp_size.growth %>%
+              select(-sp, -size), by = "sp_size") %>%
   mutate(size = factor(size, levels = c("tiny", "small", "medium", "large")))
 save(demo.sp_size, file = ("results/demo.sp_size.RData"))
-demo.sp <- sp.growth %>% full_join(full_join(sp.growth.adult, sp.growth.juvenile, by = "sp"), by = "sp") %>%
+demo.sp <- sp.growth.juve  %>%
+  full_join(full_join(sp.growth.adult, sp.growth.large, by = "sp"), by = "sp") %>%
   full_join(sp.mrate.adult.juve, by = "sp")
 # View(sp.demo)
 save(demo.sp, file = ("results/demo.sp.RData"))

@@ -61,15 +61,23 @@ iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_Mar
 ## growth. A median residual for each sp_size is caluclated only when at least data from
 # 3 trees are present across all census intervals.
 # Medians within sp_size are then centered and scaled. {residual - E(residual)/sd(residual)}
-growth.type <- "med"
+growth.type <- "stats"
 dbh.residuals <- "on"
 solar.residuals <- "off"
 growth.selection <- "size_class_predefined_cc_scaled"
 intervals <- 5
-growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_ci_", intervals, "_", growth.selection, ".Rdata"))
+growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
 # growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
 
 growth <- get(growth.name); rm(growth.name)
+
+## No. of trees by sp for grpwth data
+g.n <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
+  bind_rows(.id = "sp_size") %>%
+  separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
+  dplyr::select(-sp_size, -"_") %>%
+  group_by(sp) %>%
+  summarise(n = mean(trees), .groups = "drop_last")
 
 load(file = file.path(results.folder, "grate.long_by_species-size_deciduousness.Rdata"))
 load(file = file.path(results.folder, "mrate.long_by_species-size_deciduousness.Rdata"))

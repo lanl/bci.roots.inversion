@@ -150,13 +150,14 @@ g_up.out <- apply(g, 2, function (x) {ifelse(x > 75, NA, x)})
 mean(g_up.out, na.rm = T); median(g_up.out, na.rm = T)
 # [1] 0.8034973
 # [1] 0.394808
+max(g_up.out, na.rm = T) # 69.352
 ## This matrix needs to be used in further growth calculation
 # saving growth without modulus transformation, after all outliers were removed
 save(g_up.out, file = "results/stem_growth_without_outliers.Rdata")
 ##------------------End------------------------------
 jpeg("figures/dbh/stem_growth_without_outliers.jpeg")
 plot(x = as.vector(as.matrix(dbh_low.out[, - ncol(dbh_low.out)])), y = as.vector(as.matrix(g_up.out)),
-     ylab = "Growth rate (mm/yr)", xlab = "DBH (mm)")
+     ylab = expression("Growth rate (mmyr"^-1*")"), xlab = "DBH (mm)")
 graphics.off()
 
 #
@@ -226,15 +227,15 @@ gro.long <- data.frame(gro.wide) %>%
   arrange(sp_size, interval)
 
 sp_size.stem <- split(gro.long %>% select(interval, growth), gro.long$sp_size)
-
+## taking summary stat for each sp-size by census interval (stem's size identity varying with interval)
 sp_size.med <- lapply(sp_size.stem, function(x){
   x %>% group_by(interval) %>%
-    summarise(growth = median(growth, na.rm = TRUE)) %>% arrange(interval)
+    summarise(growth = median(growth, na.rm = TRUE), .groups = "drop_last") %>% arrange(interval)
   }
   )
 sp_size.mean <- lapply(sp_size.stem, function(x){
   x %>% group_by(interval) %>%
-    summarise(growth = mean(growth, na.rm = TRUE)) %>% arrange(interval)
+    summarise(growth = mean(growth, na.rm = TRUE), .groups = "drop_last") %>% arrange(interval)
 }
 )
 
@@ -256,7 +257,65 @@ save(sp_size.mean, file = paste0("results/sp_size.mean_growth_dbh.residuals_off_
 save(sp_size.stem.names, file = paste0("results/sp_size.individual.names_", intervals,"_", growth.selection, ".Rdata"))
 save(sp_size.med.names, file = paste0("results/sp_size.med.names_", intervals, "_", growth.selection, ".Rdata"))
 save(sp_size.mean.names, file = paste0("results/sp_size.mean.names_", intervals, "_", growth.selection, ".Rdata"))
+save(gro.long, file = paste0("results/gro.long_", intervals, "_", growth.selection, ".Rdata"))
 
+## summary stats across all census intervals
+sp_size.stem.all.cen <- split(gro.long %>% select(growth), gro.long$sp_size)
+sp_size.stats.all.cen <- lapply(sp_size.stem.all.cen, function(x){
+  x %>% droplevels() %>%
+    summarise(median = median(growth, na.rm = TRUE),
+                  mean = mean(growth, na.rm = TRUE),
+                  n = length(growth),
+                  sd = sd(growth, na.rm = TRUE),
+                  se = sd/sqrt(n),
+                  trees = length(unique(x$stemID)),
+                  .groups = "drop_last")
+}
+)
+save(sp_size.stats.all.cen, file = paste0("results/sp_size.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".Rdata"))
+
+sp_size.stats.all.cen.df <- gro.long %>% group_by(sp_size) %>%
+  summarise(median = median(growth, na.rm = TRUE),
+            mean = mean(growth, na.rm = TRUE),
+            n = length(growth),
+            sd = sd(growth, na.rm = TRUE),
+            se = sd/sqrt(n),
+            trees = length(unique(stemID)),
+            .groups = "drop_last")
+large.stats.all.cen.df <- gro.long %>%
+  subset(size %in% c("large")) %>%
+  group_by(sp) %>%
+  summarise(median = median(growth, na.rm = TRUE),
+            mean = mean(growth, na.rm = TRUE),
+            n = length(growth),
+            sd = sd(growth, na.rm = TRUE),
+            se = sd/sqrt(n),
+            trees = length(unique(stemID)),
+            .groups = "drop_last")
+adult.stats.all.cen.df <- gro.long %>%
+  subset(size %in% c("medium", "large")) %>%
+  group_by(sp) %>%
+  summarise(median = median(growth, na.rm = TRUE),
+            mean = mean(growth, na.rm = TRUE),
+            n = length(growth),
+            sd = sd(growth, na.rm = TRUE),
+            se = sd/sqrt(n),
+            trees = length(unique(stemID)),
+            .groups = "drop_last")
+juvenile.stats.all.cen.df <- gro.long %>%
+  subset(size %in% c("tiny", "small")) %>%
+  group_by(sp) %>%
+  summarise(median = median(growth, na.rm = TRUE),
+            mean = mean(growth, na.rm = TRUE),
+            n = length(growth),
+            sd = sd(growth, na.rm = TRUE),
+            se = sd/sqrt(n),
+            trees = length(unique(stemID)),
+            .groups = "drop_last")
+save(sp_size.stats.all.cen.df, file = paste0("results/sp_size.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".df.Rdata"))
+save(large.stats.all.cen.df, file = paste0("results/large.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".df.Rdata"))
+save(adult.stats.all.cen.df, file = paste0("results/adult.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".df.Rdata"))
+save(juvenile.stats.all.cen.df, file = paste0("results/juvenile.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".df.Rdata"))
 
 ##-----------------------
 ### getting dbh residuals
@@ -279,7 +338,8 @@ gro.long.mod.med.allsp <- gro.long.mod %>%
   group_by(interval, size.bins.1) %>%
   summarise(growth.mean.allsp = mean(growth, na.rm = TRUE),
             growth.median.allsp = median(growth, na.rm = TRUE),
-         dbh.mean.allsp = mean(dbh, na.rm = TRUE)) %>%
+         dbh.mean.allsp = mean(dbh, na.rm = TRUE),
+         .groups = "drop_last") %>%
   ungroup(interval, size.bins.1) %>%
   arrange(size.bins.1, interval) %>%
   mutate(interval = recode_factor(as.factor(interval), !!!level_key))
@@ -289,9 +349,9 @@ View(gro.long.mod.med.allsp)
 
 lm.model <- lm(log(growth.mean.allsp) ~ log(dbh.mean.allsp) , data = gro.long.mod.med.allsp %>% subset(growth.mean.allsp != 0))
 glm.model <- glm(growth.mean.allsp ~ splines::bs(dbh.mean.allsp, 5), data = gro.long.mod.med.allsp)
-summary(lm.model.1)
+summary(lm.model)
 ### using log(growth.mean.allsp) --------
-lm.model.1$coefficients
+lm.model$coefficients
 # (Intercept) log(dbh.mean.allsp)
 # -0.6528035           0.1397581
 gro.long.mod.med.allsp <- gro.long.mod.med.allsp %>%
@@ -308,19 +368,32 @@ pred.data <- pred.data %>%
 g1 <- ggplot(gro.long.mod.med.allsp,
              aes(x = dbh.mean.allsp/10, y = growth.mean.allsp/10)) +
   geom_point(aes(color = as.factor(interval)), alpha = 0.9) +
-  #geom_smooth(method = glm, formula = y ~ splines::bs(x, 3)) +
-  scale_color_discrete(name = "Interval") + theme(legend.position = c(0.2, 0.2)) +
+  scale_color_discrete(name = "Interval") + theme(legend.position = c(0.2, 0.25)) +
   scale_y_log10() + scale_x_log10(breaks = c(1, 2, 5, 10, 20, 30, 50, 100)) +
-  ggtitle("All data") + ylab("Growth rate (cm/yr)")  + xlab("DBH (cm)")
-g2 <- g1 +  geom_line(data = pred.data, aes(y = glm.predict.growth.allsp/10), color = "black")
+  # ggtitle("All data") +
+  ylab(expression("Growth rate (cmyr"^-1*")"))  + xlab("DBH (cm)")
+g2 <- g1 +
+  geom_line(data = pred.data, aes(y = glm.predict.growth.allsp/10), color = "black")
 ggsave("growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100.jpeg", plot = g2, path =
-         file.path("figures/dbh/"), height = 5, width = 5, units='in')
+         file.path("figures/dbh/"), height = 4.5, width = 4.5, units='in')
 g3 <- g1 +  geom_line(data = pred.data, aes(y = lm.predict.growth.allsp/10), color = "black")
 ggsave("growthrate_dbh_predicted_growth_with_lm.jpeg", plot = g3, path =
-         file.path("figures/dbh/"), height = 5, width = 5, units='in')
+         file.path("figures/dbh/"), height = 4.5, width = 4.5, units='in')
+# to show with equation
+formula.glm <- y ~ poly(x, 5, raw = TRUE)
+g4 <- g1 +
+  stat_poly_eq(aes(label = paste(stat(eq.label))),
+               npcx = 0.05, npcy = 0.97, rr.digits = 2,
+               formula = formula.glm, parse = TRUE, size = 3) +
+  stat_poly_eq(aes(label = paste(stat(adj.rr.label))),
+               npcx = 0.05, npcy = 0.90, rr.digits = 2,
+               formula = formula.glm, parse = TRUE, size = 3) +
+  geom_smooth(method = glm, formula = y ~ splines::bs(x, 5), color = "black", size = 0.7)
+ggsave("growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model.jpeg", plot = g4, path =
+         file.path("figures/dbh/"), height = 4.5, width = 4.5, units='in')
 
 ## not enough species-wise data to fit a trend...often giving rise to negative trends
-## So using fitting community wide fit
+## So using community wide fit
 gro.long.mod <- gro.long.mod %>%
   mutate(dbh.predict.growth = predict(glm.model, newdata = data.frame(dbh.mean.allsp = gro.long.mod$dbh)),
          dbh.residuals = growth - dbh.predict.growth)
@@ -390,6 +463,7 @@ graphics.off()
 
 ##--------------------------------------------------
 ## Defining size at the beginning of selected censuses
+## (ie. here defnied at census 3, not for each census after)
 ## And selecting only complete cases stems with growth records in all selected census intervals
 ##--------------------------------------------------
 row.names(gro.wide) <- gro.wide$stemID
@@ -404,6 +478,7 @@ dbh.long.cc <- dbh_low.out %>% select(-census.8) %>% mutate(stemID = gro.wide$st
 size.class.long.cc <- size.class %>%
   mutate(stemID = gro.wide$stemID) %>%
   subset(stemID %in% row.names(gro.wide.cc)) %>%
+  # Defining size at the beginning of census 3
   select(stemID, interval.3) %>%
   pivot_longer(cols = starts_with("interval."), names_to = "interval",
                names_prefix = "interval.", values_to = "size") %>%
@@ -415,16 +490,17 @@ gro.long.cc <- data.frame(gro.wide) %>%
   subset(stemID %in% row.names(gro.wide.cc)) %>%
   arrange(stemID, interval) %>%
   ## dbh in the beginning of each census interval
-  mutate(dbh.predict.growth = predict(glm.model, newdata = data.frame(dbh.mean.allsp = dbh.long.cc$dbh)),
+  mutate(dbh.predict.growth = predict(glm.model,
+                                      newdata = data.frame(dbh.mean.allsp = dbh.long.cc$dbh)),
                   dbh.residuals = growth - dbh.predict.growth,
         dbh = dbh.long.cc$dbh,
-        ## size class in the initial census repeated forall censuses
+        ## size class in the initial census repeated for all censuses
         size = rep(size.class.long.cc$size, each = intervals)) %>%
   arrange(sp, stemID, interval) %>%
   unite("sp_size", sp, size, remove = FALSE) %>%
   mutate(interval = as.numeric(interval))
 
-gro.long.cc.sub <- gro.long.cc %>% subset(interval == 3 & dbh  < 50)
+gro.long.cc.sub <- gro.long.cc %>% subset(interval == 3 & dbh < 50)
 g10 <- ggplot(gro.long.cc %>% subset(stemID %in% gro.long.cc.sub$stemID),
              aes(x = interval)) +
   scale_y_log10() +
@@ -433,6 +509,7 @@ g10 <- ggplot(gro.long.cc %>% subset(stemID %in% gro.long.cc.sub$stemID),
 g10 + geom_line(aes(y = dbh/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
 g10 + geom_line(aes(y = dbh.residuals/10, group = stemID, color = as.factor(stemID)), show.legend = FALSE)
 
+# this takes a long time
 gro.long.cc.norm.stem <- gro.long.cc %>% group_by(stemID) %>%
   mutate(dbh.resid.range = range01(dbh.residuals),
          growth.range = range01(growth),
@@ -470,7 +547,7 @@ g11 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
   geom_line(data = gro.long.cc.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid), color = "red", lwd = 1)
 g11
 ggsave("dbh.residuals_stem_range01 and scaled_median range01 in black and median raw overlaid_in red__alsebl_large.jpeg", plot = g11, path =
-         file.path("figures"), height = 5, width = 5, units='in')
+         file.path("figures/dbh"), height = 5, width = 5, units='in')
 
 g12 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
               aes(x = interval)) +
@@ -479,7 +556,7 @@ g12 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
   geom_line(data = gro.long.cc.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid), color = "red", lwd = 1)
 g12
 ggsave("dbh.residuals_stem_center and scaled_median center in black and scaled and median raw overlaid_in red_alsebl_large.jpeg", plot = g12, path =
-         file.path("figures"), height = 5, width = 5, units='in')
+         file.path("figures/dbh"), height = 5, width = 5, units='in')
 g13 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
               aes(x = interval)) +
   geom_line(aes(y = dbh.resid.center, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
@@ -487,7 +564,7 @@ g13 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
   geom_line(data = gro.long.cc.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid), color = "red", lwd = 1)
 g13
 ggsave("dbh.residuals_stem_centered_median centered in black and median raw overlaid_in red__alsebl_large.jpeg", plot = g13, path =
-         file.path("figures"), height = 15, width = 5, units='in')
+         file.path("figures/dbh"), height = 15, width = 5, units='in')
 ### centering and scaling growth for each stem
 
 growth.wide.cc.1 <- gro.long.cc %>% select(sp_size, stemID, interval, growth) %>%
@@ -512,34 +589,36 @@ sp_size.stem.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res.list, function(x){
   x %>% pivot_longer(everything(), names_to = c("interval"), values_to = "dbh.residuals") %>%
     mutate(interval = as.numeric(interval))})
 
-
 sp_size.stem.cc.n.dbh.res.list <- lapply(sp_size.stem.cc.dbh.res, function(x){
   data.frame(n = nrow(x)/intervals)})
 sp_size.n.cc.dbh.res  <- rbindlist(sp_size.stem.cc.n.dbh.res.list, idcol = "sp_size")
 select.sp_size <- sp_size.n.cc.dbh.res$sp_size[sp_size.n.cc.dbh.res$n >= sample.size]
 
-sp_size.mean.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res[select.sp_size], function(x){
-  x %>% group_by(interval) %>%
-    summarise(dbh.residuals = mean(dbh.residuals, na.rm = TRUE)) %>% arrange(interval)
-})
-sp_size.mean.cc.growth <- lapply(sp_size.stem.cc.growth[select.sp_size], function(x){
-  x %>% group_by(interval) %>%
-    summarise(growth = mean(growth, na.rm = TRUE)) %>% arrange(interval)
-})
 
-sp_size.med.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res[select.sp_size], function(x){
+sp_size.stats.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res[select.sp_size], function(x){
   x %>% group_by(interval) %>%
-    summarise(dbh.residuals = median(dbh.residuals, na.rm = TRUE)) %>% arrange(interval)
+    summarise(median = median(dbh.residuals, na.rm = TRUE),
+              mean = median(dbh.residuals, na.rm = TRUE),
+              sd = sd(dbh.residuals, na.rm = TRUE),
+              trees = n(),
+              se = sd/sqrt(trees),
+              .groups = "drop_last") %>%
+    arrange(interval)
 })
-sp_size.med.cc.growth <- lapply(sp_size.stem.cc.growth[select.sp_size], function(x){
+sp_size.stats.cc.growth <- lapply(sp_size.stem.cc.growth[select.sp_size], function(x){
   x %>% group_by(interval) %>%
-    summarise(growth = median(growth, na.rm = TRUE)) %>% arrange(interval)
+    summarise(median = median(growth, na.rm = TRUE),
+              mean = mean(growth, na.rm = TRUE),
+              sd = sd(growth, na.rm = TRUE),
+              trees = n(),
+              se = sd/sqrt(trees),
+              .groups = "drop_last") %>%
+    arrange(interval)
 })
 ## 493 sp_size has at least stems = sample.size
 
 sp_size.stem.cc.names <- names(sp_size.stem.cc.growth) # 660
-sp_size.mean.cc.names <- names(sp_size.mean.cc.growth) # 520
-sp_size.med.cc.names <- names(sp_size.med.cc.growth) # 520
+sp_size.stats.cc.names <- names(sp_size.stats.cc.growth) # 520
 growth.selection <- "size_class_predefined_cc_scaled"
 
 save(gro.long.cc, file = paste0("results/gro.long.cc_", intervals, "_", growth.selection, ".Rdata"))
@@ -548,15 +627,11 @@ save(gro.long.cc.norm.med, file = paste0("results/gro.long.cc.norm.med_", interv
 save(gro.long.cc.med, file = paste0("results/gro.long.cc.med_", intervals, "_", growth.selection, ".Rdata"))
 
 save(sp_size.stem.cc.dbh.res, file = paste0("results/sp_size.individual_growth_dbh.residuals_on_", intervals, "_", growth.selection, ".Rdata"))
-save(sp_size.mean.cc.dbh.res, file = paste0("results/sp_size.mean_growth_dbh.residuals_on_", intervals, "_", growth.selection, ".Rdata"))
-save(sp_size.med.cc.dbh.res, file = paste0("results/sp_size.med_growth_dbh.residuals_on_", intervals, "_", growth.selection, ".Rdata"))
-
+save(sp_size.stats.cc.dbh.res, file = paste0("results/sp_size.stats_growth_dbh.residuals_on_", intervals, "_", growth.selection, ".Rdata"))
 save(sp_size.stem.cc.growth, file = paste0("results/sp_size.individual_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".Rdata"))
-save(sp_size.mean.cc.growth, file = paste0("results/sp_size.mean_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".Rdata"))
-save(sp_size.med.cc.growth, file = paste0("results/sp_size.med_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".Rdata"))
+save(sp_size.stats.cc.growth, file = paste0("results/sp_size.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".Rdata"))
 save(sp_size.stem.cc.names, file = paste0("results/sp_size.individual.names_", intervals, "_", growth.selection, ".Rdata"))
-save(sp_size.mean.cc.names, file = paste0("results/sp_size.mean.names_", intervals, "_", growth.selection, ".Rdata"))
-save(sp_size.med.cc.names, file = paste0("results/sp_size.med.names_", intervals, "_", growth.selection, ".Rdata"))
+save(sp_size.stats.cc.names, file = paste0("results/sp_size.stats.names_", intervals, "_", growth.selection, ".Rdata"))
 
 
 ##--------------------------------------------------

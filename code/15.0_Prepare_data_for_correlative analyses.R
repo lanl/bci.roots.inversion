@@ -298,11 +298,16 @@ mrate.long <- mrate.long %>%
 adult.mrate.long <- adult.mrate.long %>%
   left_join(deci, by = "sp") %>%
   mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95", `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15")) %>%
-  left_join(demo.sp_size %>%
-              subset(size %in% c("medium", "large")) %>%
-              group_by(sp) %>%
-              summarize(mean.mrate = mean(mrate, na.rm = TRUE),
-                        mean.grate = mean(grate, na.rm = TRUE)), by = "sp") %>%
+  # left_join(demo.sp_size %>%
+  #             subset(size %in% c("medium", "large")) %>%
+  #             group_by(sp) %>%
+  #             summarize(mean.mrate = mean(mrate, na.rm = TRUE),
+  #                       mean.grate = mean(grate, na.rm = TRUE)), by = "sp") %>%
+  left_join(demo.sp %>%
+              mutate(mean.mrate = mrate.adult, na.rm = TRUE,
+                     mean.grate = grate.adult, na.rm = TRUE,
+                     grate.se = g.adult.se, na.rm = TRUE) %>%
+              select(sp, mean.mrate, mean.grate, grate.se), by = "sp") %>%
   mutate(diff.mrate = mrate - mean.mrate)
 grate.long <- grate.long %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%

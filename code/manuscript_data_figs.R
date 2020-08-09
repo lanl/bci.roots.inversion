@@ -55,18 +55,90 @@ erd.sp.names <- bci.traits %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
   select(Code, Genus, Species, Family)
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
+df.erd.to.plot <- df.erd.to.plot %>%
+  left_join(erd.sp.names %>%
+              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
+                     sp = tolower(Code)), by = "sp") %>%
+  select(sp, s.names, depth, depth.se) %>%
+  transform(s.names = reorder(s.names, depth)) %>%
+  droplevels()
 
 erd.sp.plot <- ggplot(df.erd.to.plot,
-                      aes(x = sp, y = depth)) +
-  geom_point(aes(color = sp), show.legend = FALSE, size = 3) +
+                      aes(x = s.names, y = depth)) +
+  geom_point(aes(color = s.names), show.legend = FALSE, size = 3) +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.2, size = 0.2) +
   ylab("Effective Rooting Depth (m)") + xlab("Species") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  scale_y_continuous(trans = reverselog_trans(10), breaks = ml.rsq.combine$depth)
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"),
+        axis.text.y = element_text(face = "plain")) +
+  scale_y_continuous(trans = reverselog_trans(10), breaks = unique(ml.rsq.combine$depth))
 ggsave("ERD_by_sp_large_canopy.tiff",
        plot = erd.sp.plot, file.path(figures.folder), device = "tiff", height = 3.5, width = 5, units='in')
 ggsave("ERD_by_sp_large_canopy.jpeg",
-       plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 3.5, width = 5, units='in')
+       plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 4.5, width = 5, units='in')
+
+xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
+ml.rsq.combine.sub <- ml.rsq.combine.best %>%
+  left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
+  mutate(depth = as.numeric(depth)) %>%
+  subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
+  left_join(df.erd.to.plot %>% select(sp, s.names), by = "sp") %>%
+  droplevels()
+formula = y~x
+p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4" &
+                                             corr.func == "gr.Psi.VPD.multi"),
+             aes(x = Xylem_sap_deltaD_permil, y = depth)) +
+  geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
+                     xmin = Xylem_sap_deltaD_permil - se, color = s.names),
+                 size = 0.5, height = 0.05, show.legend = FALSE) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
+  ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
+  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.9, npcy = 0.2, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.9, npcy = 0.1, size = 4) +
+  geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3.5) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), color = "black",
+                size = 0.3, width = 0.2) +
+  guides(fill = guide_legend(title = "Species"), color = FALSE) +
+  theme(legend.text = element_text(face = "italic", size = 8))
+ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
+       plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4.3, units = 'in')
+
+ml.rsq.combine.sub <- ml.rsq.combine.sub %>%
+  transform(models.plot1 = factor(corr.func, labels = c("A", "B", "C", "D", "E", "F")))
+
+p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
+               aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
+  coord_cartesian(ylim = c(13, 0.3)) +
+  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
+  geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
+                     xmin = Xylem_sap_deltaD_permil - se, color = sp),
+                 size = 0.5, height = 0.05) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness), size = 0.5, height = 0.05) +
+  facet_wrap( ~ models.plot1, nrow = 1) +
+  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.07, nudge_x = 0,
+            size = 3) +
+  ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
+  scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.98, npcy = 0.13, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.98, npcy = 0.05, size = 4) +
+  geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 1, size = 3) +
+  theme(legend.position = "top",
+        legend.direction = "horizontal") +
+  guides(fill = "none", color = "none")
+ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
+       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 9, units = 'in')
 
 #******************************************************
 

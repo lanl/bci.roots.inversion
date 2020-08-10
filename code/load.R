@@ -84,7 +84,7 @@ load(file = file.path(results.folder, "mrate.long_by_species-size_deciduousness.
 load(file = file.path(results.folder, "adult.mrate.long_by_species-size_deciduousness.Rdata"))
 
 load(file = file.path("results/demo.sp_size.Rdata"))
-
+load(file = file.path("results/demo.sp.Rdata"))
 #******************************************************
 ### Load Psi from ELM-FATES-------
 #******************************************************

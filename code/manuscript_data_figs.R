@@ -7,6 +7,7 @@ load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 load(file = file.path(results.folder, "mrate.depth.Rdata"))
 load(file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
 load(file = file.path(results.folder, "erd.stem.traits.Rdata"))
+load(file = file.path(results.folder, "depth.traits.kunert.Rdata"))
 load(file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 
 #****************************
@@ -242,8 +243,54 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
         plot.margin = margin(0.2, 0.2, -1, 0.2, "cm"))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
        plot = depth.traits.select.plot, height = 4.5, width = 3.8, units ='in')
-## lowest Psi_crit_
-# max(subset(data.model.AB, sp %in% unique(mort.erd.to.plot$sp)$psi_kl80, na.rm = TRUE)
+
+# Kmax vs. growth
+stem.k.gr <- erd.stem.traits %>% left_join(demo.sp, by = "sp") %>%
+  left_join(traits.labels.select %>% select(trait, trait.plot), by = "trait") %>%
+  droplevels()
+stem.traits.sp <- length(erd.stem.traits$trait[erd.stem.traits$trait == "TLP"])
+grate.adult.stem.traits.plot <- ggplot(stem.k.gr, aes(y = grate.adult, x = value)) +
+  # geom_smooth(method = "lm", formula = formula) +
+  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed, strip.position = 'bottom') +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  ylab(expression("Growth Rate (cm year"^-1*")")) + xlab("") +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.87, npcy = 0.9, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 3) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.87, npcy = 0.8, size = 3) +
+  theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
+        strip.text.x = element_text(size = 12, vjust = 2.5),
+        plot.margin = margin(0.2, 0.2, -1, 0.2, "cm"))
+ggsave(file.path(figures.folder, paste0("grate.adult.stem.traits.tiff")),
+       plot = grate.adult.stem.traits.plot, height = 4.5, width = 3.8, units ='in')
+
+leaf.k.gr <- depth.traits.kunert %>% left_join(demo.sp, by = "sp") %>%
+  droplevels()
+leaf.traits.sp <- nrow(leaf.k.gr)
+grate.adult.leaf.traits.plot <- ggplot(leaf.k.gr %>%
+                                         subset(trait %in% c("KmaxL") & !is.na(value)),
+         aes(y = grate.adult, x = value)) +
+  # geom_smooth(method = "lm", formula = formula) +
+  facet_wrap(. ~ trait.plot.chart, scales = "free_x", labeller = label_parsed, strip.position = 'bottom') +
+  geom_point(size = 3, alpha = 0.7) +
+  ylab(expression("Growth Rate (cm year"^-1*")")) + xlab("") +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.87, npcy = 0.9, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.87, npcy = 0.8, size = 4) +
+  theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
+        strip.text.x = element_text(size = 12, vjust = 2.5),
+        plot.margin = margin(0.2, 0.2, -0.25, 0.2, "cm"))
+ggsave(file.path(figures.folder, paste0("grate.adult.leaf.traits.tiff")),
+       plot = grate.adult.leaf.traits.plot, height = 3, width = 3, units ='in')
 
 mfac.plot.15 <- ggplot(mrate.depth.mean,
                        aes(y = mrate, x = rdi.gr)) +
@@ -276,7 +323,7 @@ pg.2 <- ggplot(mrate.depth.mean,
   geom_errorbar(aes(ymin = grate - grate.se, ymax = grate + grate.se), width = 0.15, size = 0.1) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
-  ylab(expression('Mean Growth Rate (cmyear'^-1*')')) +
+  ylab(expression('Mean Growth Rate (cm year'^-1*')')) +
   xlab("Effective Rooting Depth (m)") +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,

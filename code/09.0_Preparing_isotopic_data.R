@@ -139,17 +139,27 @@ depth.m1.label2 = paste0("R2 = ", round(summ.depth.m1$r.squared, 2),
                          "\np = ", round(summ.depth.m1$coefficients[2, 4], 4))
 # label.df <- data.frame(x = -40, y= 0, label = deparse(depth.m1.label1))
 g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
-  geom_point(size = 2) +
   xlab(soil.label) + ylab("Depth (cm)") +
-  scale_y_reverse()
-g1 +   geom_smooth(method = "lm", se = FALSE) +
-  geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5) +
-  # geom_text(data = label.df, aes(x= x, y= y, label = label), parse = TRUE, color = "blue") #+
-  geom_text(x = -38, y= 0, label = depth.m1.label1, color = "black", size = 3) +
-  geom_text(x = -10, y= -85, label = depth.m1.label2, color = "black", size = 4) +
-  xlim(-60,0) +  ylim(100, 0) + theme(text = element_text(size = 20))
+  scale_y_reverse() +
+  xlim(-60,0) +  theme(text = element_text(size = 20)) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
+  geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.3, width = 0.2) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2) +
+  stat_poly_eq(aes(label = stat(eq.label)),
+             npcx = 0.05, npcy = 0.95, rr.digits = 2,
+             formula = formula, parse = TRUE, size = 3) +
+  stat_poly_eq(aes(label = stat(adj.rr.label)),
+               npcx = 0.05, npcy = 0.87, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 3) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 5), sep = "")),
+                  npcx = 0.05, npcy = 0.75, size = 3)
 ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg")),
-       height = 3, width = 3.5, units='in')
+       height = 3, width = 3.2, units='in')
+ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.tiff")),
+       height = 3, width = 3.2, units='in')
 
 g1 +   geom_smooth(method = "loess", se = FALSE, span = 0.7) +
   geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5)

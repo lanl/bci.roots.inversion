@@ -380,3 +380,13 @@ mfac.plot.9.0.sub <- mfac.plot.9.0 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               sp %in% erd.stem.traits.sp)
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.9.0.sub, height = 3.5, width = 3.5, units = 'in')
+
+p1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB.jpeg", scale = 1)
+p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB.jpeg", scale = 1)
+plot.comm.plc <- cowplot::plot_grid(p1, p2, labels = c('A', 'B'),
+                                    label_size = 14, ncol = 2, rel_widths = c(1, 1))
+ggsave("plot.comm.plc.tiff", plot = plot.comm.plc, path =
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "tiff", height = 2.2, width = 4.4, units ='in')
+ggsave("plot.comm.plc.jpeg", plot = plot.comm.plc, path =
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "jpeg", height = 2.2, width = 4.4, units ='in')
+

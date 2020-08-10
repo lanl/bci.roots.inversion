@@ -3,13 +3,13 @@ title: "Drought-sensitive trees survive on deep-water access in a tropical fores
 author: ''
 date: ''
 output:
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
   bookdown::pdf_document2: default
 bibliography: references.bib
 csl: new-phytologist.csl
@@ -109,17 +109,17 @@ We ran ELM-FATES for the 5000 parameter ensembles with hourly climate drivers fr
 ### Model evaluation
 
 \
-We calibrated the model over 2012-2018 against three key fluxes in Eq. \@ref(eq:water-balance), namely, (i) evapotranspiration ($ET \simeq E_{v} + E_{g}$) from the eddy flux tower (2012-2017), (ii) stream discharge for the Conrad Catchment ($q_{run} \simeq q_{over} + q_{drai}$; 2012-2018) and (iii) volumetric water content (VWC, $\theta_{z} \simeq W_{liq, z}$; 2012-2018). We collected VWC data (2012-2018) from a point location at the eddy flux tower with a vertical Time Domain Reflectometry (TDR) probe ($\theta_{0-0.15m}$). This data was calibrated based on measurements of gravimetric soil moisture at the vertical probe (0-15 cm) on several occasions (Fig. \@ref(fig:TDR-calib)) and mean bulk dry density of 0.8 gcm^-3^ (*n* = 5, cylinder volume = 1250 cm^3^). We also leveraged existing opportunistic dry season VWC measurements by depth for the entire 50-ha plot ($\theta_{0.15m}$, $\theta_{0.4m}$ and $\theta_{1m}$ in 2015 and $\theta_{0.15m}$, $\theta_{0.4m}$ in 2016; @Kupers:2019). Beginning in 2016 we additionally installed three horizontal probes at depths of 0.15, 0.4 and 1m, but depth specific calibration equation was not available, so we applied the same calibration equation to these data as that of the vertical probe. However, for VWC calibration we only used data from the vertical probe to capture the long-term dynamics and plot-wide measurements to capture the dynamics by depth. To find parameter ensembles that best-fit all three fluxes simultaneously, we calculated an objective function for each of the 5000 ensembles based on root mean square error (RMSE) between observations and simulations. Let $f(obs,~sim)$ be normalised RMSE (0-1) between observations and simulations, based on monthly sums for $ET$ and $q_{run}$ and daily avarages for $\theta$s, then the objective function ($Z$) is described as:
+We calibrated the model over 2012-2018 against three key fluxes in Eq. \@ref(eq:water-balance), namely, (i) evapotranspiration ($ET \simeq E_{v} + E_{g}$) from the eddy flux tower (2012-2017), (ii) stream discharge for the Conrad Catchment ($q_{run} \simeq q_{over} + q_{drai}$; 2012-2018) and (iii) volumetric water content (VWC, $\theta_{z} \simeq W_{liq, z}$; 2012-2018). We collected VWC data (2012-2018) from a point location at the eddy flux tower with a vertical Time Domain Reflectometry (TDR) probe ($\theta_{0-0.15m}$). This data was calibrated based on measurements of gravimetric soil moisture at the vertical probe (0-15 cm) on several occasions (Fig. \@ref(fig:TDR-calib)) and mean bulk dry density of 0.8 gcm^-3^ (*n* = 5, cylinder volume = 1250 cm^3^). We also leveraged existing opportunistic dry season gravimetric measurements by depth for the entire 50-ha plot and converted them to VWC units assuming bulk density of 0.8 gcm^-3^  ($\theta_{0.15m}$, $\theta_{0.4m}$ and $\theta_{1m}$ in 2015 and $\theta_{0.15m}$, $\theta_{0.4m}$ in 2016; @Kupers:2019). Beginning in 2016 we additionally installed three horizontal probes at depths of 0.15, 0.4 and 1m, but depth specific calibration equation was not available, so we applied the same calibration equation to these data as that of the vertical probe. However, for VWC calibration we only used data from the vertical probe to capture the long-term dynamics and plot-wide measurements to capture the dynamics by depth. To find parameter ensembles that best-fit all three fluxes simultaneously, we calculated an objective function for each of the 5000 ensembles based on root mean square error (RMSE) between observations and simulations. Let $f(obs,~sim)$ be normalised RMSE (0-1) between observations and simulations, based on monthly sums for $ET$ and $q_{run}$ and daily avarages for $\theta$s, then the objective function can be described as:
 
 \begin{equation}
-Z = \frac{1}{6}\sum \left(f(ET,~E_{v} + E_{g}) + f(q_{run},~q_{over} + q_{drai}) + f(\theta_{0-0.15m}, {W_{liq,~\bar{z}}})  + f(\theta_{0.15m}, W_{liq,~`r soil.depths[4]`m}) + f(\theta_{0.4m}, W_{liq,~`r soil.depths[6]`m}) + f(\theta_{1m}, W_{liq,~`r soil.depths[8]`m})\right)
+Objective Function = \frac{1}{6}\sum \left(f(ET,~E_{v} + E_{g}) + f(q_{run},~q_{over} + q_{drai}) + f(\theta_{0-0.15m}, {W_{liq,~\bar{z}}})  + f(\theta_{0.15m}, W_{liq,~`r soil.depths[4]`m}) + f(\theta_{0.4m}, W_{liq,~`r soil.depths[6]`m}) + f(\theta_{1m}, W_{liq,~`r soil.depths[8]`m})\right)
 (\#eq:obj-func)
 \end{equation}
 
 where $W_{liq,~\bar{z}}$ is the daily average of $W_{liq,~z}$ for $z$ = `r paste(soil.depths[1:4], collapse=", ")` m. To ensure calibration with $\theta_{0.1m}$, we first selected ensembles with  $f(\theta_{1m}, W_{liq,~`r soil.depths[8]`m})$ < 0.2 (~300 ensembles) and among them selected 100 ensembles with lowest values for the objective function $Z$. Model simulations corresponding to these 100 best-fit ensembles are shown against observed fluxes in Fig. \@ref(fig:hydro-calib), including VWC from horizontal probes that were not used for calibration. See Table \@ref(tab:param) for the range of best-fit values for different parameters. We ran ELM-FATES with the chosen 100 ensembles from 1985-2018, with first 5 years used for model spin-up.
 
 
-```{r hydro-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-hydro-calib} Model evaluation: Observations (red lines) versus simulations (blue lines) from 100 best-fit parameter ensemble runs of ELM-FATES for daily Volumetric Water Content (VWC) by depth for horizontal probes at three depths (10, 40 and 100 cm; A) and a vertical probe (0-15 cm; B); monthly stream discharge (C) and monthly Evapotranspiration from eddy flux tower (D). Points (red) in (A) show average plot-wide observations of VWC with 95% CI (error bars).[Goodness-of-fit values to be added on the panels.]xx")}
+```{r hydro-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-hydro-calib} Model evaluation: Observations (red lines) versus simulations (blue lines) from 100 best-fit parameter ensemble runs of ELM-FATES for daily Volumetric Water Content (VWC) by depth for horizontal Time Domain Reflectometry (TDR) probes at three depths (10, 40 and 100 cm; A) and a vertical probe (0-15 cm; B); monthly stream discharge (C) and monthly Evapotranspiration from eddy flux tower (D). Points (red) in (A) show average plot-wide observations of VWC with 95% CI (error bars). VWC data from the horizontal probes (lines in A) were not used for ELM-FATES calibration. Values in inset are average standardised RMSE across the 100 simulations. For panel A, values at the top are for plot-wide VWC and those at the bottom are for TDR probes.")}
 knitr::include_graphics(file.path("figures/hydro-calib2.jpeg"))
 ```
 
@@ -231,7 +231,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/ERD_by_sp_large_ca
 ```
 
 
-```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus hydraulic properties for eight large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets.")}
+```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}Modelled Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus hydraulic properties for eight large, canopy species found on Barro Colorado Island (Panama). *R*^2^ and *P*-values are given in panel insets.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits.jpeg"))
 ```
 
@@ -276,19 +276,19 @@ Yet To be written.
 ## Supplementary Information
 
 ```{r ksat-profiles, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-ksat-profiles} Generated 5000 curves of soil hydraulic conductivity variation by depth based on Latin Hypercube Sampling within 95% CI of observed data at depths of 12.5 cm and 60 cm [@Kinner:2004], assuming a linear decline between those depths, and values before 12.5 and after 60 cm as that of 12.5 cm and 60 cm, respectively. Only 100 curves are shown for clarity. Note the log scale on horizontal axis.")}
-knitr::include_graphics(file.path("figures/Bootstrapped Ksat profiles within observed 95CI_random_two_hundred.pdf"))
+knitr::include_graphics(file.path("figures/Bootstrapped Ksat profiles within observed 95CI_random_two_hundred.jpeg"))
 ```
 
 ```{r TDR-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-TDR-calib} Volumetric Water Content vs. TDR data for a vertical TDR probe (0-15 cm depth) at the base of Eddy Flux Tower."}
 knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpeg"))
 ```
 
-```{r swp-droughts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-droughts} Extreme soil droughts by census interval (panels) at three representative depths: 0.5, 1 and 1.7 m, depicted in different colors. Mean soil water potential ($Psi_{soil,~z}$) for a given DOY and depth z are shown as lines. Filled areas show extreme drought periods, when $Psi_{soil,~z}$ declined below 2.5 percentile of $Psi_{soil,~z}$ for the given DOY and depth z in any given year within the cenus intervals. Extreme drought periods from multiple years may be overlaid within a panel. Wet season is shown in gray as beginning with DOY."}
+```{r swp-droughts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-droughts} Extreme soil droughts by census interval (panels) at three representative depths: 0.5, 1 and 1.7 m, depicted in different colors. Mean soil water potential ($Psi_{soil,~z}$) for a given DOY and depth z are shown as lines. Filled areas show extreme drought periods, when $Psi_{soil,~z}$ declined below 2.5 percentile of $Psi_{soil,~z}$ for the given DOY and depth z in any given year within the cenus intervals. Extreme drought periods from multiple years may be overlaid within a panel. Wet season is shown in gray as beginning with DOY."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.jpeg"))
 ```
 
 
-```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "30%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd} Scatterplot of mean daily gross primary productivity (GPP) and mean daily vapour pressure deficit (VPD) by month measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows a fit from a polynomial model described in inset, and used to standardise VPD employed in equations \\@ref(eq:M2) and \\@ref(eq:M4)."}
+```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "20%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd} Scatterplot of mean daily gross primary productivity (GPP) and mean daily vapour pressure deficit (VPD) by month measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows a fit from a polynomial model described in inset, and used to standardise VPD employed in equations \\@ref(eq:M2) and \\@ref(eq:M4)."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/gpp_by_env_variables/monthly_gpp.vpd.jpeg"))
 ```
 
@@ -321,21 +321,19 @@ knitr::include_graphics(file.path("figures/dbh/growthrate_dbh_predicted_growth_w
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/diff.mortality_by rdi.gr.jpeg"))
 ```
 
-
 ```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-comm-plc-curves} Modelled 'vulnerability curves' ($K_{leaf}$ vs. $\\Psi_{leaf}$) at community-scale (", length(data.model.AB$sp)," species) shown in terms of loss of conductivity (%) (A & B). Each line represents a species, color coded by $WSG$ (A), or $LMA$ (B), with blue tones indicating smaller values and red tones indicating larger values of $WSG$ (A), or $LMA$ (B)")}
-p1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB.jpeg", scale = 1)
-p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB.jpeg", scale = 1)
-cowplot::plot_grid(p1, p2, ncol = 2, labels = "AUTO")
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.comm.plc.jpeg"))
 ```
 
+\
 ```{r symbols, results = 'asis', echo = FALSE}
 knitr::kable(symbols.table, caption = 'The symbol, definition of key hydraulic traits or variables used.', booktabs = TRUE, escape = FALSE)
 ```
-
+\
 ```{r param, results = 'asis', echo = FALSE}
 knitr::kable(param.table, caption = 'ELM-FATES parameters used to generate ensembles, with description, chosen ranges, references and rationale. No. 1-6 are parameters specific to FATES.', booktabs = TRUE, escape = FALSE)
 ```
-
+\
 ```{r spcodes, results = 'asis', echo = FALSE}
 knitr::kable(erd.sp.names, caption = 'Scientific names and codes for tree species for which Effective Rooting Depths were estimated.', booktabs = TRUE
 )

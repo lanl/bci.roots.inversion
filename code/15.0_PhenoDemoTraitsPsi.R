@@ -1243,6 +1243,7 @@ ggsave(file.path(figures.folder, paste0("Wolfe_traits_depth.jpeg")),
 depth.traits.kunert <- traits.long %>%
   subset(trait %in% c(select.traits.3, select.traits.4)) %>%
   subset(trait != "depth") %>% left_join(traits.pairs.2 %>% select(sp, `Depth[italic("Rsq")]`), by = "sp")
+save(depth.traits.kunert, file = file.path(results.folder, "depth.traits.kunert.Rdata"))
 
 depth.traits.kunert.plot <- ggplot(depth.traits.kunert %>%
                                      subset(trait != "Xylem_sap_deltaD_permil"),

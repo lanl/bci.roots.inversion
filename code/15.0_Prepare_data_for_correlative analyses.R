@@ -4,7 +4,7 @@ rm(list=ls())
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
                scales, GGally, ggpmisc, Evapotranspiration,
-               data.table, bci.elm.fates.hydro, mgcv, lubridate, smooth, bci.hydromet)
+               data.table, bci.elm.fates.hydro, mgcv, lubridate, smooth, bci.hydromet, viridis)
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),

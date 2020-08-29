@@ -95,7 +95,7 @@ psi.corr.fun.ls.2 <- list(
   "gr.Psi.VPD.multi" =
     function(df, dflc) {
       result.df <-
-        psi.study[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
+        psi.study[, psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
           , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*std.VPD, na.rm = TRUE))]#[
             # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
@@ -105,7 +105,7 @@ psi.corr.fun.ls.2 <- list(
     function(df, dflc) {
       result.df <-
         psi.study[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod + std.VPD), na.rm = TRUE))]#[
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod + VPD.effect), na.rm = TRUE))]#[
       # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
@@ -273,6 +273,15 @@ get.mfac.ls <- list(
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
       return(result.df)
     },
+  "mr.kl20.I" =
+    function(df) {
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl20, greater.than = FALSE)][
+          , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod, na.rm = TRUE))][
+            , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
+      return(result.df)
+    },
   "mr.kl80.I.VPD" =
     function(df) {
       result.df <-
@@ -286,6 +295,15 @@ get.mfac.ls <- list(
     function(df) {
       result.df <-
         as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl50, greater.than = FALSE)][
+          , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
+            , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
+      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
+      return(result.df)
+    },
+  "mr.kl20.I.VPD" =
+    function(df) {
+      result.df <-
+        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl20, greater.than = FALSE)][
           , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
             , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
@@ -382,7 +400,7 @@ growth.sub <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
   rename(demo.rate = median) %>%
   # rename(demo.rate = dbh.residuals) %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  dplyr::select(-sp_size, -"_", -mean, -sd, -trees, -se) %>%
+  dplyr::select(-sp_size, -"_", -mean, -sd, -trees) %>%
   # remove species taht are not canopy
   subset(sp %in% bci.traits$sp[bci.traits$form1 == "T"])
 length(unique(growth.sub$sp))
@@ -391,7 +409,7 @@ grate.plot <- ggplot(growth.sub, aes(x = interval, y = demo.rate)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE) +
   facet_wrap(. ~ sp) +
   ylab("Std. Growth") + xlab("Interval") +
-  geom_errorbar(aes(ymax = upr, ymin = lwr), width = 0.1, size = 0.5)
+  geom_errorbar(aes(ymax = demo.rate + se, ymin = demo.rate - se), width = 0.1, size = 0.5)
 ggsave(paste0("Std.Growth_", growth.type,".jpeg"),
        plot = grate.plot, file.path(figures.folder), device = "jpeg", height = 7, width = 7, units='in')
 
@@ -465,7 +483,7 @@ psi.m <- psi %>%
   #                    std.Rs = range01(Rs)) %>%
   full_join(clim.daily.effect %>%
               dplyr::select(date, std.Rs.pet.PM, std.Rs.VPD,
-                     std.Rs, std.pet.PM, std.VPD), by = "date")
+                     std.Rs, std.pet.PM, std.VPD, VPD.effect), by = "date")
 depth.sub <- c(soil.depths[5:length(soil.depths)])
 depth.breaks <- c(soil.depths[5], soil.depths[7:length(soil.depths)])
 depth.labels <- c(0.5, soil.depths[8:length(soil.depths)])
@@ -508,6 +526,8 @@ data.model.AB.sub <- data.model.AB %>%
   subset(sp.LMA.sub == "original") %>%
   ## removing A & B predicted from gap-filled WSG
   subset(sp.WSG.sub == "original")
+
+save(data.model.AB.sub, file = file.path(results.folder, "data.model.AB.sub.Rdata"))
 
 setdiff(unique(growth.sub$sp), unique(data.model.AB.sub$sp))
 
@@ -1647,7 +1667,7 @@ ggsave(file.path(paste0(figures.folder,
 
 
 #******************************************************
-### Is leaf phenology linked to growth vulnerability to different drought intensity and duration?------
+# Is leaf phenology linked to growth vulnerability to different drought intensity and duration?------
 # Indeed facultative deciduous species show greater reduction in growth in 2005-2010 period two successive early wet seasons were dry
 # a large chunk of their limited growing period
 #******************************************************
@@ -1759,7 +1779,7 @@ ggsave(file.path(paste0(figures.folder,
 
 
 ## Plot mortality by time spent below a threshold in the preferred depth-------
-
+# For each sp-depth calculate number of days below a threshold with an indicator function
 names.mfac <- names(get.mfac.ls)
 mfac.interval <- vector(mode = "list", length = length(names.mfac))
 names(mfac.interval) <- names.mfac  # "psi.p50.g1", "psi.p50.g2"
@@ -1784,6 +1804,7 @@ for (i in 1:length(names.mfac)) {
     left_join(mfac.interval.long[[i]], by = c("interval.num", "sp", "size"))
 }
 
+save(mfac.interval.long, file = file.path(results.folder, "mfac.interval.long.Rdata"))
 ## Ordered along Rooting Depth Index
 mfac.on <- "mr.kl50.I"
 mrate.depth <-
@@ -1800,10 +1821,10 @@ mrate.depth <-
   mutate(size = as.character(size)) %>%
   subset(size == "large" & form1 == "T") %>% droplevels()
 mrate.mfac.depth <- mrate.depth %>%
-  right_join(mfac.interval.long[[mfac.on]] %>%
-               mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
-                                           `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")),
-             by = c("censusint.m", "sp", "size")) %>%
+  right_join(mfac.interval.long[[mfac.on]], #%>%
+               # mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
+               #                             `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")),
+             by = c("interval.num", "sp", "size")) %>%
   mutate(sp_size = paste(sp, size, sep = "_")) %>%
   group_by(sp, size, censusint.m) %>%
   mutate(mfac.soil.column = sum(mfac, na.rm = TRUE)) %>%

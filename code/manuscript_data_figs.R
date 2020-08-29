@@ -51,16 +51,17 @@ erd.iso <- erd.data %>% subset(sp != "guapst" &
 ### ERD Species names----
 #******************************************************
 erd.sp <- erd.data$sp
+save(erd.sp, file = file.path("results", "erd.sp.Rdata"))
 erd.sp.names <- bci.traits %>%
   subset(sp %in% erd.sp) %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
-  select(Code, Genus, Species, Family)
+  dplyr::select(Code, Genus, Species, Family)
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 df.erd.to.plot <- df.erd.to.plot %>%
   left_join(erd.sp.names %>%
               mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
                      sp = tolower(Code)), by = "sp") %>%
-  select(sp, s.names, depth, depth.se) %>%
+  dplyr::select(sp, s.names, depth, depth.se) %>%
   transform(s.names = reorder(s.names, depth)) %>%
   droplevels()
 
@@ -79,14 +80,19 @@ ggsave("ERD_by_sp_large_canopy.jpeg",
 
 xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
-  left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   mutate(depth = as.numeric(depth)) %>%
   subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
-  left_join(df.erd.to.plot %>% select(sp, s.names), by = "sp") %>%
+  left_join(bci.traits %>%
+              dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
+              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
+                     sp = tolower(Code)) %>%
+              dplyr::select(sp, s.names), by = "sp") %>%
+  subset(source == "Meinzer et al.1999 Fig. 4") %>%
   droplevels()
+
+
 formula = y~x
-p4 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4" &
-                                             corr.func == "gr.Psi.VPD.multi"),
+p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == "gr.Psi.VPD.multi"),
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
@@ -112,59 +118,63 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
 
 ml.rsq.combine.sub <- ml.rsq.combine.sub %>%
   transform(models.plot1 = factor(corr.func, labels = c("A", "B", "C", "D", "E", "F")))
+erd.iso_sp_N_by_model <- ml.rsq.combine.sub %>%
+  group_by(models.plot1) %>%
+  summarise(N = n(), .groups = "drop_last")
 
-p3.2 <- ggplot(ml.rsq.combine.sub %>% subset(source == "Meinzer et al.1999 Fig. 4"),
-               aes(x = Xylem_sap_deltaD_permil, y = depth)) + #HSMTLP.80L)) +
+p3.2 <- ggplot(ml.rsq.combine.sub,
+               aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   coord_cartesian(ylim = c(13, 0.3)) +
   geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
-                     xmin = Xylem_sap_deltaD_permil - se, color = sp),
+                     xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05) +
-  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = deciduousness), size = 0.5, height = 0.05) +
-  facet_wrap( ~ models.plot1, nrow = 1) +
-  geom_text(aes(x =  Xylem_sap_deltaD_permil, y = depth, label = sp, color = sp), nudge_y = 0.07, nudge_x = 0,
-            size = 3) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = s.names), size = 0.5) +
+  facet_wrap( ~ models.plot1, nrow = 2) +
+  geom_text(data = erd.iso_sp_N_by_model, aes(x = -60, y = 0.3, label = paste0("n = ", N), group = models.plot1),
+            vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
   ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.98, npcy = 0.13, rr.digits = 2,
+               npcx = 0.98, npcy = 0.15, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.98, npcy = 0.05, size = 4) +
-  geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 1, size = 3) +
-  theme(legend.position = "top",
-        legend.direction = "horizontal") +
-  guides(fill = "none", color = "none")
+  geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
+  guides(fill = guide_legend(title = "Species"), color = FALSE)
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
-       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 3.5, width = 9, units = 'in')
+       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 5, width = 7, units = 'in')
 
 #******************************************************
 
 mrate.depth.select <- subset(mrate.depth, !is.na(rdi.gr) & avg.abund >= 20) %>%
   subset(sp %in% erd.sp) %>% droplevels()
-mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) & avg.abund >= 20) %>%
-  subset(sp %in% erd.sp) %>% droplevels()
+mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) &
+                                    avg.abund >= 20 & depth == rdi.gr) %>%
+  subset(sp %in% erd.sp) %>% droplevels() %>%
+  dplyr::select(censusint.m, sp, depth, depth.se, avg.abund, trees, mfac, mrate,
+         mean.mrate, diff.mrate, mean.grate, grate.se, size, deciduous)
 
+# summarising acros interval
 mrate.depth.mean <- mrate.depth.select %>%
-  group_by(sp) %>% summarise(rdi.gr = mean(rdi.gr, na.rm = TRUE),
+  group_by(sp, deciduous) %>% summarise(rdi.gr = mean(rdi.gr, na.rm = TRUE),
                              depth.se = mean(depth.se, na.rm = TRUE),
                                      avg.abund = mean(avg.abund, na.rm = TRUE),
-                                     se = sd(mrate, na.rm = TRUE)/sqrt(n()),
+                                     mrate.se = sd(mrate, na.rm = TRUE)/sqrt(n()),
                                      mrate = mean(mrate, na.rm = TRUE), # should be same as mrate = mean(mean.mrate, na.rm = TRUE),
                                      grate = mean(mean.grate, na.rm = TRUE),
                                      grate.se = mean(grate.se, na.rm = TRUE),
                                      .groups = "drop_last") %>% droplevels()
 erd.mrate.sp <- unique(mrate.depth.mean$sp)
 mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
-  subset(depth == rdi.gr) %>%
-  group_by(sp) %>%
+  group_by(sp, deciduous) %>%
   summarise(depth.se = mean(depth.se, na.rm = TRUE),
             avg.abund = mean(avg.abund, na.rm = TRUE),
             depth = mean(depth, na.rm = TRUE),
-            mfac = sum(mfac, na.rm = TRUE),.groups = "drop_last")
+            mfac = sum(mfac, na.rm = TRUE), .groups = "drop_last")
 # save.image("results/manuWorkSpace.RData")
 
 ## Minimum Soil water potential reached at depth 1.7 + CI
@@ -204,24 +214,32 @@ ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatolo
        plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
 
 erd.stem.traits.only <- erd.stem.traits %>%
-  left_join(df.erd.to.plot %>% select(sp, depth, depth.se), by = "sp") %>%
+  left_join(df.erd.to.plot %>%
+              dplyr::select(sp, depth, depth.se), by = "sp") %>%
   subset(!is.na(depth)) %>%
   droplevels()
 erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
 
 traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
-                                                  levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE)) %>%
-  transform(trait.plot = factor(trait, labels = c(expression(atop(italic('K')['max, stem'], ""^(kg*s^-1*MPa^-1*m^-1))),
+                                                  levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE),
+                                   panel = factor(c("A", "B", "C", "D"), levels = c("A", "B", "C", "D"), ordered = TRUE),
+                                   y = c(0, 0, 0, 0),
+                                   x = c(6, 0.5, -1, 1.5)) %>%
+  transform(trait.plot = factor(trait, labels = c(expression(atop(italic('K')['max, stem'], ""^(kg*m^-1*s^-1*MPa^-1))),
                                                   expression(atop(Psi[tlp], ""^(MPa))),
                                                   expression(atop(Psi['88, stem'], ""^(MPa))),
                                                   expression(atop(Psi[min]*' - '*Psi['88, stem'], ""^(MPa))))))
 erd.stem.traits.only.lab <- erd.stem.traits.only %>%
-  left_join(traits.labels.select %>% select(trait, trait.plot), by = "trait") %>%
+  left_join(traits.labels.select %>%
+              dplyr::select(trait, trait.plot), by = "trait") %>%
   droplevels()
+
 
 depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                    aes(y = depth, x = value)) +
   geom_smooth(method = "lm", formula = formula) +
+  geom_text(data = traits.labels.select, aes(x = x, y = y,
+                                             label = panel, group = trait.plot), vjust = "inward", hjust = "inward") +
   # geom_errorbar(aes(ymax = value + se, ymin = value - se), width = 0.05) +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.1, size = 0.2) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
@@ -295,7 +313,7 @@ ggsave(file.path(figures.folder, paste0("grate.adult.leaf.traits.tiff")),
 mfac.plot.15 <- ggplot(mrate.depth.mean,
                        aes(y = mrate, x = rdi.gr)) +
   geom_smooth(method = "lm", formula = formula) +
-  geom_errorbar(aes(ymin = mrate - se, ymax = mrate + se), width = 0.15, size = 0.1) +
+  geom_errorbar(aes(ymin = mrate - mrate.se, ymax = mrate + mrate.se), width = 0.15, size = 0.1) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
   ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
@@ -319,7 +337,7 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_only_with_ste
 
 pg.2 <- ggplot(mrate.depth.mean,
                aes(x = rdi.gr, y = grate)) +
-  geom_smooth(method = "lm", formula = formula) +
+  # geom_smooth(method = "lm", formula = formula) +
   geom_errorbar(aes(ymin = grate - grate.se, ymax = grate + grate.se), width = 0.15, size = 0.1) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
@@ -337,14 +355,13 @@ ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_rdi.gr.jpeg")), plot =
 ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_rdi.gr.tiff")), plot = pg.2, height = 3, width = 3, units='in')
 
 
-
-y.label.1 <- expression(Mort[anomaly]~('%'*yr^{-1}))
 mfac.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_smooth(method = "lm", formula = formula) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
-  xlab("Effective Rooting Depth (m)")  + ylab(y.label.1) +
+  xlab("Effective Rooting Depth (m)")  +
+  ylab(expression('Mortality Rate (%'*'year'^1*')')) +
   facet_grid(. ~ censusint.m) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,
@@ -354,14 +371,14 @@ mfac.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.82, size = 4)
-ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr.tiff")),
+ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.tiff")),
        plot = mfac.plot.15.1, height = 2.5, width = 10, units = 'in')
-ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr.jpeg")),
+ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.jpeg")),
        plot = mfac.plot.15.1, height = 2.5, width = 10, units = 'in')
 
 mfac.plot.15.1.sub <- mfac.plot.15.1 %+% subset(mrate.depth.select, sp %in% erd.stem.traits.sp & avg.abund >= 50) +
   geom_text(aes(label = avg.abund), size = 2, nudge_y = 0.4)
-ggsave(file.path(paste0(figures.folder, "/diff.mortality_by rdi.gr_only_with_stem_traits.tiff")),
+ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.15.1.sub, height = 2.5, width = 10, units = 'in')
 
 mfac.plot.9.0 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
@@ -381,12 +398,51 @@ mfac.plot.9.0.sub <- mfac.plot.9.0 %+% subset(mrate.mfac.depth.gr.mean.mfac,
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.9.0.sub, height = 3.5, width = 3.5, units = 'in')
 
-p1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB.jpeg", scale = 1)
-p2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB.jpeg", scale = 1)
-plot.comm.plc <- cowplot::plot_grid(p1, p2, labels = c('A', 'B'),
-                                    label_size = 14, ncol = 2, rel_widths = c(1, 1))
+
+pt1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_SG100C_AVG_predicted_AB.tiff", scale = 1)
+pt2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_LMALAM_AVD_predicted_AB.tiff", scale = 1)
+
+pb1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB.tiff", scale = 1)
+pb2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB.tiff", scale = 1)
+
+plot.comm.plc <- cowplot::plot_grid(pt1, pt2, pb1, pb2, labels = c('A', 'B', 'C', 'D'),
+                                    label_size = 14, ncol = 2, nrow = 2, rel_widths = c(1, 1))
 ggsave("plot.comm.plc.tiff", plot = plot.comm.plc, path =
-         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "tiff", height = 2.2, width = 4.4, units ='in')
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "tiff", height = 4.4, width = 4.4, units ='in')
 ggsave("plot.comm.plc.jpeg", plot = plot.comm.plc, path =
-         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "jpeg", height = 2.2, width = 4.4, units ='in')
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "jpeg", height = 4.4, width = 4.4, units ='in')
+
+
+pt1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_SG100C_AVG_predicted_AB_for_data_sp.tiff", scale = 1)
+pt2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_LMALAM_AVD_predicted_AB_for_data_sp.tiff", scale = 1)
+
+pb1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB_for_data_sp.tiff", scale = 1)
+pb2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB_for_data_sp.tiff", scale = 1)
+plot.obs.plc <- cowplot::plot_grid(pt1, pt2, pb1, pb2, labels = c('A', 'B', 'C', 'D'),
+                                   label_size = 14, ncol = 2, nrow = 2, rel_widths = c(1, 1))
+ggsave("plot.obs.plc.tiff", plot = plot.obs.plc, path =
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "tiff", height = 4.4, width = 4.4, units ='in')
+ggsave("plot.obs.plc.jpeg", plot = plot.obs.plc, path =
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "jpeg", height = 4.4, width = 4.4, units ='in')
+
+erd.data <- erd.data %>% left_join(data.model.AB.sub %>%
+                                     dplyr::select(sp, Kmax, psi_kl50, psi_kl80, psi_kl20), by = "sp")
+erd.p50.plot <- ggplot(erd.data, aes(y = depth, x = psi_kl50)) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.01, size = 0.2) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  # geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 0.8, size = 2.5) +
+  scale_y_reverse() +
+  coord_cartesian(ylim = c(10, 0)) +
+  ylab("Effective Rooting Depth (m)") + xlab(expression(Psi['crit']*~"(MPa)")) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.05, npcy = 0.15, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.05, npcy = 0.05, size = 4)
+ggsave(file.path(figures.folder, paste0("erd.p0L.jpeg")),
+       plot = erd.p50.plot, height = 3, width = 3, units ='in')
+
 

@@ -1321,6 +1321,8 @@ tlp.hyd.kunert.plot <- ggplot(tlp.hyd.kunert, aes(x = `Wolfe et al. Psi[tlp]`, y
 ggsave(file.path(figures.folder, paste0("TLP_Kunert_by_Wolfe.jpeg")),
        plot = tlp.hyd.kunert.plot, height = 3, width = 3, units ='in')
 
+
+
 #******************************************************
 ### Plot LWP -----
 #******************************************************
@@ -1854,6 +1856,57 @@ mrate.mfac.depth.to.rdi.gr.study <- mrate.mfac.depth.to.rdi.gr %>%
 
 save(mrate.depth, file = file.path(results.folder, "mrate.depth.Rdata"))
 save(mrate.mfac.depth, file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
+
+## mfac vs. mort
+
+# mrate.mfac.depth.gr.mean.mfac.mrate <- mrate.mfac.depth.gr.mean.mfac %>%
+#   subset(deciduous == "E") %>%
+#   left_join(mrate.depth.mean %>% select(sp, mrate, mrate.se, grate, grate.se), by = "sp")
+# formula.2 = y ~ splines::bs(x, 2)
+# mfac.plot.mrate <- ggplot(mrate.mfac.depth.gr.mean.mfac.mrate %>% subset(deciduous == "E"),
+#                           aes(x = mfac, y = mrate)) +
+#   # geom_smooth(method = lm, formula = formula.2, se = FALSE) +
+#   geom_errorbar(aes(ymin = mrate - mrate.se, ymax = mrate + mrate.se), width = 0.15, size = 0.1) +
+#   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+#   ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
+#   stat_poly_eq(aes(label = stat(eq.label)),
+#                npcx = 0.95, npcy = 0.95, rr.digits = 2,
+#                formula = formula.2, parse = TRUE, size = 4) +
+#   stat_poly_eq(aes(label = paste(..rr.label..)),
+#                npcx = 0.95, npcy = 0.85, rr.digits = 2,
+#                formula = formula.2, parse = TRUE, size = 4) +
+#   stat_fit_glance(method = 'lm',
+#                   method.args = list(formula = formula.2),
+#                   geom = 'text_npc',
+#                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+#                   npcx = 0.95, npcy = 0.75, size = 4) +
+#   xlab(expression(atop('Time spent below '*Psi['crit'], '(Days over 1990-2015)')))
+# ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. mrate.tiff")),
+#        plot = mfac.plot.mrate, height = 3.5, width = 3.5, units = 'in')
+# ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. mrate.jpeg")),
+#        plot = mfac.plot.mrate, height = 3.5, width = 3.5, units = 'in')
+#
+# mfac.plot.15.2 <- ggplot(mrate.mfac.depth.select %>% subset(deciduous == "E"),
+#                          aes(y = mrate, x = mfac)) +
+#   geom_smooth(method = lm, formula = formula.2, se = FALSE) +
+#   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+#   ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
+#   facet_grid(. ~ censusint.m) +
+#   stat_poly_eq(aes(label = paste(..rr.label..)),
+#                npcx = 0.95, npcy = 0.95, rr.digits = 2,
+#                formula = formula.2, parse = TRUE, size = 4) +
+#   stat_fit_glance(method = 'lm',
+#                   method.args = list(formula = formula.2),
+#                   geom = 'text_npc',
+#                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+#                   npcx = 0.95, npcy = 0.8, size = 4) +
+#   xlab(expression(atop('Time spent below '*Psi['crit'], '(Days over 1990-2015)')))
+#
+# ggsave(file.path(paste0(figures.folder, "/mortality_by mfac.tiff")),
+#        plot = mfac.plot.15.2, height = 2.5, width = 10, units = 'in')
+# ggsave(file.path(paste0(figures.folder, "/mortality_by mfac.jpeg")),
+#        plot = mfac.plot.15.2, height = 2.5, width = 10, units = 'in')
+
 ## for rdi.mr
 mrate.mfac.depth.to.rdi.mr <- mrate.mfac.depth %>%
   group_by(sp, size) %>%

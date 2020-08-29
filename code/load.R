@@ -220,9 +220,11 @@ b.wsg.r2 <- signif(broom::glance(k_by_psi.models$B.WSG100)$adj.r.squared, 2)
 b.wsg.p <- ifelse(broom::glance(k_by_psi.models$B.WSG100)$p.value < 0.001,
                   paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$B.WSG100)$p.value, 2)))
 
-
 b.wsg.cf <- as.numeric(round(k_by_psi.models$B.WSG100$coefficients, 2))
 a.wsg.cf <- as.numeric(round(k_by_psi.models$A.WSG100$coefficients, 2))
+
+vpd.cf <- as.numeric(round(gpp.models$eq.gpp.vpd$coefficients, 2))
+
 #******************************************************
 ### Tables
 #******************************************************

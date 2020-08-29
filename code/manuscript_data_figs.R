@@ -9,7 +9,7 @@ load(file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
 load(file = file.path(results.folder, "erd.stem.traits.Rdata"))
 load(file = file.path(results.folder, "depth.traits.kunert.Rdata"))
 load(file = file.path(results.folder, "df.erd.to.plot.Rdata"))
-
+load(file = file.path(results.folder, "data.model.AB.sub.Rdata"))
 
 #****************************
 ###   Custom Functions   ####
@@ -118,7 +118,7 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
        plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4.3, units = 'in')
 
 ml.rsq.combine.sub <- ml.rsq.combine.sub %>%
-  transform(models.plot1 = factor(corr.func, labels = c("A", "B", "C", "D", "E", "F")))
+  transform(models.plot1 = factor(corr.func, labels = c("A", "B", "C", "D", "E")))
 erd.iso_sp_N_by_model <- ml.rsq.combine.sub %>%
   group_by(models.plot1) %>%
   summarise(N = n(), .groups = "drop_last")
@@ -317,7 +317,7 @@ mfac.plot.15 <- ggplot(mrate.depth.mean,
   geom_errorbar(aes(ymin = mrate - mrate.se, ymax = mrate + mrate.se), width = 0.15, size = 0.1) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
-  ylab(expression('Mean Mortality Rate (%'*'year'^1*')')) +
+  ylab(expression('Mean Mortality Rate (%'*~'year'^-1*')')) +
   xlab("Effective Rooting Depth (m)") +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,

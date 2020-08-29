@@ -3,13 +3,13 @@ title: "Drought-sensitive trees survive on deep-water access in a tropical fores
 author: ''
 date: ''
 output:
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
   bookdown::pdf_document2: default
 bibliography: references.bib
 csl: new-phytologist.csl
@@ -192,7 +192,7 @@ For growth estimates, to minimize the effect of light variation among trees, we 
 There are many factors that could affect plant growth, including soil moisture, VPD, leaf area, temperature and radiation. Based on our preliminary analyses, incorporation of temperature and radiation did not improve our model fitting, thus we mainly focused on the impact of soil moisture, VPD and leaf area in our models.
 
 \
-As VPD may have a non-linear relationship with growth, we fitted a polynomial curve between mean daily values by month of gross primary productivity (gC m^2^ day^-1^) and VPD we collected from the eddy flux tower (kPa; $\bar{GPP} = -18.8VPD^2 + 14.5VPD + 5.02 + error = StdVPD$; 2012-2017; Fig. S\@ref(fig:gpp-vpd)) and used standardized $\bar{GPP}$ to represent the impact of VPD on growth (hereafter, $StdVPD$; range 0-1) in Eqs. \@ref(eq:M2), \@ref(eq:M3) \@ref(eq:M5) and \@ref(eq:M6). Due to the coincidence of higher temperature, higher radiation, and lower humidity during the dry season at our study site, the impact of VPD may as well be a combined impact of temperature, humidity, and radiation.
+As VPD may have a non-linear relationship with growth, we fitted a polynomial curve between mean daily values by month of gross primary productivity (gC m^2^ day^-1^) we collected from the eddy flux tower and VPD (kPa; $\bar{GPP} = `r vpd.cf[1]` + `r vpd.cf[2]`VPD + `r vpd.cf[3]`VPD^2 + error = StdVPD$; 2012-2017; Fig. S\@ref(fig:gpp-vpd)) and used standardized $\bar{GPP}$ to represent the impact of VPD on growth (hereafter, $StdVPD$; range 0-1) in Eqs. \@ref(eq:M2), \@ref(eq:M3) \@ref(eq:M5) and \@ref(eq:M6). Due to the coincidence of higher temperature, higher radiation, and lower humidity during the dry season at our study site, the impact of VPD may as well be a combined impact of temperature, humidity, and radiation.
 
 \
 To explore the effect of species seasonality in leaf cover on growth, we made an informed assumption of species-specific seasonal curves for Leaf Cover Fraction ($LeafCover$, range 0-1, unitless). For evergreen species we assumed $LeafCover$ = 1 throughout the year, whereas for non-evergreen species (various deciduous classes), we assumed $LeafCover$ = 1 during the wet season (DOY = 150 to 300) given the high forest-level leaf area index for this period (not shown), and obtained an estimate of $LeafCover$ for the rest of the year as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate, scaled to express daily leaf fall as a fraction of the total leaf fall in a given year and obtained an average leaf fall fraction by DOY estimate across years ($LeafFall$, range 0-1, unitless). Thus for non-evergreen species, we cumulatively deducted $LeafFall$ from $LeafCover$ = 1 beginning DOY = 300 and obtained a $LeafCover$ by DOY curve (Fig. S\@ref(fig:leaf-cover)). We obtained species-specific parameters $A$ & $B$ for Eq. \@ref(eq:k-soil) either from data when available, or a model based on $LMA$ or $WSG$ as described in the earlier section, and used standardized K within species ($Std.K$; range 0-1) in Eqs. \@ref(eq:M1)- \@ref(eq:M6).

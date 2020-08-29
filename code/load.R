@@ -101,7 +101,7 @@ load(file = file.path(results.folder, "psi.interpolated.depths_layers_combined.R
 #******************************************************
 load(file = file.path(results.folder, "clim.daily_with_pet.PM.Rdata"))
 load(file = file.path(results.folder, "gpp.models.Rdata"))
-
+load(file = file.path(results.folder, "rain.man.stats.Rdata"))
 #******************************************************
 ### Load K by Psi models -------
 #******************************************************
@@ -186,11 +186,12 @@ for (i in 1: (length(k_by_psi.models$A.B.LMA.LAM$coefficients) - 1)) {
     acf[i] <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[i], 2))
 }
 acf.6 <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[6], 3))
-for (i in 1: length(k_by_psi.models$A.B.LMA.LAM$coefficients)) {
+
+for (i in 1: length(k_by_psi.models$B.WSG100.LMA$coefficients)) {
   if (i == 6){
-    bcf[i] <- formatC(k_by_psi.models$A.B.LMA.LAM$coefficients[i], format = "f")
+    bcf[i] <- formatC(k_by_psi.models$B.WSG100.LMA$coefficients[i], format = "f")
   } else {
-    bcf[i] <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[i], 2))
+    bcf[i] <- as.numeric(round(k_by_psi.models$B.WSG100.LMA$coefficients[i], 2))
   }
 }
 

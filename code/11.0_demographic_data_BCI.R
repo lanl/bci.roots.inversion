@@ -345,12 +345,12 @@ save(juve.mrate.long, file = ("results/juve.mrate.long.RData"))
 ##---------Combinging growth rates mean across all size and at juvenile and adult level
 ## Only those for which avg.abundance greater than 10
 
-sp.mrate.adult.juve <- sp.mrate.mean %>% subset(avg.abund >= 10) %>%
-  full_join(juve.mrate.mean %>% subset(avg.abund >= 10) %>%
+sp.mrate.adult.juve <- sp.mrate.mean %>%
+  full_join(juve.mrate.mean %>%
               rename(mrate.juve = mrate, m.juve.se = se, m.juve.avg.abund = avg.abund) %>% select(-sd), by = "sp") %>%
-  full_join(adult.mrate.mean %>% subset(avg.abund >= 10) %>%
+  full_join(adult.mrate.mean %>%
               rename(mrate.adult = mrate, m.adult.se = se, m.adult.avg.abund = avg.abund) %>% select(-sd), by = "sp") %>%
-  full_join(large.mrate.mean %>% subset(avg.abund >= 10) %>%
+  full_join(large.mrate.mean %>%
               rename(mrate.large = mrate, m.large.se = se, m.large.avg.abund = avg.abund) %>% select(-sd), by = "sp")
 
 

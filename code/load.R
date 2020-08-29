@@ -20,6 +20,12 @@ figures.folder <- paste0("figures/PhenoDemoTraitsPsi")
 if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
 results.folder <- paste0("results/PhenoDemoTraitsPsi")
 if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder))}
+
+#******************************************************
+## Load ELM-FATES best-fit parameters -----
+#******************************************************
+params.obj.top.few <- read.csv(file = file.path("results/2019-10-14_5000/params.obj.top.few_100.csv"), header = TRUE)
+p.best <- params.obj.top.few[,1:13]
 #******************************************************
 ## Load Deciduousness-----
 #******************************************************
@@ -100,9 +106,11 @@ load(file = file.path(results.folder, "gpp.models.Rdata"))
 ### Load K by Psi models -------
 #******************************************************
 load(file = file.path(results.folder, "k_by_psi.models.Rdata"))
+load(file = file.path(results.folder, "gap.models.Rdata"))
+load(file = file.path(results.folder, "bci.AB.Rdata"))
 load(file = file.path(results.folder, "data.model.AB.Rdata"))
 load(file = file.path(results.folder, "sp.soft.filled.Rdata"))
-
+load(file = file.path(results.folder, "sp.exp.param.Rdata"))
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------
 #******************************************************
@@ -133,49 +141,135 @@ clim <- clim.daily %>%
             pet.PM = sum(pet.PM, na.rm = TRUE), .groups = "drop_last")
 range(clim$Year)
 
+## LMA~lamina~ and LMA~
+lmp <- function (modelobject) {
+  if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
+  f <- summary(modelobject)$fstatistic
+  p <- pf(f[1],f[2],f[3],lower.tail=F)
+  attributes(p) <- NULL
+  return(p)
+}
+
+disc.cf <- as.numeric(round(gap.models$LMA.LAM.DISC$coefficients, 2))
+disc.r2 <- round(summary(gap.models$LMA.LAM.DISC)$adj.r.squared, 2)
+disc.n <- length(gap.models$LMA.LAM.DISC$residuals)
+disc.p <- ifelse(broom::glance(gap.models$LMA.LAM.DISC)$p.value < 0.001,
+                 paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models$LMA.LAM.DISC)$p.value, 2)))
+
+lma.cf <- as.numeric(round(gap.models$LMA.LAM.LMA$coefficients, 2))
+lma.r2 <- round(summary(gap.models$LMA.LAM.LMA)$adj.r.squared, 2)
+lma.n <- length(gap.models$LMA.LAM.LMA$residuals)
+lma.p <- ifelse(broom::glance(gap.models$LMA.LAM.LMA)$p.value < 0.001,
+                 paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models$LMA.LAM.LMA)$p.value, 2)))
+
+c.lma.gaps <- table(bci.AB$sp.LMA.sub)
+c.wsg.gaps <- table(bci.AB$sp.WSG.sub)
+
+leaf.cf <- as.numeric(round(gap.models$LMA.LAM.LEAF$coefficients, 2))
+leaf.r2 <- round(summary(gap.models$LMA.LAM.LEAF)$adj.r.squared, 2)
+leaf.n <- length(gap.models$LMA.LAM.LEAF$residuals)
+leaf.p <- ifelse(broom::glance(gap.models$LMA.LAM.LEAF)$p.value < 0.001,
+                paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models$LMA.LAM.LEAF)$p.value, 2)))
+
+
+chave.cf <- as.numeric(round(gap.models$WSG.100.CHAVE$coefficients, 2))
+chave.r2 <- round(summary(gap.models$WSG.100.CHAVE)$adj.r.squared, 2)
+chave.n <- length(gap.models$WSG.100.CHAVE$residuals)
+chave.p <- ifelse(broom::glance(gap.models$WSG.100.CHAVE)$p.value < 0.001,
+                paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models$WSG.100.CHAVE)$p.value, 2)))
+
 ## A & B data models based on soft traits
 # https://stats.stackexchange.com/questions/95939/how-to-interpret-coefficients-from-a-polynomial-model-fit
 # models had raw = TRUE
 acf <- vector() ; bcf <- vector()
-for (i in 1: (length(k_by_psi.models$A.B.LMA$coefficients) - 1)) {
-    acf[i] <- as.numeric(round(k_by_psi.models$A.B.LMA$coefficients[i], 2))
+for (i in 1: (length(k_by_psi.models$A.B.LMA.LAM$coefficients) - 1)) {
+    acf[i] <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[i], 2))
 }
-acf.6 <- as.numeric(round(k_by_psi.models$A.B.LMA$coefficients[6], 3))
-for (i in 1: length(k_by_psi.models$B.WSG.LMA$coefficients)) {
+acf.6 <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[6], 3))
+for (i in 1: length(k_by_psi.models$A.B.LMA.LAM$coefficients)) {
   if (i == 6){
-    bcf[i] <- formatC(k_by_psi.models$B.WSG.LMA$coefficients[i], format = "f")
+    bcf[i] <- formatC(k_by_psi.models$A.B.LMA.LAM$coefficients[i], format = "f")
   } else {
-    bcf[i] <- as.numeric(round(k_by_psi.models$B.WSG.LMA$coefficients[i], 2))
+    bcf[i] <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[i], 2))
   }
 }
+
+afit.r2 <- signif(broom::glance(k_by_psi.models$A.B.LMA.LAM)$adj.r.squared, 2)
+afit.p <- ifelse(broom::glance(k_by_psi.models$A.B.LMA.LAM)$p.value < 0.001,
+                 paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$A.B.LMA.LAM)$p.value, 2)))
+
+bfit.r2 <- signif(broom::glance(k_by_psi.models$B.WSG100.LMA)$adj.r.squared, 2)
+bfit.p <- ifelse(broom::glance(k_by_psi.models$B.WSG100.LMA)$p.value < 0.001,
+       paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$B.WSG100.LMA)$p.value, 2)))
+
+a.lma.r2 <- signif(broom::glance(k_by_psi.models$A.LMA.LAM)$adj.r.squared, 2)
+a.lma.p <- ifelse(broom::glance(k_by_psi.models$A.LMA.LAM)$p.value < 0.001,
+                 paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$A.LMA.LAM)$p.value, 2)))
+a.wsg.r2 <- signif(broom::glance(k_by_psi.models$A.WSG100)$adj.r.squared, 2)
+a.wsg.p <- ifelse(broom::glance(k_by_psi.models$A.WSG100)$p.value < 0.001,
+                  paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$A.WSG100)$p.value, 2)))
+a.b.r2 <- signif(broom::glance(k_by_psi.models$A.B)$adj.r.squared, 2)
+a.b.p <- ifelse(broom::glance(k_by_psi.models$A.B)$p.value < 0.001,
+                  paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$A.B)$p.value, 2)))
+
+b.lma.r2 <- signif(broom::glance(k_by_psi.models$B.LMA.LAM)$adj.r.squared, 2)
+b.lma.p <- ifelse(broom::glance(k_by_psi.models$B.LMA.LAM)$p.value < 0.001,
+                  paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$B.LMA.LAM)$p.value, 2)))
+b.wsg.r2 <- signif(broom::glance(k_by_psi.models$B.WSG100)$adj.r.squared, 2)
+b.wsg.p <- ifelse(broom::glance(k_by_psi.models$B.WSG100)$p.value < 0.001,
+                  paste0("< 0.001"), paste0("= ", signif(broom::glance(k_by_psi.models$B.WSG100)$p.value, 2)))
+
+
+b.wsg.cf <- as.numeric(round(k_by_psi.models$B.WSG100$coefficients, 2))
+a.wsg.cf <- as.numeric(round(k_by_psi.models$A.WSG100$coefficients, 2))
 #******************************************************
 ### Tables
 #******************************************************
-
 symbols.table <-
   data.frame(
     Symbol = c(
       "$\\Psi_{soil, z}$",
       "$\\Psi_{leaf}$, $\\Psi_{stem}$",
       "$\\Psi_{tlp}$",
-      "$K_{leaf}$, $K_{stem}$",
-      "$K_{max, leaf}$, $K_{leaf, max}$",
-      "$\\Psi_{88, leaf}$",
-      "$\\Psi_{50, stem}$",
-      "$\\Psi_{88, stem}$",
-      "$\\Psi_{min}$"
+      "$\\Psi_{crit}$, or $\\Psi_{50,~leaf}$",
+      "$\\Psi_{88,~stem}$",
+      "$\\Psi_{min}$",
+      "$K_{leaf}$",
+      "$K_{max,~leaf}$",
+      "$K_{stem}$",
+      "$K_{max,~stem}$",
+      "$WSG$",
+      "$LMA$"
     ),
     Definition = c(
       "Soil water potential at depth z",
       "Water potential of leaf or stem",
       "Bulk leaf turgor loss point, the $\\Psi_{leaf}$ where turgor potential = 0",
-      "Hydraulic conductivity of leaf or stem",
-      "Maximum area-specific hydraulic conductivity of leaf or stem",
-      "$\\Psi_{leaf}$ at 88% loss of leaf conductivity",
-      "$\\Psi_{stem}$ at 50% loss of stem conductivity",
+      "$\\Psi_{leaf}$ at 50% loss of leaf conductance",
       "$\\Psi_{stem}$ at 88% loss of stem conductivity",
-      "Seasonal minimum water potential, the most negative $\\Psi_{leaf}$ measured at midday"
+      "Seasonal minimum water potential, the most negative $\\Psi_{leaf}$ measured at midday",
+      "Hydraulic conductance of leaf",
+      "Maximum hydraulic conductance of leaf",
+      "Hydraulic area-specific conductivity of stem",
+      "Maximum area-specific hydraulic conductivity of stem",
+      "Mean wood specific gravity after drying at 100^$\\circ$^C",
+      "Mean leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules for leaves receiving direct sunlight"
+    ),
+    Units = c(
+      "MPa",
+      "MPa",
+      "MPa",
+      "MPa",
+      "MPa",
+      "MPa",
+      "mmol m^-1^ s^-1^ MPa^-1^",
+      "mmol m^-1^ s^-1^ MPa^-1^",
+      "kg m^-1^ s^-1^ MPa^-1^",
+      "kg m^-1^ s^-1^ MPa^-1^",
+      "g cm^-3^",
+      "g m^-2^"
     )
+
   )
 param.table <-
   data.frame(
@@ -205,7 +299,7 @@ param.table <-
       "Soil hydraulic conductivity profile",
       "Maximum interception fraction of precipitation"
     ),
-    Minimum =
+    Global.minimum =
       c(
         "4",
         "0.0042",
@@ -219,8 +313,9 @@ param.table <-
         "0.007 for =< 12.5 cm; 5.56e-05 for >= 60 cm",
         "0.05"
       ),
-    Maximum =
-      c("16",
+    Global.maximum =
+      c(
+        "16",
         "0.0400",
         "92.5",
         "7.4",
@@ -229,27 +324,53 @@ param.table <-
         "18",
         "0.80",
         "8",
-        "0.014 for =< 12.5 cm; 0.0003 for >= 60 cm",
+        "0.014 for =< 12.5 cm; 8e-04 for >= 60 cm",
         "0.44"
       ),
+    Best_fit.minimum = c(
+      round(min(p.best$fates_leaf_BB_slope), 1),
+      round(min(p.best$fates_leaf_slatop), 4),
+      round(min(p.best$fates_leaf_vcmax25top), 1),
+      round(min(p.best$fates_roota_par), 2),
+      round(min(p.best$fates_rootb_par), 3),
+      round(min(p.best$fates_smpsc), 0),
+      round(min(p.best$aveDTB), 1),
+      round(min(p.best$FMAX), 2),
+      round(min(p.best$HKSAT_ADJ), 1),
+      paste0(round(min(p.best$HKSAT_12.5), 3), " for =< 12.5 cm; ", round(min(p.best$HKSAT_60), 4), " for >= 60 cm"),
+      round(min(p.best$fpi_max), 2)
+    ),
+    Best_fit.maximum = c(
+      round(max(p.best$fates_leaf_BB_slope), 1),
+      round(max(p.best$fates_leaf_slatop), 4),
+      round(max(p.best$fates_leaf_vcmax25top), 1),
+      round(max(p.best$fates_roota_par), 2),
+      round(max(p.best$fates_rootb_par), 3),
+      round(max(p.best$fates_smpsc), 0),
+      round(max(p.best$aveDTB), 1),
+      round(max(p.best$FMAX), 2),
+      round(max(p.best$HKSAT_ADJ), 1),
+      paste0(round(max(p.best$HKSAT_12.5), 3), " for =< 12.5 cm; ", round(max(p.best$HKSAT_60), 4), " for >= 60 cm"),
+      round(max(p.best$fpi_max), 2)
+    ),
     Units =
       c(
         "unitless",
-        "m^2^gC^-1^",
-        "umol CO^2^m^2^s^-1^",
+        "m^2^ gC^-1^",
+        "umol CO^2^ m^2^ s^-1^",
         "m^-1^",
         "m^-1^",
         "mm",
         "m",
         "unitless",
         "unitless",
-        "mms^-1^",
+        "mm s^-1^",
         "unitless"
       ),
-    `Method of determination with reference` =
+    Rationale.and.references =
       c(
         "The range of Ball Berry parameter fitted across several studies as compiled in Table 2 of [@Medlyn:2012]",
-        "Based on the observed range of Leaf Mass Area (LMA)--24.97 to 235.8 gm^-2^-- for individual tree variation across 51 tree species in Barro Colorado Island (this study), and assumption of 50% carbon content in biomass.",
+        "Based on the observed range of Leaf Mass Area (LMA)--24.97 to 235.8 g m^-2^-- for individual tree variation across 51 tree species in Barro Colorado Island (this study), and assumption of 50% carbon content in biomass.",
         "Observed range of $V_{cmax}$ at  $25^\\circ$C for tropical tree species under relative radiation of 50% or greater, thereby excluding highly shaded leaves. Values derived with a conversion specific for CLM model are used. [@Ali:2015]",
         "Parameter a in Eq. 2 in [@Zeng:2001] that regulates the shape of the rooting profile. Range corresponds to this parameter specified for BATS (or IGBP) land cover classified Deciduous Broadleaf Trees (5.9 m^-1^ and Evergreen Broadleaf Trees  (7.4 m^-1^) as given in Table 1 of [@Zeng:2001].",
         "Parameter b in Eq. 2 in [@Zeng:2001] that regulates the depth of the rooting profile. Chosen range of *b* is derived using this equation so as to fit the observed range of rooting depth (d~r~) of 2 - 18 m for Tropical Deciduous Forest (mean ± Standard Error (SE); 3.7 ± 0.5, *n* = 5 trees; min = 2, max = 4.7)  and Tropical Evergreen Forest (mean $\\pm$ S.E.; 7.3 $\\pm$ 0.5, n = 3 trees and 3 communities; min = 2, max = 18 m) combined [@Canadell:1996]. Besides the direct observation of roots at 18 m included by [@Nepstad:1994] in Paragominas, eastern Amazonia that is included in the above study; in Tapajos, eastern Amazonia water extraction by roots was also inferred up to 18 m. [@Davidson:2011]",
@@ -257,8 +378,38 @@ param.table <-
         "Ben Turner; pers. comm.",
         "Empirical",
         "To account for high macroporosity and direct flow paths in tropical soils that is not accounted for by small soil core samples [@Broedel:2017; @Kinner:2004; @Tomasella:1998]",
-        "For Conrad catchment observed median Ksat (95% CI) for 12.5 cm depth is 38.3 mmhr^-1^ (25.4 - 51.2, n = 75), while for 60 cm depth 0.7 mmhr^-1^ (0.2 - 1.2, n = 40) [@Kinner:2004]. For reference, a storm with 12.5 mmhr^-1^ rainfall intensity has a 0.2 probability of occurring in any given rainfall event.",
+        "For Conrad catchment observed median Ksat (95% CI) for 12.5 cm depth is 38.3 mm hr^-1^ (25.4 - 51.2, n = 75), while for 60 cm depth 0.7 mm hr^-1^ (0.2 - 1.2, n = 40) [@Kinner:2004]. For reference, a storm with 12.5 mm hr^-1^ rainfall intensity has a 0.2 probability of occurring in any given rainfall event.",
         "Based on throughfall data from [@Zimmermann:2010kzl] and precipitation data for BCI from STRI Physical Monitoring program, defined for precipitation events greater than 10 mm."
-        )
-        )
+      )
+  )
+
+ab.table <- data.model.AB %>%
+  left_join(bci.traits %>% dplyr::select(sp, GENUS., SPECIES., FAMILY.), by = "sp") %>%
+  dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.,
+                A = model.A, B = model.B) %>%
+  mutate(Species = tolower(Species)) %>%
+  dplyr::select(Genus, Species, Family, A, B) %>%
+  mutate(Family = as.character(Family))
+
+# Some familynames do not end in ceae. Correcting that
+correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
+correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
+"Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
+"Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
+  mutate(misspelt = as.character(misspelt),
+         correct = as.character(correct))
+## Which row in Family.sub matches with correct.family$misspelt
+rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
+matched.rows <- match(ab.table$Family, correct.family$misspelt)
+ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
+
+correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
+                               correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
+  mutate(misspelt = as.character(misspelt),
+         correct = as.character(correct))
+rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
+matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
+ab.table$Family[rows.to.replace.2] <-
+  correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
+
 

@@ -4,7 +4,7 @@ rm(list=ls())
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
                scales, GGally, ggpmisc, Evapotranspiration,
-               data.table, bci.elm.fates.hydro, mgcv, lubridate, smooth)
+               data.table, bci.elm.fates.hydro, mgcv, lubridate, smooth, bci.hydromet)
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),
@@ -498,6 +498,19 @@ write.csv(clim.daily,
 save(clim.daily,
      file = file.path(results.folder, "clim.daily_with_pet.PM.Rdata"))
 
+## manual rain guage
+rain.man.stats <- bci.hydromet::bci.met %>%
+  mutate(date = as.POSIXct(date, format = "%m/%d/%y %H:%M",
+                               tz = "America/Panama"),
+         Year = format(date, "%Y")) %>%
+  subset(Year %in% c(1985:2018)) %>%
+  group_by(Year) %>%
+  summarise(rain = sum(Precip, na.rm = TRUE), .groups = "drop_last") %>%
+  summarise(rain.sd = sd(rain, na.rm = TRUE),
+            rain = mean(rain, na.rm = TRUE))
+save(rain.man.stats,
+     file = file.path(results.folder, "rain.man.stats.Rdata"))
+
 #******************************************************
 ### GPP vs. RAD VPD or PET models------
 #******************************************************
@@ -514,10 +527,16 @@ if(!dir.exists(file.path(figures.folder.gpp))) {dir.create(file.path(figures.fol
 bci.tower <- read.csv("data-raw/BCI_v3.1.csv", header = TRUE)
 bci.tower <- as.data.frame(bci.tower[-1, ])
 bci.tower$datetime <- strptime(bci.tower$date, format = "%m/%d/%Y %H:%M")
-bci.tower$datetime <- as.POSIXct(bci.tower$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "")
-str(bci.tower$datetime)
+bci.tower$datetime <- as.POSIXct(bci.tower$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "America/Panama")
+bci.tower$time <- strftime(bci.tower$datetime, format = "%H:%M", tz = "America/Panama")
+str(bci.tower$datetime); str(bci.tower$time)
 
-obs.gpp.d <- bci.tower %>% select(datetime, gpp, vpd) %>% # in mumol/m2/2: units must be mumol/m2/s
+## Matteo:between 11:00 15:00 GPP will be most related to VPD
+
+select.time = c(paste0(rep(11:14, each = 2), rep(c(":00", ":30"), times = length(c(11:14)))), "15:00")
+obs.gpp.d <- bci.tower %>%
+  select(datetime, time, gpp, vpd) %>% # in mumol/m2/2: units must be mumol/m2/s
+  subset(time %in% select.time) %>%
   mutate(date = as.Date(format(datetime, "%Y-%m-%d")),
          gpp.mumol = as.numeric(as.character(gpp)),
          vpd = as.numeric(as.character(vpd))) %>%
@@ -622,7 +641,7 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
-  ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("VPD (kPa)")
+  ylab(expression('GPP (gC'*~m^-2*~day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.jpeg"),
        plot = gpp.vpd, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 ggsave(paste0(data.scale.on,"_gpp.vpd.tiff"),
@@ -2363,6 +2382,10 @@ cohort <- rbind(rama95, rama97) %>%
   mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
          deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE)) %>%
   subset(!is.na(deciduousness)) # only one species does not have a deciduousness label
+
+coh.sp <- cohort %>%
+  group_by(sp, deciduousness, deci_sp) %>%
+  summarise(lifetime = mean(lifetime, na.rm = TRUE))
 
 coh.plot.base <- ggplot(cohort) +
   guides(color = guide_legend(title = "Deciduousness"))

@@ -1001,6 +1001,55 @@ save(traits, file = file.path(results.folder, "kunert.traits.all.RData"))
 save(traits.long, file = file.path(results.folder, "kunert.traits.key.long.RData"))
 save(traits.long.hyd, file = file.path(results.folder, "kunert.traits.key.long_in_Wolfe_traits_species_list.RData"))
 
+#******************************************************
+## Trade-offs: Kmax vs. P80 --------
+#******************************************************
+formula.3 = y ~ log(x)
+l.trade <- ggplot(traits,
+                  aes(y = KmaxL, x = -p80L)) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  geom_smooth(method = lm, formula = formula.3, se = TRUE) +
+  # ylab(expression(italic('K')['max, leaf']*(mmol*~m^-2*~s^-1*~MPa^-1))) +
+  ylab(expression(atop(italic('K')['max, leaf'], ""^(mmol*~m^-2*~s^-1*~MPa^-1)))) +
+  xlab(expression(Psi['88, leaf']*~"(-MPa)")) +
+  stat_poly_eq(aes(label = stat(eq.label)),
+               npcx = 0.95, npcy = 0.95, rr.digits = 2,
+               formula = formula.3, parse = TRUE, size = 4) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.95, npcy = 0.87, rr.digits = 2,
+               formula = formula.3, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula.3),
+                  geom = 'text_npc',
+                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
+                                                 paste0(" = ", round(..p.value.., digits = 4))))),
+                  npcx = 0.95, npcy = 0.75, size = 4)
+
+s.trade <- ggplot(hyd,
+                  aes(y = KmaxS, x = -p88S)) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  geom_smooth(method = lm, formula = formula.3, se = TRUE) +
+  # ylab(expression(italic('K')['max, stem']*~"("*kg*~m^-1*~s^-1*~MPa^-1*")")) +
+  ylab(expression(atop(italic('K')['max, stem'], ""^(kg*~m^-1*~s^-1*~MPa^-1)))) +
+  xlab(expression(Psi['88, stem']*~"(-MPa)")) +
+  stat_poly_eq(aes(label = stat(eq.label)),
+               npcx = 0.95, npcy = 0.95, rr.digits = 2,
+               formula = formula.3, parse = TRUE, size = 4) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.95, npcy = 0.87, rr.digits = 2,
+               formula = formula.3, parse = TRUE, size = 4) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula.3),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.95, npcy = 0.75, size = 4)
+ls.trade <- cowplot::plot_grid(l.trade, s.trade, labels = c('A', 'B'),
+                               label_size = 12, ncol = 2, rel_widths = c(1, 1))
+ggsave("leaf.stem.trade_off.tiff", plot = ls.trade, path =
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi"), device = "tiff", height = 2.5, width = 6, units ='in')
+ggsave("leaf.stem.trade_off.jpeg", plot = ls.trade, path =
+         file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi"), device = "jpeg", height = 2.5, width = 6, units ='in')
+
 
 #******************************************************
 ## Predictors of KmaxL-LWP relationship --------

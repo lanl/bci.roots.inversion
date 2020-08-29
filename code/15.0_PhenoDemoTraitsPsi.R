@@ -651,7 +651,7 @@ ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.
   transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
-  group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp.plot) %>%
+  group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp, deci_sp.plot) %>%
   subset(corr >= 0 & R2 >= 0.5) %>%
   summarise(depth.se = sd(depth, na.rm = TRUE)/sqrt(n()),
             depth = median(depth, na.rm = TRUE),
@@ -1782,6 +1782,7 @@ ggsave(file.path(paste0(figures.folder,
 
 ## Plot mortality by time spent below a threshold in the preferred depth-------
 # For each sp-depth calculate number of days below a threshold with an indicator function
+
 names.mfac <- names(get.mfac.ls)
 mfac.interval <- vector(mode = "list", length = length(names.mfac))
 names(mfac.interval) <- names.mfac  # "psi.p50.g1", "psi.p50.g2"

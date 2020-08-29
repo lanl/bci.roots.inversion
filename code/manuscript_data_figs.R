@@ -224,12 +224,12 @@ erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
 traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
                                                   levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE),
                                    panel = factor(c("A", "B", "C", "D"), levels = c("A", "B", "C", "D"), ordered = TRUE),
-                                   y = c(0, 0, 0, 0),
-                                   x = c(6, 0.5, -1, 1.5)) %>%
-  transform(trait.plot = factor(trait, labels = c(expression(atop(italic('K')['max, stem'], ""^(kg*m^-1*s^-1*MPa^-1))),
-                                                  expression(atop(Psi[tlp], ""^(MPa))),
-                                                  expression(atop(Psi['88, stem'], ""^(MPa))),
-                                                  expression(atop(Psi[min]*' - '*Psi['88, stem'], ""^(MPa))))))
+                                   x = c(0, 0, 0, 0),
+                                   y = c(7, 0, 0.5, 2.4)) %>%
+  transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, stem']~(kg*~m^-1*~s^-1*~MPa^-1)),
+                                                  expression(Psi[tlp]~(MPa)),
+                                                  expression(Psi['88, stem']~(MPa)),
+                                                  expression(Psi[min]*' - '*Psi['88, stem']~(MPa)))))
 erd.stem.traits.only.lab <- erd.stem.traits.only %>%
   left_join(traits.labels.select %>%
               dplyr::select(trait, trait.plot), by = "trait") %>%
@@ -237,31 +237,29 @@ erd.stem.traits.only.lab <- erd.stem.traits.only %>%
 
 
 depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
-                                   aes(y = depth, x = value)) +
+                                   aes(x = depth, y = value)) +
   geom_smooth(method = "lm", formula = formula) +
   geom_text(data = traits.labels.select, aes(x = x, y = y,
                                              label = panel, group = trait.plot), vjust = "inward", hjust = "inward") +
-  # geom_errorbar(aes(ymax = value + se, ymin = value - se), width = 0.05) +
-  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.1, size = 0.2) +
+  geom_errorbarh(aes(xmax = depth + depth.se, xmin = depth - depth.se), size = 0.2) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   # geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 0.8, size = 2.5) +
-  scale_y_reverse() +
-  coord_cartesian(ylim = c(10, 0)) +
-  ylab("Effective Rooting Depth (m)") + xlab("") +
-  facet_wrap(. ~ trait.plot, scales = "free_x", labeller = label_parsed, strip.position = 'bottom') +
+  coord_cartesian(xlim = c(0, max(erd.stem.traits.only.lab$depth) + 0.5)) +
+  xlab("Effective Rooting Depth (m)") + ylab("") +
+  facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed, strip.position = 'left') +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.87, npcy = 0.2, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 3) +
+               npcx = 0.95, npcy = 0.15, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.87, npcy = 0.1, size = 3) +
-  theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
-        strip.text.x = element_text(size = 12, vjust = 2.5),
-        plot.margin = margin(0.2, 0.2, -1, 0.2, "cm"))
+                  npcx = 0.95, npcy = 0.05, size = 4) +
+  theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
+        strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
+        plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
-       plot = depth.traits.select.plot, height = 4.5, width = 3.8, units ='in')
+       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
 
 # Kmax vs. growth
 stem.k.gr <- erd.stem.traits %>% left_join(demo.sp, by = "sp") %>%

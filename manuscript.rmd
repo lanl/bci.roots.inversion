@@ -226,11 +226,11 @@ knitr::include_graphics(file.path("figures/hydro-calib2.jpeg"))
 
 ## Leaf Vulnerability Curves
 \
-For the leaf vulnerability curve parameters $A$ & $B$ fitted to the observed data on $K_{leaf}$ vs. $\Psi_{leaf}$, $WSG$ & parameter $B$ explained a large proportion of variation in parameter $A$ (Eq. \@ref(eq:a-mod); *Adj. R*^2^ = `r afit.r2`; *P* `r  afit.p`; also see Fig. S\@ref(fig:ab-fit)). $WSG$ & $LMA$ explained a large proportion of variation in parameter $B$ (Eq. \@ref(eq:b-mod); Adj. *R*^2^ = `r bfit.r2`; *P* `r  bfit.p`). WSG alone explained `r round(a.wsg.r2*100,0)` % of variation in $A$ ($A = `r a.wsg.cf[1]` `r a.wsg.cf[2]`B + `r a.wsg.cf[3]`B^2 + error$; *P* `r  a.wsg.p`) and `r round(b.wsg.r2*100,0)` % of variation in $B$ ($B = `r b.wsg.cf[1]` `r b.wsg.cf[2]`B + `r b.wsg.cf[3]`B^2 + error$; *P* `r  b.wsg.p`). Parameter $B$ alone explained `r round(a.b.r2*100,0)` % of variation in $A$ (*P* `r  a.b.p`), while $LMA$ alone was weakly related to $A$ and was not related to $B$ (not shown). The leaf vulnerability curves fitted to observed data on `r length(sp.exp.param$sp)` species are shown in Figs. S\@ref(fig:leaf-vcurves-data1), S\@ref(fig:leaf-vcurves-data2) and S\@ref(fig:obs-plc-curves) and those predicted for the `r length(unique(data.model.AB$sp))` species in the community are shown in Fig. \@ref(fig:comm-vuln-curves). Corresponding parameters for the community are given in Table S\@ref(tab:param) (also see Fig. \@ref(fig:comm-plc-curves)).
+For the leaf vulnerability curve parameters $A$ & $B$ fitted to the observed data on $K_{leaf}$ vs. $\Psi_{leaf}$, $WSG$ & parameter $B$ explained a large proportion of variation in parameter $A$ (Eq. \@ref(eq:a-mod); *Adj. R*^2^ = `r afit.r2`; *P* `r  afit.p`; also see Fig. S\@ref(fig:ab-fit)). $WSG$ & $LMA$ explained a large proportion of variation in parameter $B$ (Eq. \@ref(eq:b-mod); Adj. *R*^2^ = `r bfit.r2`; *P* `r  bfit.p`). WSG alone explained `r round(a.wsg.r2*100,0)` % of variation in $A$ ($A = `r a.wsg.cf[1]` `r a.wsg.cf[2]`B + `r a.wsg.cf[3]`B^2 + error$; *P* `r  a.wsg.p`) and `r round(b.wsg.r2*100,0)` % of variation in $B$ ($B = `r b.wsg.cf[1]` `r b.wsg.cf[2]`B + `r b.wsg.cf[3]`B^2 + error$; *P* `r  b.wsg.p`). Parameter $B$ alone explained `r round(a.b.r2*100,0)` % of variation in $A$ (*P* `r  a.b.p`), while $LMA$ alone was weakly related to $A$ and was not related to $B$ (not shown). The leaf vulnerability curves fitted to observed data on `r length(sp.exp.param$sp)` species are shown in Figs. S\@ref(fig:leaf-vcurves-data1), S\@ref(fig:leaf-vcurves-data2) and S\@ref(fig:obs-plc-curves) and those predicted for the `r length(unique(data.model.AB$sp))` species in the community are shown in Fig. \@ref(fig:comm-vuln-curves). Corresponding parameters for the community are given in Table S\@ref(tab:param) (also see Fig. \@ref(fig:obs-plc-curves)).
 
-```{r comm-vuln-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-comm-vuln-curves}Modelled 'vulnerability curves' ($K_{leaf}$ vs. $\\Psi_{leaf}$) at community-scale (", length(data.model.AB$sp)," species) based on data on $WSG$ & $LMA$ and their relationships with vulnerability curve parameters measured on ", length(sp.exp.param$sp)," species. Each line represents a species, color coded by $WSG$ with blue tones indicating smaller values of $WSG$ and red tones indicating larger values of $WSG$.")}
 
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_SG100C_AVG_predicted_AB.jpeg"))
+```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-plc-curves}'Vulnerability curves' fitted to observed $K_{leaf}$ vs. $\\Psi_{leaf}$ data on ", length(sp.exp.param$sp)," tree species from BCI (A & B) with equation \\@ref(eq:vc-exp)--in absolute terms (A, B), as well as, in terms of loss of conductivity (%) (C, D). Each line represents a species, color coded by $WSG$ (A, C), or $LMA$ (B, D), with blue tones indicating smaller values of $WSG$ or $LMA$ and red tones indicating larger values.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.obs.plc.jpeg"))
 ```
 
 ## Effective Rooting Depths, Vulnerability to Embolism and Hydraulic Safety Margins
@@ -333,14 +333,6 @@ knitr::include_graphics(file.path("figures/Bootstrapped Ksat profiles within obs
 knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpeg"))
 ```
 
-```{r leaf-vcurves-data1, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-vcurves-data}Fitted curves vs. observed data on $K_{leaf}$ vs. $\\Psi_{leaf}$ for ", length(sp.exp.param$sp)," tree species from BCI. Curves are color coded by the model used. AICc for each model are given in inset (RCT:Add models and their reference). Only nine species are shown here. The remaining twelve species are shown in Fig. \\@ref(fig:leaf-vcurves-data2).")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/vcurves_fits_to_data_by_sp.1.jpeg"))
-```
-
-```{r leaf-vcurves-data2, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-vcurves-data}See Fig. \\@ref(fig:leaf-vcurves-data1) caption.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/vcurves_fits_to_data_by_sp.2.jpeg"))
-```
-
 ```{r dbh-model, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-dbh-model}A scatterplot of tree growth rates (circles) from all census intervals versus dbh at the beginning of the census interval is overlaid with a dbh model of growth (spline). Growth rates are color coded by census interval. The model equation is shown in inset along with goodness-of-fit (Adj. *R*^2^).")}
 knitr::include_graphics(file.path("figures/dbh/growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model.jpeg"))
 ```
@@ -370,35 +362,18 @@ knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_d
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/A_B_data_vs_model.jpeg"))
 ```
 
-```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-plc-curves}'Vulnerability curves' fitted to observed $K_{leaf}$ vs. $\\Psi_{leaf}$ data on ", length(sp.exp.param$sp)," tree species from BCI (A & B) with equation \\@ref(eq:vc-exp)--in absolute terms (A, B), as well as, in terms of loss of conductivity (%) (C, D). Each line represents a species, color coded by $WSG$ (A, C), or $LMA$ (B, D), with blue tones indicating smaller values of $WSG$ or $LMA$ and red tones indicating larger values.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.obs.plc.jpeg"))
-```
-
 ```{r other-erd-mods, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-other-erd-mods}Effective Rooting Depth versus $\\delta^2H$ for each of the ERD models tested (panels). For each ERD model only those species have an estimate of ERD that have passed the test of Pearson's $\\rho$ > 0 and *R*^2^ > 0.5 during ERD parameterisation. The number of species with an ERD estimate as well as $\\delta^2H$. or each model are shown in inset, along with the goodness-of-fit (*R*^2^) and p-values for a linear relationship between ERD and $\\delta^2H$. See Eqs. \\@ref(eq:M1)-\\@ref(eq:M6). See Table  \\@ref(tab:ab-param) for the full form of scientific names.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
-```
-
-```{r comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-comm-plc-curves}Modelled 'vulnerability curves' ($K_{leaf}$ vs. $\\Psi_{leaf}$) at the community-scale (", length(ab.table$Species)," species) predicted from soft traits, $WSG$ and $LMA$, with equations \\@ref(eq:a-mod) and \\@ref(eq:b-mod) in absolute terms (A, B) as well as in terms of loss of conductivity (%) (C, D). Each line represents a species, color coded by $WSG$ (A, C), or $LMA$ (B, D), with blue tones indicating smaller values and red tones indicating larger values of $WSG$, or $LMA$.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.comm.plc.jpeg"))
 ```
 
 ```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
 ```
 
-```{r se-trade-offs, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-se-trade-offs}Efficiency-safety trade-off between $K_{max,~leaf}$ and $\\Psi_{88, leaf}$ (A) and $K_{max,~stem}$ and $\\Psi_{88,~stem}$ based on observed data on ", length(sp.exp.param$sp)," species and ", length(hyd$KmaxS[!is.na(hyd$KmaxS)]), " species, respectively. The fitted equations of the form, $K_{max}$ = a + b.log($\\Psi_{88}$), are given in inset along with goodness-of-fit (*R*^2^) and *p*-values.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/leaf.stem.trade_off.jpeg"))
-```
-
 #Supplementary Tables
 
 ```{r param, results = 'asis', echo = FALSE}
 knitr::kable(param.table, caption = 'ELM-FATES parameters used to generate ensembles, with description, prescribed global ranges, rationale for the choice of ranges and references. Ranges for best-fit chosen ensembles are also given. Note that no. 1-6 are parameters specific to FATES.', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(param.table))))
-```
-
-#####
-```{r ab-param, results = 'asis', echo = FALSE}
-knitr::kable(ab.table, caption = 'Modelled parameters A & B for leaf vulnerability curves ($K_{leaf}$ vs. $\\Psi_{leaf}$) for 233 species in Panama predicted from soft traits, $WSG$ and $LMA$, using Eqs. \\@ref(eq:a-mod) and \\@ref(eq:b-mod). Corresponding curves are of the exponetial form as in Eq. \\@ref(eq:vc-exp).', booktabs = TRUE, escape = FALSE)
 ```
 
 

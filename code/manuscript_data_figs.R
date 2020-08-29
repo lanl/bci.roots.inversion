@@ -229,10 +229,15 @@ traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM
   transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, stem']~(kg*~m^-1*~s^-1*~MPa^-1)),
                                                   expression(Psi[tlp]~(MPa)),
                                                   expression(Psi['88, stem']~(MPa)),
-                                                  expression(Psi[min]*' - '*Psi['88, stem']~(MPa)))))
+                                                  expression(Psi[min]*' - '*Psi['88, stem']~(MPa)))),
+            trait.plot.chart = factor(trait, labels = c(expression(italic('K')['max,stem']),
+                                                  expression(Psi[tlp]),
+                                                  expression(Psi['88,stem']),
+                                                  expression(Psi[min]*'-'*Psi['88,stem']))))
+
 erd.stem.traits.only.lab <- erd.stem.traits.only %>%
   left_join(traits.labels.select %>%
-              dplyr::select(trait, trait.plot), by = "trait") %>%
+              dplyr::select(trait, trait.plot, trait.plot.chart), by = "trait") %>%
   droplevels()
 
 
@@ -260,6 +265,26 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
         plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
        plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
+
+## Correlation chart
+# Check correlations (as scatterplots), distribution and print correlation coefficient
+
+erd.pairs <- erd.stem.traits.only.lab %>%
+  select(sp, depth, trait.plot.chart, value) %>%
+  pivot_wider(names_from = trait.plot.chart, values_from = value) %>%
+  rename(ERD = depth)
+chart.erd.pairs <- ggpairs(erd.pairs %>% select(-sp),
+                       upper = list(continuous = wrap(cor_func,
+                                                      method = 'spearman', symbol = expression('\u03C1 ='))),
+                       lower = list(continuous = function(data, mapping, ...) {
+                         ggally_smooth_lm(data = data, mapping = mapping) +
+                           theme(panel.background = element_blank())}),
+                       diag = list(continuous = function(data, mapping, ...) {
+                         ggally_densityDiag(data = data, mapping = mapping) +
+                           theme(panel.background = element_blank())}
+                       ), labeller = "label_parsed")
+ggsave(file.path(figures.folder, paste0("erd.stem.traits_cor.chart.jpeg")),
+       plot = chart.erd.pairs + ggpairs.theme, height = 5.5, width = 5.5, units ='in')
 
 # Kmax vs. growth
 stem.k.gr <- erd.stem.traits %>% left_join(demo.sp, by = "sp") %>%

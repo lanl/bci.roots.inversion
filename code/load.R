@@ -253,7 +253,7 @@ symbols.table <-
       "Seasonal minimum water potential, the most negative $\\Psi_{leaf}$ measured at midday",
       "Hydraulic conductance of leaf",
       "Maximum hydraulic conductance of leaf",
-      "Hydraulic area-specific conductivity of stem",
+      "Area-specific hydraulic conductivity of stem",
       "Maximum area-specific hydraulic conductivity of stem",
       "Mean wood specific gravity after drying at 100^$\\circ$^C",
       "Mean leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules for leaves receiving direct sunlight"

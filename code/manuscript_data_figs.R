@@ -274,17 +274,23 @@ erd.pairs <- erd.stem.traits.only.lab %>%
   pivot_wider(names_from = trait.plot.chart, values_from = value) %>%
   rename(ERD = depth)
 chart.erd.pairs <- ggpairs(erd.pairs %>% select(-sp),
-                       upper = list(continuous = wrap(cor_func,
-                                                      method = 'spearman', symbol = expression('\u03C1 ='))),
+                           upper = list(
+                             continuous = wrap('cor', method = "spearman")
+                           ),
+                      # upper = list(continuous = wrap(cor_func.2,
+                      #                                method = 'spearman', symbol = expression('\u03C1 ='))),
                        lower = list(continuous = function(data, mapping, ...) {
                          ggally_smooth_lm(data = data, mapping = mapping) +
                            theme(panel.background = element_blank())}),
                        diag = list(continuous = function(data, mapping, ...) {
                          ggally_densityDiag(data = data, mapping = mapping) +
                            theme(panel.background = element_blank())}
-                       ), labeller = "label_parsed")
+                       ), labeller = "label_parsed") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits_cor.chart.jpeg")),
-       plot = chart.erd.pairs + ggpairs.theme, height = 5.5, width = 5.5, units ='in')
+       plot = chart.erd.pairs, height = 5.5, width = 5.5, units ='in')
 
 # Kmax vs. growth
 stem.k.gr <- erd.stem.traits %>% left_join(demo.sp, by = "sp") %>%

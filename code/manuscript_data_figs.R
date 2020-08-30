@@ -10,6 +10,8 @@ load(file = file.path(results.folder, "erd.stem.traits.Rdata"))
 load(file = file.path(results.folder, "depth.traits.kunert.Rdata"))
 load(file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 load(file = file.path(results.folder, "data.model.AB.sub.Rdata"))
+load(file = file.path(results.folder, "obs.sp.vcurves.1.Rdata"))
+load(file = file.path(results.folder, "comm.sp.vcurves.1.Rdata"))
 
 #****************************
 ###   Custom Functions   ####
@@ -475,4 +477,46 @@ erd.p50.plot <- ggplot(erd.data, aes(y = depth, x = psi_kl50)) +
 ggsave(file.path(figures.folder, paste0("erd.p0L.jpeg")),
        plot = erd.p50.plot, height = 3, width = 3, units ='in')
 
+## plc curves
+## those species for which curves are fit to data in solid lines, rest predicrted from model in dashed lines
+obs.mod.plc <- obs.sp.vcurves.1 %>%
+  subset(sp %in% erd.sp) %>%
+  mutate(Fit = "Data")
+obs.mod.plc <- obs.mod.plc %>%
+  bind_rows(comm.sp.vcurves.1 %>%
+              ## only species that foor which data unavailable
+              subset(sp %in% erd.sp[!erd.sp %in% unique(obs.mod.plc$sp)]) %>%
+              mutate(Fit = "Model"))
+sp.n.data <- length(unique(obs.mod.plc$sp[obs.mod.plc$Fit == "Data"]))
+sp.n.model <- length(unique(obs.mod.plc$sp[obs.mod.plc$Fit == "Model"]))
+obs.mod.vcurves_fits <- ggplot(obs.mod.plc , aes(x = psi, y = k.predict)) +
+  ylim(c(0, 10)) +
+  xlab("Leaf Water Potential (-MPa)") +
+  ylab(expression(atop(italic('K')['max, leaf'], ""^(mmol*~m^-2*~s^-1*~MPa^-1)))) +
+  theme(legend.position = c(0.8, 0.65),
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent")) +
+  scale_linetype_manual(values=c("solid", "longdash")) +
+  guides(linetype = guide_legend(order = 2,
+                                 title = NULL, direction = "horizontal", label.position = "left"))
 
+obs.mod.plccurves.pre <- ggplot(obs.mod.plc, aes(x = psi, y = k.predict.percent)) +
+  xlab("Leaf Water Potential (-MPa)") +
+  ylab("Loss of Conductivity (%)") +
+  # scale_color_gradient(low = "blue", high = "Red")
+  theme(legend.position = c(0.8, 0.4),
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent")) +
+  guides(linetype = guide_legend(order = 2, title = ""))
+
+obs.mod.plccurves.black <- obs.mod.plccurves.pre +
+  geom_line(aes(group = sp, col = Fit), size = 0.25) +
+  scale_color_manual(values=c('#E69F00','#999999')) +
+  guides(color = guide_legend(override.aes = list(size = 3)))
+  #scale_color_grey(start = 0.1, end = 0.7)
+ggsave(plot = obs.mod.plccurves.black, file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/obs.mod_plccurves_fits_ggplot_no_col.tiff"),
+       device = "tiff", height = 2.7, width = 3, units='in')
+ggsave(plot = obs.mod.plccurves.black, file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/obs.mod_plccurves_fits_ggplot_no_col.jpeg"),
+       device = "jpeg", height = 2.7, width = 3, units='in')

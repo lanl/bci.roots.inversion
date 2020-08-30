@@ -4,7 +4,7 @@
 #*******************************************
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, readxl, forcats, scales, data.table, ggpmisc)
+pacman::p_load(tidyverse, readxl, forcats, scales, data.table, ggpmisc, GGally)
 
 # graphics info
 theme_set(theme_bw())

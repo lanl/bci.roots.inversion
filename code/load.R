@@ -1,4 +1,6 @@
 
+rm(list=ls())
+
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ##
 #*******************************************
@@ -228,6 +230,17 @@ vpd.cf <- as.numeric(round(gpp.models$eq.gpp.vpd$coefficients, 2))
 #******************************************************
 ### Tables
 #******************************************************
+hypo.table <-
+  data.frame(
+    Variable = c(
+      "Maximum Stem Hydraulic Conductivity",
+      "Embolism Vulnerability",
+      "Turgor Loss Point",
+      "Hydraulic Safety Margins"
+    ),
+    Deeper.ERD = c("Higher", "Higher", "Higher", "Narrower"),
+    Shallower.ERD = c("Lower", "Lower", "Lower", "Larger")
+  )
 symbols.table <-
   data.frame(
     Symbol = c(
@@ -239,7 +252,6 @@ symbols.table <-
       "$\\Psi_{min}$",
       "$K_{leaf}$",
       "$K_{max,~leaf}$",
-      "$K_{stem}$",
       "$K_{max,~stem}$",
       "$WSG$",
       "$LMA$"
@@ -253,7 +265,6 @@ symbols.table <-
       "Seasonal minimum water potential, the most negative $\\Psi_{leaf}$ measured at midday",
       "Hydraulic conductance of leaf",
       "Maximum hydraulic conductance of leaf",
-      "Area-specific hydraulic conductivity of stem",
       "Maximum area-specific hydraulic conductivity of stem",
       "Mean wood specific gravity after drying at 100^$\\circ$^C",
       "Mean leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules for leaves receiving direct sunlight"
@@ -267,7 +278,6 @@ symbols.table <-
       "MPa",
       "mmol m^-1^ s^-1^ MPa^-1^",
       "mmol m^-1^ s^-1^ MPa^-1^",
-      "kg m^-1^ s^-1^ MPa^-1^",
       "kg m^-1^ s^-1^ MPa^-1^",
       "g cm^-3^",
       "g m^-2^"
@@ -415,4 +425,22 @@ matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
 ab.table$Family[rows.to.replace.2] <-
   correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
 
-
+eddy.table <- data.frame(Variable = c("Rain",
+                                              "Temperature flux",
+                                              "H~2~O flux",
+                                              "CO~2~ flux",
+                                              "Turbulent intensity",
+                                              "Fiction velocity",
+                                              "H~2~O 4th moment",
+                                              "CO~2~ 4th moment"),
+                         Unit = c("mm", "C m^-2^ s^-1^", "mmol m^-2^ s^-1^", "mumol m^-2^ s^-1^",
+                                  "-", "m s^-1^", "mmol m^-2^", "mumol m^-2^"),
+# symbol = c(),
+                          Criterion = c("During and 30 minutes after",
+                                        "> -0.13 & < 0.51",
+                                        "> -5 & < 30",
+                                        "> -60 & < 20",
+                                        "< 5",
+                                        "> 0.15",
+                                        "< 55",
+                                        "< 55"))

@@ -1290,7 +1290,8 @@ hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
   rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
   gather(trait, se, -sp) ## But note that for TLP it's not se but sd
 
-erd.stem.traits <- depth.traits.hyd %>% subset(trait %in% c("KmaxS", "TLP", "p88S", "HSM88S")) %>%
+erd.stem.traits <- depth.traits.hyd %>%
+  subset(trait %in% c("KmaxS", "TLP", "p88S", "HSM88S", "lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%
   # bind_rows(depth.traits.kunert %>% subset(trait == "KmaxL") %>%
   #             select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value)) %>%

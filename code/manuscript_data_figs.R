@@ -55,6 +55,21 @@ erd.iso <- erd.data %>% subset(sp != "guapst" &
 #******************************************************
 erd.sp <- erd.data$sp
 save(erd.sp, file = file.path("results", "erd.sp.Rdata"))
+
+f4 <- ggplot(sp.leaf_cover.for.model %>% subset(sp %in% erd.sp & doy != 366),
+             aes(x = doy, y = leaf_cover)) +
+  facet_wrap(sp ~ ., scales = "free_y") +
+  ylim(c(0, 1)) +
+  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
+  ylab("Leaf Cover Fraction") + xlab("DOY") +
+  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
+       plot = f4, file.path(figures.folder), device = "jpeg", height = 7, width = 9, units='in')
+
 erd.sp.names <- bci.traits %>%
   subset(sp %in% erd.sp) %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
@@ -101,7 +116,7 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == "gr.Psi.VPD.multi"),
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05, show.legend = FALSE) +
   geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
-  ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
+  ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.9, npcy = 0.2, rr.digits = 2,
@@ -136,7 +151,7 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
   facet_wrap( ~ models.plot1, nrow = 2) +
   geom_text(data = erd.iso_sp_N_by_model, aes(x = -60, y = 0.3, label = paste0("n = ", N), group = models.plot1),
             vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
-  ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) +
+  ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans=reverselog_trans(10), breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.98, npcy = 0.15, rr.digits = 2,
@@ -217,6 +232,7 @@ ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatolo
        plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
 
 erd.stem.traits.only <- erd.stem.traits %>%
+  subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%
               dplyr::select(sp, depth, depth.se), by = "sp") %>%
   subset(!is.na(depth)) %>%
@@ -241,7 +257,6 @@ erd.stem.traits.only.lab <- erd.stem.traits.only %>%
   left_join(traits.labels.select %>%
               dplyr::select(trait, trait.plot, trait.plot.chart), by = "trait") %>%
   droplevels()
-
 
 depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                    aes(x = depth, y = value)) +
@@ -276,6 +291,43 @@ erd.pairs <- erd.stem.traits.only.lab %>%
   select(sp, depth, trait.plot.chart, value) %>%
   pivot_wider(names_from = trait.plot.chart, values_from = value) %>%
   rename(ERD = depth)
+
+p_load(corrplot, ggcorrplot)
+cor.data <- erd.pairs %>% select(-sp) %>%
+  relocate(ERD, `italic(\"K\")[\"max,stem\"]`)
+M <- cor(cor.data, use = "pairwise.complete.obs", method = "spearman")
+
+colnames(M) <- rownames(M) <- c("ERD", ":K['max,stem']", ":Psi[tlp]",
+  ":Psi['88,stem']", ":Psi[min]*'-'*Psi['88,stem']")
+
+res1 <- cor.mtest(cor.data, conf.level = 0.95,
+                  use = "pairwise.complete.obs",
+                  method = c("spearman"), alternative = c("two.sided"))
+
+jpeg(file.path(figures.folder, "erd.stem.traits_cor.matrix_insig_blank.jpeg"),
+     width = 4.5, height = 4.5, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+corrplot(M, type = "upper", order = "original",
+         tl.col = "black", tl.srt = 0, tl.offset = 0.8, tl.cex = 1,
+         # p.mat = res1$p, sig.level = 0.05,
+         ## show only insignificant p-values >= 0.05
+         insig = "blank",
+         ## if cor coefficient were to be shown
+         addCoef.col = "gray",
+         diag = FALSE, cl.ratio = .2, cl.align = "l")
+dev.off()
+
+jpeg(file.path(figures.folder, "erd.stem.traits_cor.matrix_all_p-val.jpeg"),
+     width = 4.5, height = 4.5, units = "in", pointsize = 10,
+     quality = 100, res = 300)
+# par(mfrow=c(1,1),omi=c(0,0,0,0),mai=c(0.1,0.1,0.1,0.1))
+corrplot(M, type = "upper", order = "original",
+         tl.col = "black", tl.srt = 0, tl.offset = 0.8, tl.cex = 1,
+         p.mat = res1$p,
+         ## show only insignificant p-values >= 0.05
+         insig = "p-val", sig.level = -1, pch.col = "grey90",
+         diag = FALSE, cl.ratio = .2, cl.align = "l", win.asp= 1)
+graphics.off()
 chart.erd.pairs <- ggpairs(
   erd.pairs %>% select(-sp),
   upper = list(continuous = wrap('cor', method = "spearman")),

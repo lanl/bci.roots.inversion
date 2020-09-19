@@ -442,18 +442,6 @@ clim.daily <- clim.dat %>%
 
 nrow(clim.daily[duplicated(clim.daily$date), ])
 ## there are no missing values
-
-clim.daily.processed_data1 <- ReadInputs(varnames = c("Tmax", "Tmin", "RHmax", "RHmin", "uz", "Rs"),
-                                         subset(clim.daily, select = c(-date)),
-                                         constants.bci,
-                                         stopmissing = c(10, 10, 3),
-                                         timestep = "daily",
-                                         interp_missing_days = TRUE,
-                                         interp_missing_entries = TRUE,
-                                         interp_abnormal = TRUE,
-                                         missing_method = "DoY average",
-                                         abnormal_method = "DoY average"
-)
 #data("processeddata")
 data("constants")
 ## Changing few constants to be BCI specific
@@ -467,6 +455,19 @@ constants.bci$PA <- 2650 # mm, average from 1929-2016, from this dataset
 # Dont know these locally, so unchanged
 # as fraction of extraterrestrial radiation reaching earth on sunless days = 0.23 for Australia (Roder- ick, 1999, page 181),
 # bs difference between fracion of extraterrestrial radiation reaching full-sun days and that on sunless days = 0.5 for Australia (Roderick, 1999, page 181),
+
+
+clim.daily.processed_data1 <- ReadInputs(varnames = c("Tmax", "Tmin", "RHmax", "RHmin", "uz", "Rs"),
+                                         subset(clim.daily, select = c(-date)),
+                                         constants.bci,
+                                         stopmissing = c(10, 10, 3),
+                                         timestep = "daily",
+                                         interp_missing_days = TRUE,
+                                         interp_missing_entries = TRUE,
+                                         interp_abnormal = TRUE,
+                                         missing_method = "DoY average",
+                                         abnormal_method = "DoY average"
+)
 
 results_PM <-
   ET.PenmanMonteith(data = clim.daily.processed_data1,
@@ -619,7 +620,7 @@ if (data.scale.on == "monthly"){
   gpp.rel <- gpp.rel.daily
 }
 
-formula = y ~ poly(x, 2, raw=TRUE)
+formula.poly = y ~ poly(x, 2, raw=TRUE)
 # https://stackoverflow.com/questions/21748598/add-or-override-aes-in-the-existing-mapping-object
 # add_modify_aes <- function(mapping, ...) {
 #   ggplot2:::rename_aes(modifyList(mapping, ...))
@@ -629,15 +630,15 @@ formula = y ~ poly(x, 2, raw=TRUE)
 gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
-              formula = formula, colour = "red") +
+              formula = formula.poly, colour = "red") +
   stat_poly_eq(aes(label = stat(eq.label)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, colour = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
                npcx = 0.95, npcy = 0.87, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, colour = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
+                  method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
@@ -655,12 +656,12 @@ if(data.scale.on == "monthly") {
 gpp.aet <- ggplot(gpp.rel, mapping.gpp.aet) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
-              formula=formula, colour = "red") +
+              formula=formula.poly, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
                npcx = 0.95, npcy = 0.98, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, color = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, color = "red") +
   stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
+                  method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
@@ -671,12 +672,12 @@ ggsave(paste0(data.scale.on,"_gpp.aet.jpeg"),
 gpp.pet <- ggplot(gpp.rel, aes(y = gpp.tower, x = pet.PM.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
-              formula=formula, colour = "red") +
+              formula=formula.poly, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
                npcx = 0.95, npcy = 0.98, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, color = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, color = "red") +
   stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
+                  method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
@@ -687,12 +688,12 @@ ggsave(paste0(data.scale.on,"_gpp.pet.jpeg"),
 gpp.pan <- ggplot(gpp.rel, aes(y = gpp.tower, x = Pan.Evap)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
-              formula=formula, colour = "red") +
+              formula=formula.poly, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
                npcx = 0.95, npcy = 0.98, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, color = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, color = "red") +
   stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
+                  method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
@@ -703,12 +704,12 @@ ggsave(paste0(data.scale.on,"_gpp.pan.jpeg"),
 gpp.rad <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
   geom_point(size = point.size, alpha = 0.7) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
-              formula=formula, colour = "red") +
+              formula=formula.poly, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
                npcx = 0.95, npcy = 0.98, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, color = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, color = "red") +
   stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
+                  method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
@@ -726,12 +727,12 @@ aet.pet <- ggplot(gpp.rel, mapping.aet.pet) +
   geom_point(size = point.size, alpha = 0.7) +
   xlim(c(2, 5)) + ylim(c(2,5)) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
-              formula=formula, colour = "red") +
+              formula=formula.poly, colour = "red") +
   stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
                npcx = 0.95, npcy = 0.98, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4, color = "red") +
+               formula = formula.poly, parse = TRUE, size = 4, color = "red") +
   stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
+                  method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
@@ -2148,6 +2149,112 @@ if(col.var == "deci") {
                              decreasing = TRUE), 1)), bty = "n")
 }
 dev.off()
+#******************************************************
+### Load processed leaf Life-time and LMA data ------
+#******************************************************
+figures.folder.cohort <- paste0("figures/PhenoDemoTraitsPsi/leaf_cohort")
+if(!dir.exists(file.path(figures.folder.cohort))) {dir.create(file.path(figures.folder.cohort))}
+
+ll.lma <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits_complete.xls")) %>%
+  rename_all(tolower) %>%
+  rename(site = `site$`, sp4 = `sp4$`, strata = `strata$`, lifeform6 = `lifeform6$`,
+         genus = `genus$`, species = `species$`) %>%
+  left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
+  select(site, sp, sp4, genus, species, lifetime, n_lifetime, lma, strata, lifeform6) %>%
+  mutate(log.ll = log(lifetime),
+         log.lma = log(lma)) %>%
+  subset(n_lifetime > 100) ## those with enough sample sizes
+
+formula <- y ~ x
+ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifetime, group = strata)) +
+  # geom_point(aes(size = n_lifetime), show.legend = TRUE) +
+  geom_text(aes(label = sp4), nudge_y = 10, size = 3) +
+  geom_point(aes(size = n_lifetime), shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  xlab(expression('LMA (g '*m^-2*')')) + ylab("Leaf Longevity (Days)") +
+  geom_smooth(method = "lm", formula = formula, se = FALSE) +
+  scale_linetype_manual(name = "Strata") +
+  theme(legend.position = c(0.2, 0.9), legend.title = element_blank(),
+        legend.background = element_rect(fill = "transparent")) #+
+# scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+#               labels = trans_format("log10", math_format(10^.x))) +
+# scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+#               labels = trans_format("log10", math_format(10^.x))) +
+# annotation_logticks()
+ggsave(("lifetime_by_lma_canopy_two sites.jpeg"),
+       plot = ll.lma.plot, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
+ll.lma.plot.canopy <- ll.lma.plot %+%
+  subset(ll.lma, strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA") + #! sp4 %in% c("VIRE", "VIR3")
+  stat_poly_eq(aes(label = stat(eq.label)),
+               npcx = 0.95, npcy = 0.1, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.95, npcy = 0.25, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
+                                                 paste0(" = ", round(..p.value.., digits = 4))))),
+                  npcx = 0.95, npcy = 0.18, size = 6)
+ggsave(("lifetime_by_lma_canopy.jpeg"),
+       plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
+# LIFETIME – median leaf longevity (days)
+# N_LIFETIME – sample size for LIFETIME (number of leaves)
+
+bci.ll <- bci.traits %>% select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
+  mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
+                             predict(gap.models$LMA.LAM.DISC, newdata =  bci.traits),
+                             LMALAM_AVD),
+         LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
+                             predict(gap.models$LMA.LAM.LEAF, newdata = bci.traits),
+                             LMALAM_AVD)) %>%
+  mutate(LMA = LMALAM_AVD) %>%
+  subset(form1 %in% c("T", "U")) %>%
+  mutate(form = recode_factor(as.factor(form1), `T` = "Canopy", `U` = "Understorey")) %>%
+  transform(form = factor(form,
+                          levels = c("Understorey", "Canopy"), ordered = TRUE)) %>%
+  select(sp, LMA, LMALEAF_AVD, form)
+
+gap.models.ll <- vector(mode = "list", length = 1)
+names(gap.models.ll) <- c("LMA.lifetime")
+gap.models.ll$LMA.lifetime <- lm(lifetime ~ LMA, data =
+                                   subset(ll.lma %>% rename(LMA = lma), strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA"))
+save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
+
+bci.lifetime <- bci.ll %>%
+  left_join(ll.lma %>%
+            subset(strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA") %>%
+              select(sp, lifetime), by = "sp") %>%
+  mutate(lifetime.filled = lifetime,
+         lifetime.sub = ifelse(!is.na(lifetime.filled), "original", NA),
+         lifetime.filled = ifelse(is.na(lifetime),
+                                  predict(gap.models.ll$LMA.lifetime, newdata = bci.ll),
+                                  lifetime),
+         lifetime.sub = ifelse(!is.na(lifetime.filled) & is.na(lifetime.sub), "ll.filled", NA))
+
+## there shouldn't be any duplicate records for species
+# bci.lifetime[duplicated(bci.lifetime$sp),]
+
+formula <- y ~ x
+ll.lma.comm <- ggplot(bci.lifetime, aes(x = LMA, y = lifetime.filled)) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  xlab(expression('LMA (g '*m^-2*')')) + ylab("Leaf Longevity (Days)") +
+  geom_smooth(method = "lm", formula = formula) +
+  stat_poly_eq(aes(label = stat(eq.label)),
+               npcx = 0.05, npcy = 0.9, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6, colour = "red") +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.9, npcy = 0.95, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.9, npcy = 0.85, size = 6)
+ggsave(("lifetime_by_lma_community.jpeg"),
+       plot = ll.lma.comm, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 #******************************************************
 ### Load LAI data ------
@@ -2204,10 +2311,10 @@ ggsave(("leaf.fall.daily_BCI.jpeg"),
 ## to get leaf_fall on each day of the interval, the above rate is actually treated as
 ## the rate observed on the census date (even though it is the mean rate of the interval)
 
-df.sp.site <- split(leaf.fall, f = list(leaf.fall$sp_site), drop = TRUE)
+df.sp_site <- split(leaf.fall, f = list(leaf.fall$sp_site), drop = TRUE)
 
-# leaf.fall.full <- vector(mode = "list", length = length(df.sp.site))
-# names(leaf.fall.full) <- names(df.sp.site) # "psi.p50.g1", "psi.p50.g2"
+# leaf.fall.full <- vector(mode = "list", length = length(df.sp_site))
+# names(leaf.fall.full) <- names(df.sp_site) # "psi.p50.g1", "psi.p50.g2"
 
 fill.day.gaps <- function(df) {
   full.date.df <- data.frame(date = seq(from = min(df$date, na.rm = TRUE),
@@ -2221,9 +2328,9 @@ fill.day.gaps <- function(df) {
   return(df.1)
 }
 # leaf_fall on each day of the interval
-leaf.fall.daygaps <- lapply(df.sp.site, fill.day.gaps)
+leaf.fall.daygaps <- lapply(df.sp_site, fill.day.gaps)
 
-## Interpolating from weely sums to daily leaf_gm
+## Interpolating from weekly sums to daily leaf_gm
 leaf.interp.approx <- function(df) {
   x <- df$day_number
   y <- df$leaf_gm_rate
@@ -2246,7 +2353,7 @@ leaf.interp.approx <- function(df) {
 set.k = 7
 leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
                         as.data.frame) %>%
-  bind_rows(.id = "sp.site") %>%
+  bind_rows(.id = "sp_site") %>%
   group_by(sp, date) %>%
   summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw)) %>%
   mutate(doy = as.numeric(format(date, "%j")),
@@ -2271,91 +2378,223 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
   mutate(sp.year = paste(sp, year, sep = "."))
 
-sp.leaf_cover <- leaf.fall.int %>%
-  select(sp, date, doy, year, leaf_cover, leaf_cover.mean, leaf_cover.sd)
-sp.leaf_cover.mean <- leaf.fall.int %>%
-  group_by(sp, doy) %>%
-  summarise(leaf_cover.mean = mean(leaf_cover, na.rm = TRUE),
-            leaf_cover.sd = sd(leaf_cover, na.rm = TRUE)) %>%
-  ungroup(sp, doy)
 
-save(sp.leaf_cover, file = file.path(results.folder, "sp.leaf_cover.Rdata"))
-save(sp.leaf_cover.mean, file = file.path(results.folder, "sp.leaf_cover.mean.Rdata"))
+# match(erd.sp, unique(subset(leaf.balance, site == "BCI-Poachers")$sp))
+sp.in.poachers <- unique(subset(leaf.fall, site == "BCI-Poachers")$sp)
 
-f2 <- ggplot(leaf.fall.int, aes(x = date, y = leaf_gm.int)) +
-  geom_line(aes(group = sp, color = sp), show.legend = FALSE)
-ggsave(("leaf.fall.int_time_series_BCI.jpeg"),
-       plot = f2, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
+leaf.fall.gain <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
+                                          as.data.frame) %>%
+  bind_rows(.id = "sp_site") %>%
+  ## all but 3 species with ERD are present in BCI-Poachers
+  ## don't take data for species from BCI50-ha for which data present from BCI-Poachers, which is a longer record
+  subset(!sp_site %in% paste0(sp.in.poachers, "_BCI50-ha")) %>%
+  arrange(sp, date) %>%
+  rename(leaf_fall = leaf_gm.int.raw) %>%
+  # group_by(sp_site, date) %>%
+  # summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw)) %>%
+  mutate(doy = as.numeric(format(date, "%j")),
+         year = as.numeric(format(date, "%Y")),
+         ## Preliminary leaf balance mean seasonality graphs below
+         ## showed that for most species leaf gain is completed (leaf cover plataus) by doy 330
+         ## (apeime starts falling much earlier)
+         sp.leaf.fall.year = ifelse(doy < 330, year - 1, year)) %>%
+  ## adding lifetime by species
+  left_join(bci.lifetime %>%
+              select(sp, LMA, lifetime.filled) %>% rename(lifetime = lifetime.filled), by = "sp") %>%
+  subset(!is.na(lifetime)) %>%
+  group_by(sp) %>%
+  ## backtracking leaf_gain from leaf_lifetime
+  mutate(leaf_gain = lead(leaf_fall, n = as.integer(mean(lifetime)))) %>%
+  ungroup(sp) %>%
+  group_by(sp, sp.leaf.fall.year) %>%
+  mutate(annual.leaf.fall = sum(leaf_fall, na.rm = TRUE),
+         n.obs = length(leaf_fall)) %>%
+  ungroup(sp, sp.leaf.fall.year)
 
-f2.1 <- ggplot(leaf.fall.int %>% subset(deciduousness != "Evergreen"), # sp %in% unique(iso.1.3.join$sp)
-               aes(x = doy, y = leaf_gm.int)) +
+ ggplot(leaf.fall.gain %>% subset(sp == "guatdu" & site == "BCI-Poachers" & year %in% c(1990:1993)),
+               aes(x = date)) +
   facet_wrap(sp ~ ., scales = "free_y") +
   geom_hline(yintercept = 0) +
-  geom_line(aes(group = sp.year, color = deciduousness), size = 0.3) +
+  geom_line(aes(y = leaf_fall, group = sp), size = 0.3, color = "red") +
+  geom_line(aes(y = leaf_gain, group = sp), size = 0.3, color = "green") +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "Leaf gain [g]")) +
+  labs(y = "Leaf fall [g]") +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+
+sp.ann.tot.leaf.fall.mean <- leaf.fall.gain %>%
+  # taking annual sum only for years with obs for > 300 days
+  subset(n.obs > 300) %>%
+  group_by(sp, sp.leaf.fall.year) %>%
+  summarise(annual.leaf.fall = sum(leaf_fall, na.rm = TRUE), .groups = "drop_last") %>%
+  group_by(sp) %>%
+  summarise(annual.leaf.fall.mean = mean(annual.leaf.fall, na.rm = TRUE),
+            annual.leaf.fall.max = max(annual.leaf.fall, na.rm = TRUE), .groups = "drop_last")
+
+leaf.balance <- leaf.fall.gain %>%
+  left_join(sp.ann.tot.leaf.fall.mean, by = "sp") %>%
+  group_by(sp) %>%
+  mutate(leaf.change = c(leaf_gain - leaf_fall)) %>%
+  subset(!is.na(leaf.change)) %>%
+  ## removing partial years
+  ## for BCI-50-ha that begins in 2013, start doy are at ~180
+  ## for BCI-50-ha that begins in 2013, start doy are at ~330
+  mutate(partial.firstyear = ifelse(sp.leaf.fall.year == min(sp.leaf.fall.year, na.rm = TRUE) &
+                                      n.obs < 365, TRUE, FALSE)) %>%
+  subset(!partial.firstyear) %>%
+  ## leaf change as a precent of total canopy
+  ## two estimates of canopy: 1. mean total annual leaf fall 2. max total annual leaf fall
+  mutate(frac.leaf.change.mean = leaf.change/annual.leaf.fall.mean,
+         frac.leaf.change.max = leaf.change/annual.leaf.fall.max,
+         ## setting first date of observation in the total record as one
+         frac.leaf.change.mean = ifelse(date == min(date, na.rm = TRUE),
+                                          1, frac.leaf.change.mean),
+         frac.leaf.change.max = ifelse(date == min(date, na.rm = TRUE),
+                                        1, frac.leaf.change.max),
+         ## The cumulating change to the starting value of 1
+         leaf.balance = cumsum(frac.leaf.change.mean)) %>%
+  ungroup(sp) %>%
+  group_by(sp, doy) %>%
+  ## average leaf balance by doy across years
+  mutate(leaf.balance.mean = mean(leaf.balance, na.rm = TRUE)) %>%
+  ungroup(sp, doy) %>%
+  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
+  mutate(sp.year = paste(sp, sp.leaf.fall.year, sep ="."))
+
+f0.1 <- ggplot(leaf.balance %>% subset(site == "BCI-Poachers"),
+       aes(x = date, y = leaf.balance)) +
+  facet_wrap(sp ~ ., scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  geom_line(aes(group = sp, color = deciduousness), size = 0.3) +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ggsave("leaf.balance_ts_BCI-Poachers.jpeg",
+       plot = f0.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+f0.2 <- f0.1 %+% subset(leaf.balance, sp %in% erd.sp & site == "BCI50-ha")
+ggsave("leaf.balance_ts_BCI50-ha.jpeg",
+       plot = f0.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+
+f1.1 <- ggplot(leaf.balance %>% subset(site == "BCI-Poachers"),
+               aes(x = doy, y = leaf.balance)) +
+  facet_wrap(sp ~ ., scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  geom_line(aes(group = sp.leaf.fall.year, color = deciduousness), size = 0.3) +
   # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
   #             fill='pink', alpha=0.8) +
-  geom_line(aes(y = leaf_gm.int.mean), color = "blue") +
-  ylab(expression('Leaf Fall/Annual Total')) + xlab("DOY") +
-  geom_vline(aes(xintercept = 150), color = "red") +
+  geom_line(aes(y = leaf.balance.mean), color = "red") +
+  ylab(expression('Leaf Balance')) + xlab("DOY") +
+  # geom_vline(aes(xintercept = 330), color = "red") +
   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
                               override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave("leaf.fall.seasonality_BCI.jpeg",
-       plot = f2.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+ggsave("leaf.balance.seasonality_BCI-Poachers.jpeg",
+       plot = f1.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+f1.2 <- f1.1 %+% subset(leaf.balance, site == "BCI50-ha")
+ggsave("leaf.balance.seasonality_BCI50-ha.jpeg",
+       plot = f1.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
 
-f2.2 <- f2.1 %+% subset(leaf.fall.int, deciduousness == "Evergreen")
-ggsave("leaf.fall.seasonality_evergreens_BCI.jpeg",
-       plot = f2.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 18, units='in')
+sp.leaf_cover.for.model <- leaf.balance %>%
+  group_by(sp, doy) %>%
+  summarise(leaf.balance.mean = mean(leaf.balance, na.rm = TRUE), .groups = "drop_last") %>%
+  group_by(sp) %>%
+  mutate(min.leaf.balance.mean = min(leaf.balance.mean, na.rm = TRUE),
+         max.leaf.balance.mean = max(leaf.balance.mean, na.rm = TRUE)) %>%
+  ungroup(sp) %>%
+  group_by(sp, doy) %>%
+  ## for an evergreen species seasonal minima is -ve (aspicr, dendar), phenology is not well constrained,
+  ## shift above zero such that max is one
+  mutate(leaf.balance.mean.mod = ifelse(min.leaf.balance.mean < 0,
+                                        c(leaf.balance.mean + c(1 - max.leaf.balance.mean)),
+                                    ## otherwise keep as it is
+                                      leaf.balance.mean)) %>%
+  ungroup(sp, doy) %>%
+  group_by(sp) %>%
+  mutate(max.leaf.balance.mean.mod = max(leaf.balance.mean.mod, na.rm = TRUE)) %>%
+  ungroup(sp) %>%
+  mutate(leaf_cover = leaf.balance.mean.mod/max.leaf.balance.mean.mod) %>%
+  left_join(deci %>% select(sp, deciduousness), by = "sp")
 
-f2.3 <- ggplot(leaf.fall.int %>% subset(deciduousness != "Evergreen"), # sp %in% unique(iso.1.3.join$sp)
+f1.3 <- ggplot(sp.leaf_cover.for.model,
                aes(x = doy, y = leaf_cover)) +
   facet_wrap(sp ~ ., scales = "free_y") +
   geom_hline(yintercept = 0) +
-  geom_line(aes(group = sp.year, color = deciduousness), size = 0.3) +
-  # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
-  #             fill='pink', alpha=0.8) +
-  geom_line(aes(y = leaf_cover.mean), color = "blue") +
-  ylab(expression('Leaf Cover Fraction')) + xlab("DOY") +
-  # geom_vline(aes(xintercept = 120), color = "red") +
+  geom_line(aes(color = deciduousness), size = 1) +
+  ylab(expression('Leaf Cover')) + xlab("DOY") +
   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
                               override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave(("leaf.cover_BCI.jpeg"),
-       plot = f2.3, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+ggsave("leaf.cover.seasonality_mean.jpeg",
+       plot = f1.3, file.path(figures.folder.phen), device = "jpeg", height = 9, width = 14, units='in')
 
-f2.4 <- f2.3 %+% subset(leaf.fall.int, deciduousness == "Evergreen")
-ggsave("leaf.cover_evergreens_BCI.jpeg",
-       plot = f2.4, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 18, units='in')
-
-f3 <- ggplot(leaf.fall.int,
-             aes(x = doy, y = leaf_cover.mean)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = c(0.7, 0.6), legend.title = element_blank(),
-        legend.background = element_rect(fill = "transparent")) +
-  ylab("Leaf Cover Fraction") + xlab("DOY")
-ggsave(("leaf.cover_BCI_single_panel.jpeg"),
-       plot = f3, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
-
-## Substituting 100% Leaf cover through the year for Evergreens
-sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
-  left_join(deci %>% select(sp, deciduousness), by = "sp") %>%
-  mutate(leaf_cover = ifelse(deciduousness == "Evergreen", 1, leaf_cover.mean)) %>%
-  select(-leaf_cover.sd) %>%
-  as.data.frame()
-f4 <- ggplot(sp.leaf_cover.for.model,
-             aes(x = doy, y = leaf_cover)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  theme(legend.position = c(0.7, 0.6), legend.title = element_blank(),
-        legend.background = element_rect(fill = "transparent")) +
-  ylab("Leaf Cover Fraction") + xlab("DOY")
-ggsave(("leaf.cover_BCI_single_panel_evergreensAt100.jpeg"),
-       plot = f4, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
-
+save(leaf.balance, file = file.path(results.folder, "leaf.balance.Rdata"))
 save(sp.leaf_cover.for.model, file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
+
+# f2 <- ggplot(leaf.fall.int, aes(x = date, y = leaf_gm.int)) +
+#   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
+# ggsave(("leaf.fall.int_time_series_BCI.jpeg"),
+#        plot = f2, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
+#
+# f2.1 <- ggplot(leaf.fall.int %>% subset(deciduousness != "Evergreen"), # sp %in% unique(iso.1.3.join$sp)
+#                aes(x = doy, y = leaf_gm.int)) +
+#   facet_wrap(sp ~ ., scales = "free_y") +
+#   geom_hline(yintercept = 0) +
+#   geom_line(aes(group = sp.year, color = deciduousness), size = 0.3) +
+#   # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
+#   #             fill='pink', alpha=0.8) +
+#   geom_line(aes(y = leaf_gm.int.mean), color = "blue") +
+#   ylab(expression('Leaf Fall/Annual Total')) + xlab("DOY") +
+#   geom_vline(aes(xintercept = 150), color = "red") +
+#   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+#                               override.aes = list(size = 3))) +
+#   theme(legend.position = "top", legend.title = element_blank()) +
+#   scale_color_viridis_d(drop = FALSE) +
+#   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+# ggsave("leaf.fall.seasonality_BCI.jpeg",
+#        plot = f2.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+#
+# f2.2 <- f2.1 %+% subset(leaf.fall.int, deciduousness == "Evergreen")
+# ggsave("leaf.fall.seasonality_evergreens_BCI.jpeg",
+#        plot = f2.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 18, units='in')
+#
+# f2.3 <- ggplot(leaf.fall.int %>% subset(deciduousness != "Evergreen"), # sp %in% unique(iso.1.3.join$sp)
+#                aes(x = doy, y = leaf_cover)) +
+#   facet_wrap(sp ~ ., scales = "free_y") +
+#   geom_hline(yintercept = 0) +
+#   geom_line(aes(group = sp.year, color = deciduousness), size = 0.3) +
+#   # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
+#   #             fill='pink', alpha=0.8) +
+#   geom_line(aes(y = leaf_cover.mean), color = "blue") +
+#   ylab(expression('Leaf Cover Fraction')) + xlab("DOY") +
+#   # geom_vline(aes(xintercept = 120), color = "red") +
+#   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+#                               override.aes = list(size = 3))) +
+#   theme(legend.position = "top", legend.title = element_blank()) +
+#   scale_color_viridis_d(drop = FALSE) +
+#   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+# ggsave(("leaf.cover_BCI.jpeg"),
+#        plot = f2.3, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+#
+# f2.4 <- f2.3 %+% subset(leaf.fall.int, deciduousness == "Evergreen")
+# ggsave("leaf.cover_evergreens_BCI.jpeg",
+#        plot = f2.4, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 18, units='in')
+#
+# f3 <- ggplot(leaf.fall.int,
+#              aes(x = doy, y = leaf_cover.mean)) +
+#   geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
+#   theme(legend.position = c(0.7, 0.6), legend.title = element_blank(),
+#         legend.background = element_rect(fill = "transparent")) +
+#   ylab("Leaf Cover Fraction") + xlab("DOY")
+# ggsave(("leaf.cover_BCI_single_panel.jpeg"),
+#        plot = f3, file.path(figures.folder.phen), device = "jpeg", height = 3, width = 4.5, units='in')
+
+
+
 
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------
@@ -2383,9 +2622,6 @@ cohort <- rbind(rama95, rama97) %>%
          deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE)) %>%
   subset(!is.na(deciduousness)) # only one species does not have a deciduousness label
 
-coh.sp <- cohort %>%
-  group_by(sp, deciduousness, deci_sp) %>%
-  summarise(lifetime = mean(lifetime, na.rm = TRUE))
 
 coh.plot.base <- ggplot(cohort) +
   guides(color = guide_legend(title = "Deciduousness"))

@@ -2411,9 +2411,9 @@ leaf.fall.gain <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
          n.obs = length(leaf_fall)) %>%
   ungroup(sp, sp.leaf.fall.year)
 
- ggplot(leaf.fall.gain %>% subset(sp == "guatdu" & site == "BCI-Poachers" & year %in% c(1990:1993)),
+f.fl <- ggplot(leaf.fall.gain %>% subset(sp %in% c("alsebl", "alchco", "anacex") & site == "BCI-Poachers" & year %in% c(1990:1993)),
                aes(x = date)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
+  facet_wrap(. ~ sp, scales = "free_y", nrow = 3) +
   geom_hline(yintercept = 0) +
   geom_line(aes(y = leaf_fall, group = sp), size = 0.3, color = "red") +
   geom_line(aes(y = leaf_gain, group = sp), size = 0.3, color = "green") +
@@ -2422,6 +2422,8 @@ leaf.fall.gain <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
   theme(legend.position = "top", legend.title = element_blank()) +
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+ ggsave("leaf.fall.gain_ts_BCI-Poachers_example_species.jpeg",
+        plot = f.fl, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 9, units='in')
 
 sp.ann.tot.leaf.fall.mean <- leaf.fall.gain %>%
   # taking annual sum only for years with obs for > 300 days

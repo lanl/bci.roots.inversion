@@ -45,7 +45,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
   mutate(depth = as.numeric(depth))
 erd.data <- ml.rsq.combine.best %>%
   subset(corr >= 0 & form1 == "T" &
-           corr.func == "gr.Psi.VPD.multi" &
+           corr.func == "gr.Psi.VPD.leaf.add" &
            R2 >= 0.1)
 erd.iso <- erd.data %>% subset(sp != "guapst" &
                                  source == "Meinzer et al.1999 Fig. 4")
@@ -56,25 +56,30 @@ erd.iso <- erd.data %>% subset(sp != "guapst" &
 erd.sp <- erd.data$sp
 save(erd.sp, file = file.path("results", "erd.sp.Rdata"))
 
-f4 <- ggplot(sp.leaf_cover.for.model %>% subset(sp %in% erd.sp & doy != 366),
-             aes(x = doy, y = leaf_cover)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
-  ylim(c(0, 1)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.5) +
-  ylab("Leaf Cover Fraction") + xlab("DOY") +
-  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
-                              override.aes = list(size = 3))) +
-  theme(legend.position = "top", legend.title = element_blank()) +
-  scale_color_viridis_d(drop = FALSE) +
-  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
-       plot = f4, file.path(figures.folder), device = "jpeg", height = 7, width = 9, units='in')
-
 erd.sp.names <- bci.traits %>%
   subset(sp %in% erd.sp) %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
   dplyr::select(Code, Genus, Species, Family)
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
+
+f4 <- ggplot(sp.leaf_cover.for.model %>% subset(sp %in% erd.sp & doy != 366) %>%
+               left_join(erd.sp.names %>%
+                           mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
+                                  sp = tolower(Code)), by = "sp"),
+             aes(x = doy, y = leaf_cover)) +
+  facet_wrap(s.names ~ ., scales = "free_y", ncol = 4) +
+  ylim(c(0, 1)) +
+  geom_line(aes(group = sp, color = deciduousness), size = 0.8) +
+  ylab("Leaf Cover Fraction") + xlab("DOY") +
+  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1),
+        strip.text.x = element_text(face = "italic", size = 11))
+ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
+       plot = f4, file.path(figures.folder), device = "jpeg", height = 9, width = 7, units='in')
+
 df.erd.to.plot <- df.erd.to.plot %>%
   left_join(erd.sp.names %>%
               mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
@@ -85,7 +90,8 @@ df.erd.to.plot <- df.erd.to.plot %>%
 
 erd.sp.plot <- ggplot(df.erd.to.plot,
                       aes(x = s.names, y = depth)) +
-  geom_point(aes(color = s.names), show.legend = FALSE, size = 3) +
+  # geom_point(aes(color = s.names), show.legend = FALSE, size = 3) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 3) +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.2, size = 0.2) +
   ylab("Effective Rooting Depth (m)") + xlab("Species") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"),
@@ -110,7 +116,7 @@ ml.rsq.combine.sub <- ml.rsq.combine.best %>%
 
 
 formula = y~x
-p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == "gr.Psi.VPD.multi"),
+p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == "gr.Psi.VPD.leaf.add"),
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
@@ -134,8 +140,10 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == "gr.Psi.VPD.multi"),
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
        plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4.3, units = 'in')
 
+## as "gr.Psi.VPD.add" is not present
 ml.rsq.combine.sub <- ml.rsq.combine.sub %>%
-  transform(models.plot1 = factor(corr.func, labels = c("A", "B", "C", "D", "E")))
+  transform(models.plot1 = factor(corr.func, levels = c("gr.Psi", "gr.Psi.VPD.multi", "gr.Psi.leaf", "gr.Psi.VPD.leaf.add", "gr.Psi.VPD.leaf.multi"),
+                                  labels = c("A", "B", "C", "D", "E")))
 erd.iso_sp_N_by_model <- ml.rsq.combine.sub %>%
   group_by(models.plot1) %>%
   summarise(N = n(), .groups = "drop_last")
@@ -162,7 +170,8 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
                   npcx = 0.98, npcy = 0.05, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
-  guides(fill = guide_legend(title = "Species"), color = FALSE)
+  guides(fill = guide_legend(title = "Species"), color = FALSE) +
+  theme(legend.text = element_text(face = "italic"))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
        plot = p3.2, file.path(figures.folder), device = "jpeg", height = 5, width = 7, units = 'in')
 

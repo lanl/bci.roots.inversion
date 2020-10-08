@@ -192,6 +192,8 @@ acf.6 <- as.numeric(round(k_by_psi.models$A.B.LMA.LAM$coefficients[6], 3))
 for (i in 1: length(k_by_psi.models$B.WSG100.LMA$coefficients)) {
   if (i == 6){
     bcf[i] <- formatC(k_by_psi.models$B.WSG100.LMA$coefficients[i], format = "f")
+  } else if (i == 4) {
+    bcf[i] <- as.numeric(round(k_by_psi.models$B.WSG100.LMA$coefficients[i], 3))
   } else {
     bcf[i] <- as.numeric(round(k_by_psi.models$B.WSG100.LMA$coefficients[i], 2))
   }

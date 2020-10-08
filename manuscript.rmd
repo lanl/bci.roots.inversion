@@ -179,7 +179,7 @@ We obtained leaf hydraulic vulnerability curves ($K_{leaf}$ vs. $\Psi_{leaf}$; s
 We chose the exponential function without the intercept to fit observed data across species, and as a general function to scale-up to the community, because it had the lowest AICc for most species, captured the form of the observed data across all species well, and had the lowest number of parameters, that is, two:
 
 \begin{equation}
-K_{leaf,~s} = A_{s}e^{-B_{s}\Psi_{leaf}} + error
+K_{leaf,~s} = A_{s}e^{-B_{s}\Psi_{leaf_{s}}} + error
 (\#eq:vc-exp)
 \end{equation}
 where $A$ and $B$ are fitted species-specific parameters. From these fits we estimated species $K_{max,~leaf}$, $\Psi_{50,~leaf}$ and  $\Psi_{80,~leaf}$ (see Table 1). We identified scaling relationships between fitted parameters $A$ and $B$ in Eq. \@ref(eq:vc-exp) and two traits that were available at the community-scale, namely,  WSG and LMA (@Wright:2010; see SI for description of how data gaps were filled. We fitted polynomial equations described as,

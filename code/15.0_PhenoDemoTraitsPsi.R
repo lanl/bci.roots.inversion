@@ -664,7 +664,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
 ## Plot chosen ERD
 
 df.erd.to.plot <- ml.rsq.combine.best %>%
-  subset(corr.func == "gr.Psi.VPD.multi") %>%
+  subset(corr.func == "gr.Psi.VPD.leaf.add") %>%
   mutate(size = as.character(size)) %>%
   left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   subset(form1 == "T" &
@@ -947,7 +947,7 @@ ggsave("psi.corr_best.depth_phenology.jpeg",
 
 ## Soil preference vs traits
 hyd <- hyd %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
-                           subset(corr.func == "gr.Psi.VPD.multi") %>%
+                           subset(corr.func == "gr.Psi.VPD.leaf.add") %>%
                            select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
@@ -1034,7 +1034,7 @@ hyd.long <- hyd.long %>%
 
 ##
 traits <- traits %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
-                                 subset(corr.func == "gr.Psi.VPD.multi") %>%
+                                 subset(corr.func == "gr.Psi.VPD.leaf.add") %>%
                                  select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
@@ -1814,7 +1814,7 @@ mfac.on <- "mr.kl50.I"
 mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%
   # mrate.long %>%
-  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD.multi") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD.leaf.add") %>%
               rename(rdi.gr = depth) %>%
               dplyr::select(sp, size, rdi.gr, depth.se), by = c("sp", "size")) %>%
   left_join(subset(depth.rsq.isotopes, corr.func == "mr.Psi.VPD.I") %>%
@@ -2084,7 +2084,7 @@ adult.mrate.mean <- adult.mrate.long %>%
   mutate(mean.mrate = ifelse(!is.finite(mean.mrate),
                         rep(NA, length(mean.mrate)), mean.mrate)) %>%
   mutate(size = "large") %>%
-  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD.multi") %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == "gr.Psi.VPD.leaf.add") %>%
               dplyr::select(sp, size, depth), by = c("sp", "size")) %>%
   left_join(bci.traits %>% dplyr::select(form1, sp), by = "sp") %>%
   subset(size == "large" & form1 == "T")

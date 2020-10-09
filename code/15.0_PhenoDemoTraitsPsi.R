@@ -447,7 +447,7 @@ clim.daily.effect <- clim.daily %>%
          std.Rs.pet.PM = range01(Rs.pet.PM.effect),
          std.Rs.VPD = range01(Rs.VPD.effect),
          pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.pet, newdata = clim.daily)),
-         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd, newdata = clim.daily)),
+         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd.tower, newdata = clim.daily)),
          Rs.effect = as.numeric(predict(gpp.models$eq.gpp.rad, newdata = clim.daily)),
          std.pet.PM = range01(pet.PM.effect),
          std.VPD = range01(VPD.effect),

@@ -2,7 +2,7 @@
 rm(list=ls())
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
+pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra, zoo,
                scales, GGally, ggpmisc, Evapotranspiration,
                data.table, bci.elm.fates.hydro, mgcv, lubridate, smooth, bci.hydromet, viridis)
 # graphics info
@@ -397,7 +397,10 @@ str(clim.dat)
 clim.dat <- clim.dat %>%
   mutate(datetime = as.POSIXct(DateTime, format = "%m/%d/%y %H:%M",
                                tz = "America/Panama"),
-         Year = format(datetime, "%Y")) %>%
+         time = strftime(datetime, format = "%H:%M", tz = "America/Panama"),
+         Year = format(datetime, "%Y"),
+         SVP = 0.61121 * exp((18.678 - Temp_deg_C/234.84) * (Temp_deg_C/(257.14 + Temp_deg_C))),
+                VPD = SVP * (1 - RH_prc/100)) %>%
   select(-DateTime) %>%
   mutate(date = as.Date(datetime, tz = "America/Panama"))
 head(clim.dat$datetime)
@@ -426,15 +429,24 @@ clim.daily.min.max <- clim.dat %>%
          RHmin = ifelse(RHmin > 100, 100, RHmax),
          RHmin = ifelse(RHmin < 0, 0, RHmin))
 
+## Matteo:between 11:00 15:00 GPP will be most related to VPD
+select.time = c(paste0(rep(11:14, each = 2), rep(c(":00", ":30"), times = length(c(11:14)))), "15:00")
+
+clim.dat.vpd <- clim.dat %>%
+  subset(time %in% select.time) %>%
+  group_by(date) %>%
+  summarise(VPD = mean(VPD, na.rm = TRUE), .groups = "drop_last")
+
 clim.daily <- clim.dat %>%
-  select(-datetime, -Rainfall_mm_hr) %>%
+  dplyr::select(-datetime, -Rainfall_mm_hr) %>%
   group_by(date, Year) %>%
-  summarise(Rs = mean(SR_W_m2, na.rm = TRUE)* 0.0864, # from W/m2 MJ/m2/day
+  dplyr::summarise(Rs = mean(SR_W_m2, na.rm = TRUE)* 0.0864, # from W/m2 MJ/m2/day
             uz = mean(Wind_Speed_km_hr, na.rm = TRUE)* 1000 / 3600, # to convert in m/s from km/hr
             Temp = mean(Temp_deg_C, na.rm = TRUE),
             RH = mean(RH_prc, na.rm = TRUE),
-            Bp = mean(BP_Pa, na.rm = TRUE)) %>%
+            Bp = mean(BP_Pa, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(date, Year) %>%
+  left_join(clim.dat.vpd, by = "date") %>%
   left_join(clim.daily.rain, by = "date") %>%
   left_join(clim.daily.min.max, by = "date") %>%
   mutate(Month = format(date, format = "%m"),
@@ -489,9 +501,7 @@ clim.daily <- clim.daily %>%
   left_join(data.frame(date = as.Date(index(results_PM$ET.Daily), tz = "America/Panama"),
                        pet.PM = coredata(results_PM$ET.Daily)), by = "date") %>%
   # Calculate the VPD = SVP x (1 – RH/100) = VPD
-  mutate(SVP = 0.61121 * exp((18.678 - Temp/234.84) * (Temp/(257.14 + Temp))),
-         VPD = SVP * (1 - RH/100),
-         interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
+  mutate(interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
                                                      labels = cut.labels.2, right = TRUE)))
 write.csv(clim.daily,
           file.path(results.folder, "clim.daily_with_pet.PM.csv"),
@@ -532,17 +542,16 @@ bci.tower$datetime <- as.POSIXct(bci.tower$datetime, format = "%Y-%m-%d %H:%M:%S
 bci.tower$time <- strftime(bci.tower$datetime, format = "%H:%M", tz = "America/Panama")
 str(bci.tower$datetime); str(bci.tower$time)
 
-## Matteo:between 11:00 15:00 GPP will be most related to VPD
-
-select.time = c(paste0(rep(11:14, each = 2), rep(c(":00", ":30"), times = length(c(11:14)))), "15:00")
 obs.gpp.d <- bci.tower %>%
-  select(datetime, time, gpp, vpd) %>% # in mumol/m2/2: units must be mumol/m2/s
-  subset(time %in% select.time) %>%
+  select(datetime, time, gpp, vpd, FLAG) %>% # in mumol/m2/2: units must be mumol/m2/s
+  ## removing GPP when FLAG = 0 (that is data is gap-filled, does increase the daily relationship R2 to 0.78,
+  ## but retaining gap-filled data gives a better monthly-scale relationship (r2 = 0.13, so retained.))
+  subset(time %in% select.time & FLAG == 0) %>%
   mutate(date = as.Date(format(datetime, "%Y-%m-%d")),
          gpp.mumol = as.numeric(as.character(gpp)),
          vpd = as.numeric(as.character(vpd))) %>%
   group_by(date) %>% summarise(gpp.tower = mean(gpp.mumol, na.rm = T),
-                               VPD.tower = mean(vpd, na.rm = T)) %>%
+                               VPD.tower = mean(vpd, na.rm = T), .groups = "drop_last") %>%
   mutate(gpp.tower = gpp.tower*12*1e-06*24*60*60) %>% # gC/m2/d %>%
   subset(date != is.na(date)) %>%
   droplevels
@@ -551,13 +560,16 @@ rectangles <- data.frame(
   xmin = as.Date(paste0(c(2012:2017), "-05-01")),
   xmax = as.Date(paste0(c(2012:2017), "-12-01")),
   ymin = 0,
-  ymax = 15
+  ymax = max(obs.gpp.d$gpp.tower, na.rm = TRUE)
 )
 
 gpp.daily <- ggplot(obs.gpp.d) +
   geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
             fill='gray80', alpha=0.8) +
-  geom_point(aes(y = gpp.tower, x = date)) +
+  geom_point(aes(y = gpp.tower, x = date), shape = 21, color = "black", fill = "black", alpha = 0.8, size = 1) +
+  geom_line(aes(x = date, y=rollmean(gpp.tower, 21, na.pad=TRUE)), color = "red") +
+  # geom_smooth(aes(y = gpp.tower, x = date), method = gam,
+  #             formula = y ~ s(x, bs = "cs"), span = 0.00001) +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Date") +
   scale_x_date(breaks = c(rectangles$xmin, rectangles$xmax), date_labels = "%b-%y") +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
@@ -607,7 +619,7 @@ gpp.rel.weekly <- gpp.rel.daily %>%
   group_by(week) %>%
   summarise_all(list(~mean(., na.rm = TRUE)))
 
-data.scale.on <- "monthly"
+data.scale.on <- "daily"
 
 if (data.scale.on == "monthly"){
   point.size <- 2
@@ -632,16 +644,16 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula = formula.poly, colour = "red") +
   stat_poly_eq(aes(label = stat(eq.label)),
-               npcx = 0.95, npcy = 0.95, rr.digits = 2,
+               npcx = 0.97, npcy = 0.16, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
-               npcx = 0.95, npcy = 0.87, rr.digits = 2,
+               npcx = 0.95, npcy = 0.07, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
+                  aes(label = paste0("P < 0.001")),
+                  npcx = 0.95, npcy = 0.02, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*~m^-2*~day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.jpeg"),
        plot = gpp.vpd, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -763,11 +775,15 @@ summary(eq.gpp.rad.pan.gam)
 summary(eq.gpp.rad.pet.tower.gam)
 summary(eq.gpp.rad.pet.gam)
 
+summary(eq.gpp.vpd.tower)
+summary(eq.gpp.vpd)
+
 # plot(eq.gpp.rad.vpd.gam$fitted.values ~ eq.gpp.rad.vpd.gam$)
 # eq.gpp.vpd <- lm(gpp ~ poly(VPD, 2, raw=TRUE), data = gpp.rel.daily)
 # eq.gpp.pet <- lm(gpp ~ poly(pet.PM, 2, raw=TRUE), data = gpp.rel.daily)
 # eq.gpp.rad <- lm(gpp ~ poly(Rs, 2, raw=TRUE), data = gpp.rel.daily)
-gpp.models <- list(eq.gpp.vpd = eq.gpp.vpd,
+gpp.models <- list(eq.gpp.vpd.tower = eq.gpp.vpd.tower,
+                   eq.gpp.vpd = eq.gpp.vpd,
                    eq.gpp.pet = eq.gpp.pet,
                    eq.gpp.rad = eq.gpp.rad,
                    eq.gpp.rad.vpd.tower.gam = eq.gpp.rad.vpd.tower.gam,
@@ -2355,7 +2371,8 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
                         as.data.frame) %>%
   bind_rows(.id = "sp_site") %>%
   group_by(sp, date) %>%
-  summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw)) %>%
+  summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw), .groups = "drop_last") %>%
+  ungroup(sp, date) %>%
   mutate(doy = as.numeric(format(date, "%j")),
          year = as.numeric(format(date, "%Y")),
          sp.leaf.fall.year = ifelse(doy < 150, year-1, year)) %>%

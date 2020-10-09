@@ -415,7 +415,7 @@ knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpe
 ```
 
 ```{r dbh-model, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-dbh-model}A scatterplot of tree growth rates (circles) from all census intervals versus dbh at the beginning of the census interval is overlaid with a dbh model of growth (spline). Growth rates are color coded by census interval. The model equation is shown in inset along with goodness-of-fit (Adj. *R*^2^).")}
-knitr::include_graphics(file.path("figures/dbh/growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model.jpeg"))
+knitr::include_graphics(file.path("figures/dbh/growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model_no_color.jpeg"))
 ```
 
 ```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "35%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd}Scatterplot of mean daily gross primary productivity (GPP) and mean daily vapor pressure deficit (VPD) by month measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows a fit from a polynomial model described in inset, and used to standardize VPD employed in equations \\@ref(eq:M2) and \\@ref(eq:M4)."}

@@ -1,8 +1,8 @@
-#---------------------------------
+#________________________________
 # Title: Preparing growth data for inverse modeling
 # Author : Rutuja Chitra-Tarak
 # Original date: December 11, 2019
-#---------------------------------
+#________________________________
 
 # for 50 ha obs species groups
 rm(list = ls())
@@ -26,9 +26,9 @@ intervals <- nint
 range01 <- function(x){(x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
 
 # sp4 <- c("ANOL", "TECG", "LAGL", "TERT")
-##------------------------------------------------
+#________________________________
 ## Collating tree.full data for all censuses
-##------------------------------------------------
+#________________________________
 # https://repository.si.edu/handle/10088/20925
 # load("data-raw/CTFScensuses/BCI.stem1.Rdata") # 1982-1985
 # load("data-raw/CTFScensuses/BCI.stem2.Rdata") # 1985-1990
@@ -48,12 +48,29 @@ stem.full <- bind_rows(bci.stem3, bci.stem4, bci.stem5, bci.stem6, bci.stem7, bc
 # [1] 28442160
 ###------------selection----------
 census <- 3:8
-###-------------------------------
 stem.full$census <- rep(census, each = nrow(bci.stem3))
+#________________________________
+## adding crown exposure---------
+#________________________________
+# crown1 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci1.csv") %>% mutate(census = 1)
+# crown2 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci2.csv") %>% mutate(census = 2)
+crown3 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci3.csv") %>% mutate(census = 3)
+crown4 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci4.csv") %>% mutate(census = 4)
+crown5 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci5.csv") %>% mutate(census = 5)
+crown6 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci6.csv") %>% mutate(census = 6)
+crown7 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci7.csv") %>% mutate(census = 7)
+crown8 <- read.csv("data-raw/traits/CrownExposure_MatteoDetto/bci8.csv") %>% mutate(census = 8)
+
+crown.full <- bind_rows(crown3, crown4, crown5, crown6, crown7, crown8) %>%
+  rename(crown = rank)
+stem.full <- stem.full %>% left_join(crown.full %>% select(-dbh, -sp), by = c("treeID", "census"))
+#________________________________
 ## remove duplicated tags if any
 nrow(stem.full) # 4740360
 stem.full <- stem.full %>% mutate(ExactDate = as.Date(ExactDate))
 stem.full <- stem.full %>% group_by(census) %>% distinct(stemID, .keep_all= TRUE)
+save(stem.full, file = "results/stem.full_crown.rda")
+
 nrow(stem.full)
 # 4740360
 # so no duplicate stemIDs;
@@ -61,9 +78,9 @@ n_stem.full <- stem.full %>% group_by(census) %>% nest()
 map_dbl(n_stem.full$data, nrow)
 # 790060 790060 790060 790060 790060 790060 790060
 
-##------------------------------------------------
+#________________________________
 ## to remove stems for which hom have changed--------
-##------------------------------------------------
+#________________________________
 # pool together for each stem.full hom in censuses
 hom.mat <- map_dfc(n_stem.full$data, "hom")
 hom.mat <- data.frame(invisible(lapply(hom.mat, function (x) {as.numeric(x)})))
@@ -91,12 +108,12 @@ map_dbl(n_stem$data, nrow)
 # stems removed
 map_dbl(n_stem.full$data, nrow) - map_dbl(n_stem$data, nrow)
 # 4530 4530 4530 4530 4530 4530
-##--------------------End of removing stems with hom change----------------------------
+#_____End of removing stems with hom change#____________
 
 
-##------------------------------------------------
+#________________________________
 # Getting a matrix of date by census for these stems
-##------------------------------------------------
+#________________________________
 time.mat <- map_dfc(n_stem$data, "ExactDate")
 n_date.mat <- map_dfc(n_stem$data, "date")
 colnames(time.mat) <- paste("census", census, sep = ".")
@@ -122,12 +139,12 @@ head(which(low.out[,1] == "TRUE"))
 dbh.mat[which(low.out[,1] == "TRUE")[1:20],]
 dbh_low.out[which(low.out[,1] == "TRUE")[1:20],]
 ## This matrix (same dimensions as dbh) needs to be used in growth calculation
-##--------------------End-------------------------
+#________________________________End________________________________
 
 
-##------------------------------------------------
+#________________________________
 ## Now to obtain growth rates-----
-##------------------------------------------------
+#________________________________
 ## subtracting successive columns
 time.diff <- t(diff(t(n_date.mat)))/365 # from days to yr
 colnames(time.diff) <- paste("interval", census[-length(census)], sep = ".")
@@ -154,20 +171,20 @@ max(g_up.out, na.rm = T) # 69.352
 ## This matrix needs to be used in further growth calculation
 # saving growth without modulus transformation, after all outliers were removed
 save(g_up.out, file = "results/stem_growth_without_outliers.Rdata")
-##------------------End------------------------------
+#________________End_____________________________________________________
 jpeg("figures/dbh/stem_growth_without_outliers.jpeg")
 plot(x = as.vector(as.matrix(dbh_low.out[, - ncol(dbh_low.out)])), y = as.vector(as.matrix(g_up.out)),
      ylab = expression("Growth rate (mmyr"^-1*")"), xlab = "DBH (mm)")
 graphics.off()
 
 #
-# ##--------------------------------------------------
+# ##________________________________
 # ## Saving individual stem data for HADAD with following selection criterion:
 # ## stems with at least 3 records
-# ##--------------------------------------------------
+# #________________________________
 # intervals <- nint; #census.cols = (ncol(gt_back) - intervals + 1):ncol(gt_back)
 # rows.3obs <- unlist(apply(gt_back, 1, function(x) {sum(!is.na(x)) >= 3}))
-# ###---------------
+# #________________________________
 # sum(rows.3obs); #1,47,913
 # sum(rows.3obs)/nrow(gt_back) # 18% of stems have at least 3 records
 # gt_back_for_hadad <- gt_back[rows.3obs,]
@@ -197,7 +214,7 @@ graphics.off()
 # stem.data <- stem.data %>% unite("sp_size", c("sp", "size"), remove = FALSE)
 # save(stem.data, file =  paste0("results/growth_individual_stem.data_intervals_", intervals ,".Rdata"))
 # load(file = paste0("results/growth_individual_stem.data_intervals_", intervals ,".Rdata"))
-# ##------------------End------------------------------
+# #____________________End___________________________________________
 
 cut.breaks <- c(10, 50, 100, 300, max(dbh_low.out, na.rm = T)) # about 45 trees per interval are > 1000 mm in dbh
 cut.labels <- c("tiny", "small", "medium", "large")
@@ -214,10 +231,10 @@ gro.wide <- g_up.out %>% data.frame() %>% mutate(stemID = n_stem$data[[1]]$stemI
 gro.long <- data.frame(gro.wide) %>%
   pivot_longer(cols = starts_with("interval."), names_to = "interval",
                names_prefix = "interval.", values_to = "growth") %>%
-##--------------------------------------------------
+#________________________________
 ## a stem's size class can change across censuses
 ## and thus which size class group it belongs to, whose mean is being taken
-##--------------------------------------------------
+#________________________________
   mutate(size = as.vector(as.matrix(size.class)),
          dbh = as.vector(as.matrix(dbh_low.out[, -ncol(dbh_low.out)])),
          interval = as.numeric(interval)) %>%
@@ -317,9 +334,9 @@ save(large.stats.all.cen.df, file = paste0("results/large.stats_growth_dbh.resid
 save(adult.stats.all.cen.df, file = paste0("results/adult.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".df.Rdata"))
 save(juvenile.stats.all.cen.df, file = paste0("results/juvenile.stats_growth_dbh.residuals_off_", intervals, "_", growth.selection, ".df.Rdata"))
 
-##-----------------------
-### getting dbh residuals
-##-----------------------
+#________________________________
+### getting dbh residuals--------
+#________________________________
 ### power law (growth = r*dbh^d) as in literature/Ecol Lett 2006 Muller-Landau.pdf
 ## hardly any data by species and it's wild (not enough to get mean by size class bind either)
 ## So using a mixed effects model
@@ -350,7 +367,7 @@ View(gro.long.mod.med.allsp)
 lm.model <- lm(log(growth.mean.allsp) ~ log(dbh.mean.allsp) , data = gro.long.mod.med.allsp %>% subset(growth.mean.allsp != 0))
 glm.model <- glm(growth.mean.allsp ~ splines::bs(dbh.mean.allsp, 5), data = gro.long.mod.med.allsp)
 summary(lm.model)
-### using log(growth.mean.allsp) --------
+### using log(growth.mean.allsp)
 lm.model$coefficients
 # (Intercept) log(dbh.mean.allsp)
 # -0.6528035           0.1397581
@@ -391,12 +408,33 @@ g4 <- g1 +
   geom_smooth(method = glm, formula = y ~ splines::bs(x, 5), color = "black", size = 0.7)
 ggsave("growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model.jpeg", plot = g4, path =
          file.path("figures/dbh/"), height = 4.5, width = 4.5, units='in')
+# without color
+g5 <- ggplot(gro.long.mod.med.allsp,
+             aes(x = dbh.mean.allsp/10, y = growth.mean.allsp/10)) +
+  geom_point(alpha = 0.7) +
+  scale_y_log10() + scale_x_log10(breaks = c(1, 2, 5, 10, 20, 30, 50, 100)) +
+  # ggtitle("All data") +
+  ylab(expression("Growth rate (cmyr"^-1*")"))  + xlab("DBH (cm)") +
+  stat_poly_eq(aes(label = paste(stat(eq.label))),
+               npcx = 0.05, npcy = 0.97, rr.digits = 2,
+               formula = formula.glm, parse = TRUE, size = 3) +
+  stat_poly_eq(aes(label = paste(stat(adj.rr.label))),
+               npcx = 0.05, npcy = 0.90, rr.digits = 2,
+               formula = formula.glm, parse = TRUE, size = 3) +
+  geom_smooth(method = glm, formula = y ~ splines::bs(x, 5), size = 0.7)
+ggsave("growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model_no_color.jpeg",
+       plot = g5, path = file.path("figures/dbh/"), height = 4, width = 4.5, units='in')
+# > 30 cm
+g6 <- g4 + coord_cartesian(xlim = c(30, max(gro.long.mod.med.allsp$dbh.mean.allsp/10, na.rm = TRUE)))
+ggsave("growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model_above30cm.jpeg",
+       plot = g6, path = file.path("figures/dbh/"), height = 4.5, width = 4.5, units='in')
 
 ## not enough species-wise data to fit a trend...often giving rise to negative trends
 ## So using community wide fit
 gro.long.mod <- gro.long.mod %>%
   mutate(dbh.predict.growth = predict(glm.model, newdata = data.frame(dbh.mean.allsp = gro.long.mod$dbh)),
          dbh.residuals = growth - dbh.predict.growth)
+## throws a warning
 ####
 ## plotting the predicted growth
 sp.stem.dbh.full <- split(gro.long.mod %>% select(interval, growth, dbh.predict.growth, dbh, dbh.residuals), gro.long.mod$sp)
@@ -428,7 +466,7 @@ for (i in 1:length(sp.stem.dbh)) {
 }
 graphics.off()
 
-## not enough species-wise data to fit a trend...often giving rise to negative trends--------
+## not enough species-wise data to fit a trend...often giving rise to negative trends
 #
 # mixed.model.1 <- lmer(log(growth.med.sp) ~ log(dbh.mean.sp) + (1 | sp), data = gro.long.mod %>% subset(growth.med.sp != 0))
 # summary(mixed.model.1)
@@ -459,13 +497,13 @@ graphics.off()
 #      main = "All data", ylab = "Growth rate (cm/yr)", xlab = "DBH (cm)")
 # points(x = gro.long.mod.2$dbh.mean.allsp*0.1, y = gro.long.mod.2$predict.growth.allsp*0.1,  col = "red")
 # graphics.off()
-#####---------------
+#________________________________
 
-##--------------------------------------------------
+#_____________________________________________________
 ## Defining size at the beginning of selected censuses
 ## (ie. here defnied at census 3, not for each census after)
-## And selecting only complete cases stems with growth records in all selected census intervals
-##--------------------------------------------------
+## And selecting only complete cases stems with growth records in all selected census intervals----
+#_____________________________________________________
 row.names(gro.wide) <- gro.wide$stemID
 gro.wide.cc <- gro.wide %>% subset(complete.cases(gro.wide %>% select(-stemID, -sp))) ## 87922 stem IDs
 
@@ -492,6 +530,7 @@ gro.long.cc <- data.frame(gro.wide) %>%
   ## dbh in the beginning of each census interval
   mutate(dbh.predict.growth = predict(glm.model,
                                       newdata = data.frame(dbh.mean.allsp = dbh.long.cc$dbh)),
+         # throws a warning
                   dbh.residuals = growth - dbh.predict.growth,
         dbh = dbh.long.cc$dbh,
         ## size class in the initial census repeated for all censuses
@@ -529,14 +568,14 @@ gro.long.cc.norm.med <- gro.long.cc.norm.stem %>%
             med.dbh.resid.scale = median(dbh.resid.scale, na.rm = TRUE),
             med.growth.scale = median(growth.scale, na.rm = TRUE),
             med.dbh.resid.center = median(dbh.resid.center, na.rm = TRUE),
-            med.growth.center = median(growth.center, na.rm = TRUE)) %>%
+            med.growth.center = median(growth.center, na.rm = TRUE), .groups = "drop_last") %>%
   subset(n >= sample.size) %>%
   ungroup(sp_size, interval)
 
 gro.long.cc.med <- gro.long.cc %>%
   group_by(sp, size, sp_size, interval) %>%
   summarise(med.dbh.resid = median(dbh.residuals, na.rm = TRUE),
-            med.growth = median(growth, na.rm = TRUE)) %>%
+            med.growth = median(growth, na.rm = TRUE), .groups = "drop_last") %>%
   subset(sp_size %in% gro.long.cc.norm.med$sp_size) %>%
   ungroup(sp_size, interval)
 
@@ -577,12 +616,37 @@ sp_size.stem.cc.growth <- lapply(sp_size.stem.cc.growth.list, function(x){
   x %>% pivot_longer(everything(), names_to = c("interval"), values_to = "growth") %>%
     mutate(interval = as.numeric(interval))})
 
+#________________________________
+### selecting only stems that were consistently in the same crown exposure:-----
+## for the current paper > 80%
+#________________________________
+crown.wide <- pivot_wider(stem.full, id_cols = c(stemID), names_from = census, values_from = crown)
+# crown.wide.cc <- crown.wide %>% subset(rowSums(is.na(crown.wide)) != ncol(crown.wide))
+#   subset(complete.cases(gro.wide %>% select(-stemID, -sp)))
+# crown.wide[crown > 90) %>%
+ind <- apply(crown.wide[-1], 1, function(x) all(is.na(x)))
+crown.wide.sub <- crown.wide[!ind, ]
+## only stems with crown exponsure > 85% throughout
+ind2 <- apply(crown.wide[-1], 1, function(x) all(x > 80))
+crown.wide.sub2 <- crown.wide[ind2, ]
+ind3 <- apply(crown.wide.sub2, 1, function(x) all(is.na(x)))
+crown.wide.select <- crown.wide.sub2[!ind3, ] %>%
+  left_join(stem.full %>% select(stemID, sp, dbh), by = "stemID")
+nrow(crown.wide.select)
+table(crown.wide.select$sp)
+save(crown.wide.select, file = "results/crown.wide.select.rda")
+
 ### centering and scaling the residuals for each stem
-dbh.res.wide.cc.1 <- gro.long.cc %>% select(sp_size, stemID, interval, dbh.residuals) %>%
+dbh.res.wide.cc.1 <- gro.long.cc %>%
+  # retaining stems that are limited to canopy exposure > 80 removes most of the trees, so not employing
+  # subset(stemID %in% crown.wide.select$stemID) %>%
+  select(sp_size, stemID, interval, dbh.residuals) %>%
   pivot_wider(names_from = c("interval"), values_from = "dbh.residuals")
 dbh.res.wide.cc <- dbh.res.wide.cc.1 %>% select(-sp_size, -stemID)
 dbh.res.wide.cc.norm <- data.frame(t(apply(dbh.res.wide.cc, 1, scale, center = TRUE, scale = TRUE)))
 colnames(dbh.res.wide.cc.norm) <- colnames(dbh.res.wide.cc)
+table(dbh.res.wide.cc.1$sp_size)
+
 sp_size.stem.cc.dbh.res.list <- split(dbh.res.wide.cc.norm, dbh.res.wide.cc.1$sp_size)
 
 sp_size.stem.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res.list, function(x){
@@ -594,6 +658,7 @@ sp_size.stem.cc.n.dbh.res.list <- lapply(sp_size.stem.cc.dbh.res, function(x){
 sp_size.n.cc.dbh.res  <- rbindlist(sp_size.stem.cc.n.dbh.res.list, idcol = "sp_size")
 select.sp_size <- sp_size.n.cc.dbh.res$sp_size[sp_size.n.cc.dbh.res$n >= sample.size]
 
+nrow(select.sp_size)
 
 sp_size.stats.cc.dbh.res <- lapply(sp_size.stem.cc.dbh.res[select.sp_size], function(x){
   x %>% group_by(interval) %>%
@@ -633,12 +698,10 @@ save(sp_size.stats.cc.growth, file = paste0("results/sp_size.stats_growth_dbh.re
 save(sp_size.stem.cc.names, file = paste0("results/sp_size.individual.names_", intervals, "_", growth.selection, ".Rdata"))
 save(sp_size.stats.cc.names, file = paste0("results/sp_size.stats.names_", intervals, "_", growth.selection, ".Rdata"))
 
-
-##--------------------------------------------------
-
-##--------------------------------------------------
+#_____________________________________________________
+#_____________________________________________________
 ## Plotting stem growth time series
-##--------------------------------------------------
+#_____________________________________________________
 
 # graphics info
 theme_set(theme_bw())
@@ -687,11 +750,11 @@ plot.psi.stat.3 <- ggplot(psi.stat.2, aes(x = interval.yrs, y = mean)) +
 ggsave("psi_mean_across_params.top.few_full_interval_no-depth.jpeg", plot = plot.psi.stat.3, path =
          file.path("figures"), height = 5, width = 5, units='in')
 
-####------------------------------------------------------
+#_____________________________________________________
 ### Also detrending for dbh and solar radiation in the same loop
-####------------------------------------------------------
+#_____________________________________________________
 ### Boris's data - 2018 substituted by rutuja
-####------------------------------------------------------
+#_____________________________________________________
 
 ## data starts only from 1985-01-01
 clim.data <- read.csv("data-raw/BCI_1985_2018c_mod_2018substituted.csv")
@@ -711,9 +774,9 @@ sola <- clim.data %>%
   group_by(interval) %>%
   summarise(solar = mean(SR_W_m2, na.rm = TRUE)) %>%
   mutate(interval = as.numeric(interval)) %>% data.table()
-####------------------------------------------------------
+#_____________________________________________________
 
-####------------Loop starts-----------------------------
+#______________________Loop starts_____________________
 
 growth.types <- c("individual", "mean")
 growth.selections <- c("size_class_predefined_cc", "size_class_varying_non_cc")
@@ -731,9 +794,9 @@ for (k in 1: length(growth.selection)){
     for (j in 1 : length(g.list)) {
       g.list[[j]]$sp_size <- g.names[j]
     }
-    ###------------------------------------
+    #_____________________________________________________
     ## Plotting stem growth time series----
-    ###------------------------------------
+    #_____________________________________________________
     gdf <- do.call(rbind, g.list)
     gdf <- gdf %>%
       separate(sp_size, into = c("sp", "size"), sep = "_", remove = FALSE) %>%
@@ -752,17 +815,17 @@ for (k in 1: length(growth.selection)){
       xlab("Mean Growth factor (0-1)") + ylab("Growth rate (cm/yr)")
     ggsave(file.path(paste0("figures/", growth.type, "_growth_by_gfac_by_size_", growth.selection, ".jpeg")), plot = gdf.plot.1,
            height = 15, width = 30, units ='in')
-    ###---------------------------
-    ### Detrending for dbh--------
-    ###---------------------------
+    #____________________________
+    ### Detrending for dbh-------
+    #____________________________
   }
 }
 
 
 ### detrending for solar radiation
-###-------------------
+#_____________________________________________________
 ### Boris's data - 2018 substituted by rutuja
-###-------------------
+#_____________________________________________________
 ## data starts only from 1985-01-01
 clim.data <- read.csv("data-raw/BCI_1985_2018c_mod_2018substituted.csv")
 str(clim.data)

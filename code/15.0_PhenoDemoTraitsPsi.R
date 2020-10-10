@@ -766,7 +766,7 @@ iso.2 <- iso.2.raw %>%
   summarise(se = sd(Xylem_sap_deltaD_permil, na.rm = TRUE)/sqrt(n()),
             Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
             n = n(),
-            DBH = mean(DBH, na.rm = TRUE))
+            DBH = mean(DBH, na.rm = TRUE), .groups = "drop_last")
 
 ## those species that were likely leafless at the time of Xylem sap isotopes collection
 ## in Mar & April need to be removed
@@ -784,13 +784,13 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
               subset(!sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"])) %>%
               group_by(sp) %>%
               summarise(Xylem_sap_deltaD_permil.mean = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
-                        se.mean = mean(se, na.rm = TRUE)) %>%
+                        se.mean = mean(se, na.rm = TRUE), .groups = "drop_last") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil.mean, se.mean), by = "sp") %>%
   droplevels()
 
 depth.rsq.isotopes <- ml.rsq.combine.best %>%
   group_by(corr.func, sp, size) %>%
-  summarise_at(c("depth", "depth.se","Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE) %>%
+  summarise_at(c("depth", "depth.se","Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE, .groups = "drop_last") %>%
   ungroup(corr.func, sp, size)
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
@@ -1024,7 +1024,7 @@ hyd.labels <- hyd.kruskal.labels
 unique(hyd.labels$trait)
 hyd.labels.data <- hyd.labels %>%
   left_join(hyd.long %>% group_by(trait) %>%
-              summarise(value = max(value, na.rm = TRUE)), by = c("trait")) %>%
+              summarise(value = max(value, na.rm = TRUE)), by = c("trait"), .groups = "drop_last") %>%
   subset(deciduousness != "NA") %>%
   droplevels() %>%
   left_join(traits.labels.table.1 %>% select(trait, trait.plot), by = "trait")
@@ -1090,7 +1090,7 @@ head(traits.kruskal.labels)
 traits.labels <- traits.kruskal.labels
 traits.labels.data <- traits.labels %>%
   left_join(traits.long %>% group_by(trait) %>%
-              summarise(value = max(value, na.rm = TRUE)), by = c("trait")) %>%
+              summarise(value = max(value, na.rm = TRUE)), by = c("trait"), .groups = "drop_last") %>%
   subset(deciduousness != "NA") %>%
   droplevels() %>%
   transform(deciduousness = factor(deciduousness,
@@ -1923,17 +1923,17 @@ mrate.mfac.depth.to.rdi.mr.total.int <- mrate.mfac.depth.to.rdi.mr %>%
   summarise(mfac.soil.column.mr = mean(mfac.soil.column.mr, na.rm = TRUE),
             mrate = mean(mrate, na.rm = TRUE),
             diff.mrate = mean(diff.mrate, na.rm = TRUE),
-            depth = mean(depth, na.rm = TRUE)) %>%
+            depth = mean(depth, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(sp, size, censusint.m)
 mrate.mfac.depth.to.rdi.mr.total <- mrate.mfac.depth.to.rdi.mr.total.int %>%
   group_by(sp, size) %>%
-  summarise(mfac.soil.column.total.mr = sum(mfac.soil.column.mr, na.rm = TRUE)) %>%
+  summarise(mfac.soil.column.total.mr = sum(mfac.soil.column.mr, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(sp, size)
 mrate.mfac.depth.to.rdi.mr.study <- mrate.mfac.depth.to.rdi.mr %>%
   subset(depth == rdi.mr) %>%
   group_by(sp, size) %>%
   summarise(mfac.total.mr = sum(mfac, na.rm = TRUE),
-            mrate.sum = sum(mrate, na.rm = TRUE)) %>%
+            mrate.sum = sum(mrate, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(sp, size)
 
 mrate.mfac.column <- mrate.mfac.depth %>%
@@ -1946,7 +1946,7 @@ mrate.mfac.column.total.int <- mrate.mfac.column %>%
   summarise(mfac.soil.column = mean(mfac.soil.column, na.rm = TRUE),
             mrate = mean(mrate, na.rm = TRUE),
             diff.mrate = mean(diff.mrate, na.rm = TRUE),
-            depth = mean(depth, na.rm = TRUE)) %>%
+            depth = mean(depth, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(sp, size, censusint.m)
 
 mfac.plot.7 <- ggplot(mrate.mfac.depth.to.rdi.gr.study,
@@ -2126,7 +2126,7 @@ psi.stat.1 <- psi %>%
   group_by(interval.yrs, date, depth) %>%
   summarise(median = -median(psi, na.rm = TRUE),
             upper.CI = -quantile(psi, probs = 0.975),
-            lower.CI = -quantile(psi, probs = 0.025))
+            lower.CI = -quantile(psi, probs = 0.025), .groups = "drop_last")
 psi.stat.1 <- psi.stat.1 %>%
   group_by(interval.yrs, depth) %>%
   mutate(days = 1:n())
@@ -2164,7 +2164,7 @@ psi.stat.2 <- psi.2 %>%
   group_by(interval.yrs.to.plot, date, depth) %>%
   summarise(median = median(psi, na.rm = TRUE),
             upper.CI = quantile(psi, probs = 0.975),
-            lower.CI = quantile(psi, probs = 0.025))
+            lower.CI = quantile(psi, probs = 0.025), .groups = "drop_last")
 psi.stat.2 <- psi.stat.2 %>%
   group_by(interval.yrs.to.plot, depth) %>%
   mutate(days = 1:n())
@@ -2210,7 +2210,7 @@ psi.stat.3 <- psi %>%
   group_by(doy, depth) %>%
   summarise(median = median(psi, na.rm = TRUE),
             upper.CI = quantile(psi, probs = 0.975),
-            lower.CI = quantile(psi, probs = 0.025)) %>%
+            lower.CI = quantile(psi, probs = 0.025), .groups = "drop_last") %>%
   ungroup(doy, depth) %>%
   mutate(doy = as.numeric(doy))
 psi.stat.4 <- psi %>%
@@ -2225,7 +2225,7 @@ psi.stat.4 <- psi %>%
   summarise(median = median(psi, na.rm = TRUE),
             q97.5 = quantile(psi, probs = 0.975),
             q2.5 = quantile(psi, probs = 0.025),
-            q5 = quantile(psi, probs = 0.05)) %>%
+            q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
   ungroup(doy, year, depth) %>%
   mutate(doy = as.numeric(doy))
 psi.stat.5 <- psi.stat.4 %>%
@@ -2234,7 +2234,7 @@ psi.stat.5 <- psi.stat.4 %>%
             q97.5.clim = quantile(median, probs = 0.975),
             q2.5.clim = quantile(median, probs = 0.025),
             q10.clim = quantile(median, probs = 0.1),
-            q5.clim = quantile(median, probs = 0.05)) %>%
+            q5.clim = quantile(median, probs = 0.05), .groups = "drop_last") %>%
   ungroup(doy, depth) %>%
   mutate(doy = as.numeric(doy))
 rectangles.3 <- data.frame(
@@ -2262,7 +2262,7 @@ psi.stat.4.select <- psi %>%
   summarise(median = median(psi, na.rm = TRUE),
             q97.5 = quantile(psi, probs = 0.975),
             q2.5 = quantile(psi, probs = 0.025),
-            q5 = quantile(psi, probs = 0.05)) %>%
+            q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
   ungroup(doy, year, depth) %>%
   mutate(doy = as.numeric(doy))
 
@@ -2272,7 +2272,7 @@ psi.stat.5.select <- psi.stat.4.select %>%
             q97.5.clim = quantile(median, probs = 0.975),
             q2.5.clim = quantile(median, probs = 0.025),
             q10.clim = quantile(median, probs = 0.1),
-            q5.clim = quantile(median, probs = 0.05)) %>%
+            q5.clim = quantile(median, probs = 0.05), .groups = "drop_last") %>%
   ungroup(doy, depth) %>%
   mutate(doy = as.numeric(doy))
 
@@ -2339,6 +2339,16 @@ psi.stat.4.select <- psi.stat.4.select %>%
          below.q5 = ifelse(median < q5.clim, median, NA),
          below.q2.5 = ifelse(median < q2.5.clim, median, NA),
          depth_year = paste(depth, year, sep = "_"))
+## this is the date that's shown in the graph, so only interested in shwoing an extreme year
+## defined for the shown doy range
+xlim.in.wet.season <- 200
+psi.stat.4.extreme.yr  <- psi.stat.4 %>%
+  subset(doy < xlim.in.wet.season) %>%
+  group_by(depth_year) %>%
+  dplyr::summarise(extreme.yr.q2.5 = if_else(any(!is.na(below.q2.5)), TRUE, FALSE), .groups = "drop")
+
+psi.stat.4 <- psi.stat.4 %>%
+  left_join(psi.stat.4.extreme.yr, by = "depth_year")
 
 save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
 save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
@@ -2354,7 +2364,7 @@ pct.drought.days <- psi.stat.4 %>%
             pct.days.below.q5.0.5 = 100*round(sum(!is.na(below.q5) & below.q5 < -0.5)/n(), 3),
             pct.days.above.q5.0.5 = 100 - pct.days.below.q5.0.5,
             pct.days.below.q2.5.0.5 = 100*round(sum(!is.na(below.q2.5) & below.q2.5 < -0.5)/n(), 3),
-            pct.days.above.q2.5.0.5 = 100 - pct.days.below.q2.5.0.5) %>%
+            pct.days.above.q2.5.0.5 = 100 - pct.days.below.q2.5.0.5, .groups = "drop_last") %>%
   ungroup(depth, interval.yrs) %>% #subset(depth %in% c(0.06, 0.62, 1))
   mutate(depth.fac = factor(depth, levels = sort(unique(psi.stat.4$depth), decreasing = TRUE))) %>%
   mutate(int.ssn = paste(interval.yrs, season, sep = "_"))
@@ -2455,6 +2465,32 @@ plot.psi.stat.7.interval.q2.5 <- plot.psi.stat.6.interval.base %+%
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5.jpeg",
        plot = plot.psi.stat.7.interval.q2.5, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
 
+psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
+plot.psi.stat.7.interval.q2.5.depth <- plot.psi.stat.5.base %+%
+  subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)") +
+  facet_wrap(plot.depth ~ interval.yrs, nrow = 3) +
+  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), linetype = "Mean"), size = 0.5) +
+  geom_ribbon(aes(x = doy, ymin = q2.5.clim, ymax = median.clim, group = as.factor(depth),
+                  fill = "Lower 95% CI"), alpha = 0.7) +
+  theme(panel.grid.major.y = element_line(size = 0.1)) +
+  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 200)) +
+  geom_line(data = psi.stat.4 %>%
+              subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
+            aes(x = doy, y = median, group = as.factor(depth_year),
+                  color = year), size = 0.5, alpha = 1) +
+  scale_linetype_manual(name = "", values = c("solid")) +
+  scale_fill_manual(name = "", values = c("gray80")) +
+  guides(linetype = guide_legend(order = 1, title = NULL, label.position = "top"),
+         fill = guide_legend(order = 2, title = NULL, label.position = "top"),
+         color = guide_legend(order = 3, title = "Year",
+                              #label.position = "bottom", direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "bottom", legend.direction = "horizontal")
+  # geom_line(data = psi.stat.4 %>% subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
+  #           aes(x = doy, y = below.q2.5, group = as.factor(depth_year), color = year),  size = 1.5, alpha = 1, show.legend = FALSE)
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_by_dpeth.jpeg",
+       plot = plot.psi.stat.7.interval.q2.5.depth, file.path(figures.folder), device = "jpeg", height = 6, width = 7, units='in')
+
 ## plot over observed
 plot.psi.stat.7.interval.median <- plot.psi.stat.6.interval.base %+%
   subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs.2 != "2015-2020") +
@@ -2483,7 +2519,7 @@ for (i in 1:length(unique(psi.stat.4$year))) {
     guides(color = guide_legend(title = "Depth(m)", order = 1, override.aes = list(size = 3)),
            linetype = guide_legend(order = 2, title = NULL, override.aes =
                                      list(linetype = c("climatology" = "solid", "Year" = "dashed")))) +
-    coord_cartesian(ylim = c(-3, 0), xlim = c(0, 200)) +
+    coord_cartesian(ylim = c(-3, 0), xlim = c(0, xlim.in.wet.season)) +
       ggtitle(year.on) + xlab("") + ylab("")
   if(year.on != "2018") {
     plot.psi.stat.5.yr <- plot.psi.stat.5.yr + theme(legend.position = "none")
@@ -2519,7 +2555,7 @@ pct.drought.days <- pct.drought.days %>%
 pct.drought.days.mean <- pct.drought.days %>%
   dplyr::select(-season, -int.ssn) %>%
   group_by(interval.num, interval.yrs, interval.yrs.2, depth, depth.fac) %>%
-    summarise_all(list(~sum(., na.rm = TRUE)))
+    summarise_all(list(~sum(., na.rm = TRUE)), .groups = "drop_last")
 
 mrate.drought <- mrate.long %>% left_join(pct.drought.days.mean, by = "interval.num")  %>%
   left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp")

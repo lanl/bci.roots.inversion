@@ -9,6 +9,7 @@ load(file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
 load(file = file.path(results.folder, "erd.stem.traits.Rdata"))
 load(file = file.path(results.folder, "depth.traits.kunert.Rdata"))
 load(file = file.path(results.folder, "df.erd.to.plot.Rdata"))
+load(file = file.path(results.folder, "obs.data.model.AB.Rdata"))
 load(file = file.path(results.folder, "data.model.AB.sub.Rdata"))
 load(file = file.path(results.folder, "obs.sp.vcurves.1.Rdata"))
 load(file = file.path(results.folder, "comm.sp.vcurves.1.Rdata"))
@@ -306,12 +307,22 @@ cor.data <- erd.pairs %>% select(-sp) %>%
   relocate(ERD, `italic(\"K\")[\"max,stem\"]`)
 M <- cor(cor.data, use = "pairwise.complete.obs", method = "spearman")
 
-colnames(M) <- rownames(M) <- c("ERD", ":K['max,stem']", ":Psi[tlp]",
-  ":Psi['88,stem']", ":Psi[min]*'-'*Psi['88,stem']")
-
 res1 <- cor.mtest(cor.data, conf.level = 0.95,
                   use = "pairwise.complete.obs",
                   method = c("spearman"), alternative = c("two.sided"))
+
+colnames(res1$p) <- rownames(res1$p) <- colnames(M) <- rownames(M) <- c("ERD", ":K['max,stem']", ":Psi[tlp]",
+                                ":Psi['88,stem']", ":Psi[min]*'-'*Psi['88,stem']")
+
+cor.k <- round(M[which(colnames(M) == ":K['max,stem']"), which(rownames(M) == "ERD")], 2)
+cor.tlp <- round(M[which(colnames(M) == ":Psi[tlp]"), which(rownames(M) == "ERD")], 2)
+cor.stem.88 <- round(M[which(colnames(M) == ":Psi['88,stem']"), which(rownames(M) == "ERD")], 2)
+cor.hsm <- round(M[which(colnames(M) ==  ":Psi[min]*'-'*Psi['88,stem']"), which(rownames(M) == "ERD")], 2)
+
+p.k <- round(res1$p[which(colnames(res1$p) == ":K['max,stem']"), which(rownames(res1$p) == "ERD")], 2)
+p.tlp <- round(res1$p[which(colnames(res1$p) == ":Psi[tlp]"), which(rownames(res1$p) == "ERD")], 2)
+p.stem.88 <- round(res1$p[which(colnames(res1$p) == ":Psi['88,stem']"), which(rownames(res1$p) == "ERD")], 2)
+p.hsm <- round(res1$p[which(colnames(res1$p) ==  ":Psi[min]*'-'*Psi['88,stem']"), which(rownames(res1$p) == "ERD")], 2)
 
 jpeg(file.path(figures.folder, "erd.stem.traits_cor.matrix_insig_blank.jpeg"),
      width = 4.5, height = 4.5, units = "in", pointsize = 10,
@@ -559,7 +570,7 @@ obs.mod.plc <- obs.sp.vcurves.1 %>%
   mutate(Fit = "Data")
 obs.mod.plc <- obs.mod.plc %>%
   bind_rows(comm.sp.vcurves.1 %>%
-              ## only species that foor which data unavailable
+              ## only those ERD species that for which data unavailable
               subset(sp %in% erd.sp[!erd.sp %in% unique(obs.mod.plc$sp)]) %>%
               mutate(Fit = "Model"))
 sp.n.data <- length(unique(obs.mod.plc$sp[obs.mod.plc$Fit == "Data"]))
@@ -595,3 +606,45 @@ ggsave(plot = obs.mod.plccurves.black, file.path("figures/PhenoDemoTraitsPsi/kma
        device = "tiff", height = 2.7, width = 3, units='in')
 ggsave(plot = obs.mod.plccurves.black, file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/obs.mod_plccurves_fits_ggplot_no_col.jpeg"),
        device = "jpeg", height = 2.7, width = 3, units='in')
+
+
+ab.table <- obs.data.model.AB %>%
+  subset(sp %in% erd.sp) %>%
+  mutate(Source = "Data") %>%
+  rename(A = data.A, B = data.B) %>%
+  select(sp, A, B, Kmax, psi_kl50, Source) %>%
+  bind_rows(data.model.AB %>%
+              ## only those ERD species that for which data unavailable
+              subset(sp %in% erd.sp[!erd.sp %in% unique(obs.mod.plc$sp)]) %>%
+              mutate(Source = "Model") %>%
+              rename(A = model.A, B = model.B) %>%
+              select(sp, A, B, Kmax, psi_kl50, Source)) %>%
+  left_join(bci.traits %>% dplyr::select(sp, GENUS., SPECIES., FAMILY.), by = "sp") %>%
+  dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.,
+                Kmax.leaf = Kmax, Psi_50.leaf = psi_kl50) %>%
+  mutate(Species = tolower(Species)) %>%
+  dplyr::select(Genus, Species, Family, A, B, Kmax.leaf, Psi_50.leaf, Source) %>%
+  mutate(Family = as.character(Family))
+
+
+# Some familynames do not end in ceae. Correcting that
+correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
+                             correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
+                                         "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
+                                         "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
+  mutate(misspelt = as.character(misspelt),
+         correct = as.character(correct))
+## Which row in Family.sub matches with correct.family$misspelt
+rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
+matched.rows <- match(ab.table$Family, correct.family$misspelt)
+ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
+
+correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
+                               correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
+  mutate(misspelt = as.character(misspelt),
+         correct = as.character(correct))
+rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
+matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
+ab.table$Family[rows.to.replace.2] <-
+  correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
+

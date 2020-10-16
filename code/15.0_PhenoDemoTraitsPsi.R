@@ -13,6 +13,11 @@
 
 
 rm(list=ls())
+#******************************************************
+### Load data -------
+#******************************************************
+source("code/load.R")
+
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ##
 #*******************************************
@@ -375,10 +380,6 @@ ggpairs.theme <- theme(strip.background = element_rect(fill = "white"),
                        panel.grid.minor = element_blank()) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 
-#******************************************************
-### Load data -------
-#******************************************************
-source("code/load.R")
 
 #******************************************************
 ### Calculate Correlation of growth rates with psi by depth -------
@@ -447,7 +448,8 @@ clim.daily.effect <- clim.daily %>%
          std.Rs.pet.PM = range01(Rs.pet.PM.effect),
          std.Rs.VPD = range01(Rs.VPD.effect),
          pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.pet, newdata = clim.daily)),
-         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd.tower, newdata = clim.daily)),
+         # temporarily renaming VPD variable name for the model input to work
+         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd.tower, newdata = clim.daily %>% rename(VPD.tower = VPD))),
          Rs.effect = as.numeric(predict(gpp.models$eq.gpp.rad, newdata = clim.daily)),
          std.pet.PM = range01(pet.PM.effect),
          std.VPD = range01(VPD.effect),
@@ -633,7 +635,8 @@ for (i in names(gfac.interval)) {
 
   # left_join(traits.long.hyd %>% select(deci_sp, deci_sp.plot, sp, sp.plot,  deciduousness), by = "sp") #%>%
   # Select best corr within each sp and par.sam
-  ml.corr.best.parsam[[i]] <- ml.corr[[i]] %>% group_by(sp, par.sam) %>%
+  ml.corr.best.parsam[[i]] <- ml.corr[[i]] %>%
+    group_by(sp, par.sam) %>%
     mutate(corr.max = max(corr, na.rm = TRUE)) %>%
     subset(corr == corr.max) %>% dplyr::select(-corr.max) %>%
     ungroup(sp, par.sam)
@@ -652,7 +655,7 @@ ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
   group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp, deci_sp.plot) %>%
-  subset(corr >= 0 & R2 >= 0.5) %>%
+  subset(corr >= 0.7071068) %>% # that is R2 >= 0.5 and corr >= 0
   summarise(depth.se = sd(depth, na.rm = TRUE)/sqrt(n()),
             depth = median(depth, na.rm = TRUE),
             corr.se = sd(corr, na.rm = TRUE)/sqrt(n()),
@@ -668,7 +671,6 @@ df.erd.to.plot <- ml.rsq.combine.best %>%
   mutate(size = as.character(size)) %>%
   left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   subset(form1 == "T" &
-           corr >= 0 & R2 >= 0.1 &
            !duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
   transform(sp = reorder(sp, depth))
 length(unique(df.erd.to.plot$sp))
@@ -804,7 +806,7 @@ load(file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 # ml.rsq.combine.best <- ml.rsq.combine.best %>%
 #   left_join(traits.wide.hyd %>% select(sp, KmaxL, Panama.moist.pref:HSMLWP.TLP), by = "sp")
 
-heat.rsq <- ggplot(ml.rsq.combine %>% subset(corr >= 0) %>% droplevels(),
+heat.rsq <- ggplot(ml.rsq.combine %>% droplevels(),
                    aes(y = deci_sp, x = as.factor(depth))) +
   geom_tile(aes(fill = corr)) +
   ylab("Species") + xlab("Depth (m)") +
@@ -823,11 +825,11 @@ xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.best <- ml.rsq.combine.best %>% left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
   mutate(depth = as.numeric(depth))
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
-  subset(corr >= 0 & form1 == "T" &
-           corr.func %in% names.gfac[1:5] &
+  subset(form1 == "T" &
+           #corr.func %in% names.gfac[1:5] &
            !sp %in% c("guapst") &
            # !sp %in% c("guapst", "alsebl") &
-           R2 >= 0.1 & #corr.func == "gr.Psi.Rad.VPD" &
+           #corr.func == "gr.Psi.Rad.VPD" &
            !is.na(Xylem_sap_deltaD_permil.mean)) %>%
   droplevels()
 

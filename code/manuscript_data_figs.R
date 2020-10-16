@@ -1,13 +1,14 @@
 #******************************************************
 ## output
 #******************************************************
+load(file = file.path(results.folder, "psi.stat.4.Rdata"))
 load(file = file.path(results.folder, "psi.stat.4.select.Rdata"))
 load(file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
+load(file = file.path(results.folder, "chosen.model.Rdata"))
 load(file = file.path(results.folder, "mrate.depth.Rdata"))
 load(file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
 load(file = file.path(results.folder, "erd.stem.traits.Rdata"))
-load(file = file.path(results.folder, "depth.traits.kunert.Rdata"))
 load(file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 load(file = file.path(results.folder, "obs.data.model.AB.Rdata"))
 load(file = file.path(results.folder, "data.model.AB.sub.Rdata"))
@@ -40,10 +41,10 @@ reverselog_trans <- function(base = exp(1)) {
 formula <- y ~ x
 #****************************
 ml.rsq.combine.best <- ml.rsq.combine.best %>%
-  left_join(bci.traits %>% dplyr::select(sp, form1), by = "sp") %>%
+  ## ERD only for canopy species, so no need to subset
   mutate(depth = as.numeric(depth))
 erd.data <- ml.rsq.combine.best %>%
-  subset(form1 == "T" & corr.func == "gr.Psi.VPD.leaf.add")
+  subset(corr.func == chosen.model)
 erd.iso <- erd.data %>%
   subset(sp != "guapst" & source == "Meinzer et al.1999 Fig. 4")
 
@@ -62,7 +63,10 @@ rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 #****************************
 ### PSI significant droughts----
 #****************************
-psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
+
+
+### Calculate Correlation of growth rates with psi by depth
+
 plot.psi.stat.7.interval.q2.5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)") %>% droplevels()) +
   geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), linetype = "Mean"), size = 0.5) +
   geom_ribbon(aes(x = doy, ymin = q2.5.clim, ymax = median.clim, group = as.factor(depth),
@@ -91,6 +95,11 @@ plot.psi.stat.7.interval.q2.5.depth.wo.int <- plot.psi.stat.7.interval.q2.5.dept
   facet_wrap(plot.depth ~ ., nrow = 3)
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_by_depth.wo.int.jpeg",
        plot = plot.psi.stat.7.interval.q2.5.depth.wo.int, file.path(figures.folder), device = "jpeg", height = 6, width = 6, units='in')
+
+
+## Minimum Soil water potential reached at depth 1.7 + CI
+psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
+  subset(median == min(median, na.rm = TRUE))
 
 #****************************
 ## LAI seasonality by species----
@@ -147,7 +156,7 @@ ggsave("ERD_by_sp_large_canopy.jpeg",
 xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   mutate(depth = as.numeric(depth)) %>%
-  subset(!sp %in% c("guapst")) %>%
+  # subset(!sp %in% c("guapst")) %>%
   left_join(bci.traits %>%
               dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
               mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
@@ -157,7 +166,7 @@ ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   droplevels()
 
 formula = y~x
-p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == "gr.Psi.VPD.leaf.add"),
+p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == chosen.model),
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
@@ -183,7 +192,8 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
 
 ## as "gr.Psi.VPD.add" is not present
 ml.rsq.combine.sub <- ml.rsq.combine.sub %>%
-  transform(models.plot1 = factor(corr.func, levels = c("gr.Psi", "gr.Psi.VPD.add", "gr.Psi.VPD.multi", "gr.Psi.leaf", "gr.Psi.VPD.leaf.add", "gr.Psi.VPD.leaf.multi"),
+  transform(models.plot1 = factor(corr.func, levels = c("gr.Psi", "gr.Psi.VPD.add", "gr.Psi.VPD.multi",
+                                                        "gr.Psi.leaf", "gr.Psi.VPD.leaf.add", "gr.Psi.VPD.leaf.multi"),
                                   labels = c("A", "B", "C", "D", "E", "F")))
 erd.iso_sp_N_by_model <- ml.rsq.combine.sub %>%
   group_by(models.plot1) %>%
@@ -233,7 +243,7 @@ mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) &
 # summarising acros interval
 mrate.depth.mean <- mrate.depth.select %>%
   group_by(sp, deciduous) %>% summarise(rdi.gr = mean(rdi.gr, na.rm = TRUE),
-                             depth.se = mean(depth.se, na.rm = TRUE),
+                                        depth.se = mean(depth.se, na.rm = TRUE),
                                      avg.abund = mean(avg.abund, na.rm = TRUE),
                                      mrate.se = sd(mrate, na.rm = TRUE)/sqrt(n()),
                                      mrate = mean(mrate, na.rm = TRUE), # should be same as mrate = mean(mean.mrate, na.rm = TRUE),
@@ -248,10 +258,6 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
             depth = mean(depth, na.rm = TRUE),
             mfac = sum(mfac, na.rm = TRUE), .groups = "drop_last")
 # save.image("results/manuWorkSpace.RData")
-
-## Minimum Soil water potential reached at depth 1.7 + CI
-psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
-  subset(median == min(median, na.rm = TRUE))
 
 #****************************
 ### ERD vs. hydraulic traits---
@@ -422,29 +428,6 @@ grate.adult.stem.traits.plot <- ggplot(stem.k.gr, aes(y = grate.adult, x = value
 ggsave(file.path(figures.folder, paste0("grate.adult.stem.traits.tiff")),
        plot = grate.adult.stem.traits.plot, height = 4.5, width = 3.8, units ='in')
 
-leaf.k.gr <- depth.traits.kunert %>% left_join(demo.sp, by = "sp") %>%
-  droplevels()
-leaf.traits.sp <- nrow(leaf.k.gr)
-grate.adult.leaf.traits.plot <- ggplot(leaf.k.gr %>%
-                                         subset(trait %in% c("KmaxL") & !is.na(value)),
-         aes(y = grate.adult, x = value)) +
-  # geom_smooth(method = "lm", formula = formula) +
-  facet_wrap(. ~ trait.plot.chart, scales = "free_x", labeller = label_parsed, strip.position = 'bottom') +
-  geom_point(size = 3, alpha = 0.7) +
-  ylab(expression("Growth Rate (cm year"^-1*")")) + xlab("") +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.87, npcy = 0.9, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.87, npcy = 0.8, size = 4) +
-  theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
-        strip.text.x = element_text(size = 12, vjust = 2.5),
-        plot.margin = margin(0.2, 0.2, -0.25, 0.2, "cm"))
-ggsave(file.path(figures.folder, paste0("grate.adult.leaf.traits.tiff")),
-       plot = grate.adult.leaf.traits.plot, height = 3, width = 3, units ='in')
 
 #****************************
 ## ERD vs. mortality rates----
@@ -669,24 +652,24 @@ ab.table <- obs.data.model.AB %>%
   dplyr::select(Genus, Species, Family, A, B, Kmax.leaf, Psi_50.leaf, Source) %>%
   mutate(Family = as.character(Family))
 
-# Some familynames do not end in ceae. Correcting that
-correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
-                             correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
-                                         "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
-                                         "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
-  mutate(misspelt = as.character(misspelt),
-         correct = as.character(correct))
-## Which row in Family.sub matches with correct.family$misspelt
-rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
-matched.rows <- match(ab.table$Family, correct.family$misspelt)
-ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
-
-correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
-                               correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
-  mutate(misspelt = as.character(misspelt),
-         correct = as.character(correct))
-rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
-matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
-ab.table$Family[rows.to.replace.2] <-
-  correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
-
+# # Some familynames do not end in ceae. Correcting that
+# correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
+#                              correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
+#                                          "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
+#                                          "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
+#   mutate(misspelt = as.character(misspelt),
+#          correct = as.character(correct))
+# ## Which row in Family.sub matches with correct.family$misspelt
+# rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
+# matched.rows <- match(ab.table$Family, correct.family$misspelt)
+# ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
+#
+# correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
+#                                correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
+#   mutate(misspelt = as.character(misspelt),
+#          correct = as.character(correct))
+# rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
+# matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
+# ab.table$Family[rows.to.replace.2] <-
+#   correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
+#

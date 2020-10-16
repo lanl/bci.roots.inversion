@@ -240,8 +240,8 @@ hypo.table <-
       "Turgor Loss Point",
       "Hydraulic Safety Margins"
     ),
-    Deeper.ERD = c("Higher", "Higher", "Higher", "Narrower"),
-    Shallower.ERD = c("Lower", "Lower", "Lower", "Larger")
+    Deeper.ERD = c("Higher", "Higher", "Higher, or less negative", "Narrower"),
+    Shallower.ERD = c("Lower", "Lower", "Lower, or more negative", "Larger")
   )
 symbols.table <-
   data.frame(
@@ -265,11 +265,11 @@ symbols.table <-
       "$\\Psi_{leaf}$ at 50% loss of leaf conductance",
       "$\\Psi_{stem}$ at 88% loss of stem conductivity",
       "Seasonal minimum water potential, the most negative $\\Psi_{leaf}$ measured at midday",
-      "Hydraulic conductance of leaf",
-      "Maximum hydraulic conductance of leaf",
-      "Maximum area-specific hydraulic conductivity of stem",
-      "Mean wood specific gravity after drying at 100^$\\circ$^C",
-      "Mean leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules for leaves receiving direct sunlight"
+      "Leaf-area specific hydraulic conductance of leaf",
+      "Maximum leaf area-specific hydraulic conductance of leaf",
+      "Maximum stem area-specific hydraulic conductivity of stem",
+      "Wood specific gravity",
+      "Leaf mass per unit area"
     ),
     Units = c(
       "MPa",
@@ -278,8 +278,8 @@ symbols.table <-
       "MPa",
       "MPa",
       "MPa",
-      "mmol m^-1^ s^-1^ MPa^-1^",
-      "mmol m^-1^ s^-1^ MPa^-1^",
+      "mmol m^-2^ s^-1^ MPa^-1^",
+      "mmol m^-2^ s^-1^ MPa^-1^",
       "kg m^-1^ s^-1^ MPa^-1^",
       "g cm^-3^",
       "g m^-2^"
@@ -397,35 +397,6 @@ param.table <-
         "Based on throughfall data from [@Zimmermann:2010kzl] and precipitation data for BCI from STRI Physical Monitoring program, defined for precipitation events greater than 10 mm."
       )
   )
-
-ab.table <- data.model.AB %>%
-  left_join(bci.traits %>% dplyr::select(sp, GENUS., SPECIES., FAMILY.), by = "sp") %>%
-  dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.,
-                A = model.A, B = model.B) %>%
-  mutate(Species = tolower(Species)) %>%
-  dplyr::select(Genus, Species, Family, A, B) %>%
-  mutate(Family = as.character(Family))
-
-# Some familynames do not end in ceae. Correcting that
-correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
-correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
-"Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
-"Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
-  mutate(misspelt = as.character(misspelt),
-         correct = as.character(correct))
-## Which row in Family.sub matches with correct.family$misspelt
-rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
-matched.rows <- match(ab.table$Family, correct.family$misspelt)
-ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
-
-correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
-                               correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
-  mutate(misspelt = as.character(misspelt),
-         correct = as.character(correct))
-rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
-matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
-ab.table$Family[rows.to.replace.2] <-
-  correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
 
 eddy.table <- data.frame(Variable = c("Rain",
                                               "Temperature flux",

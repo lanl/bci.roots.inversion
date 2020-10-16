@@ -63,6 +63,43 @@ erd.sp.names <- bci.traits %>%
   dplyr::select(Code, Genus, Species, Family)
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 
+###____________________________
+### PSI significant droughts----
+###____________________________
+psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
+plot.psi.stat.7.interval.q2.5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)") %>% droplevels()) +
+  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), linetype = "Mean"), size = 0.5) +
+  geom_ribbon(aes(x = doy, ymin = q2.5.clim, ymax = median.clim, group = as.factor(depth),
+                  fill = "Lower 95% CI"), alpha = 0.7) +
+  theme(panel.grid.major.y = element_line(size = 0.1)) +
+  geom_line(data = psi.stat.4 %>%
+              subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
+            aes(x = doy, y = median, group = as.factor(depth_year),
+                color = year), size = 0.5, alpha = 1) +
+  scale_linetype_manual(name = "", values = c("solid")) +
+  scale_fill_manual(name = "", values = c("gray80")) +
+  guides(linetype = guide_legend(order = 1, title = NULL, label.position = "top"),
+         fill = guide_legend(order = 2, title = NULL, label.position = "top"),
+         color = guide_legend(order = 3, title = "Year",
+                              override.aes = list(size = 3))) +
+  scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
+  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 200)) +
+  ylab(expression(Psi[soil]*~"(MPa)")) + xlab("Day of the Year")
+
+plot.psi.stat.7.interval.q2.5.depth <- plot.psi.stat.7.interval.q2.5.depth.base +
+  facet_wrap(plot.depth ~ interval.yrs, nrow = 3) +
+  theme(legend.position = "bottom", legend.direction = "horizontal")
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_by_depth.jpeg",
+       plot = plot.psi.stat.7.interval.q2.5.depth, file.path(figures.folder), device = "jpeg", height = 6, width = 7, units='in')
+plot.psi.stat.7.interval.q2.5.depth.wo.int <- plot.psi.stat.7.interval.q2.5.depth.base +
+  facet_wrap(plot.depth ~ ., nrow = 3)
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_by_depth.wo.int.jpeg",
+       plot = plot.psi.stat.7.interval.q2.5.depth.wo.int, file.path(figures.folder), device = "jpeg", height = 6, width = 6, units='in')
+
+###_______________________________
+## LAI seasonality by species----
+###_______________________________
+
 f4 <- ggplot(sp.leaf_cover.for.model %>% subset(sp %in% erd.sp & doy != 366) %>%
                left_join(erd.sp.names %>%
                            mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
@@ -80,6 +117,10 @@ f4 <- ggplot(sp.leaf_cover.for.model %>% subset(sp %in% erd.sp & doy != 366) %>%
         strip.text.x = element_text(face = "italic", size = 11))
 ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
        plot = f4, file.path(figures.folder), device = "jpeg", height = 9, width = 7, units='in')
+
+###________________________
+## ERD by species----
+###________________________
 
 df.erd.to.plot <- df.erd.to.plot %>%
   left_join(erd.sp.names %>%
@@ -102,6 +143,10 @@ ggsave("ERD_by_sp_large_canopy.tiff",
        plot = erd.sp.plot, file.path(figures.folder), device = "tiff", height = 3.5, width = 5, units='in')
 ggsave("ERD_by_sp_large_canopy.jpeg",
        plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 4.5, width = 5, units='in')
+
+###________________________
+## ERD by isotopes----
+###________________________
 
 xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
@@ -178,6 +223,10 @@ ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
 
 #******************************************************
 
+###________________________
+## ERD by mrate data prep----
+###________________________
+
 mrate.depth.select <- subset(mrate.depth, !is.na(rdi.gr) & avg.abund >= 20) %>%
   subset(sp %in% erd.sp) %>% droplevels()
 mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) &
@@ -206,41 +255,12 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 # save.image("results/manuWorkSpace.RData")
 
 ## Minimum Soil water potential reached at depth 1.7 + CI
-
 psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
   subset(median == min(median, na.rm = TRUE))
 
-## Graph SWP for depths used in inverse model
-plot.psi.stat.6.interval.base.select <- ggplot(psi.stat.4.select %>% subset(depth %in% c(0.5, 1, 1.7))
-                                               %>% droplevels()) +
-  scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
-  # coord_cartesian(ylim = c(-2.5, 0)) +
-  theme(panel.grid.major.y = element_line()) +
-  ylab(expression(Psi[soil]*~"(MPa)")) + xlab("Day of the Year") +
-  facet_wrap(. ~ interval.yrs.2) +
-  geom_rect(data=rectangles.4, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
-            fill='gray90', alpha = 0.8) +
-  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), color = as.factor(depth)), size = 0.3, linetype = "solid") +
-  geom_ribbon(aes(x = doy, ymin = below.q5, ymax = median.clim, group = as.factor(depth_year),
-                  fill = as.factor(depth)), alpha = 0.7, show.legend = FALSE) +
-  theme(panel.grid.major.y = element_line(size = 0.1)) +
-  scale_color_discrete(name = "Depth (m)", labels = c("0.5", "1", "1.7")) +
-  guides(color = guide_legend(override.aes = list(size = 3))) +
-  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 200)) +
-  theme(legend.position = "top")
-
-plot.psi.stat.7.interval.q2.5.select <- plot.psi.stat.6.interval.base.select %+%
-  subset(psi.stat.4.select, depth %in% c(0.5, 1, 1.7) & interval.yrs != "(Missing)") +
-  scale_y_continuous(trans = rev_sqrt_trans(), breaks = c(0.01, 0.1, 0.5, 1, 1.5, 2.0),
-                     labels = c("0.01", "-0.1", "-0.5", "-1.0", "-1.5", "-2.0")) +
-  facet_wrap(. ~ interval.yrs, nrow = 1) +
-  geom_ribbon(aes(x = doy, ymin = below.q2.5, ymax = median.clim, group = as.factor(depth_year),
-                  fill = as.factor(depth)), alpha = 0.7, show.legend = FALSE)
-ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.tiff",
-       plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "tiff", height = 2.5, width = 6, units='in')
-ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.jpeg",
-       plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
-
+###____________________________
+### ERD vs. hydraulic traits---
+###____________________________
 erd.stem.traits.only <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%
@@ -294,7 +314,9 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
        plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
 
-## Correlation chart
+###__________________________________________
+## Correlation chart: ERD vs. hydraulic traits----
+###__________________________________________
 # Check correlations (as scatterplots), distribution and print correlation coefficient
 
 erd.pairs <- erd.stem.traits.only.lab %>%
@@ -379,8 +401,9 @@ chart.erd.pairs <- ggpairs(
   ))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits_cor.chart.jpeg")),
        plot = chart.erd.pairs, height = 5.5, width = 5.5, units ='in')
-
-# Kmax vs. growth
+###_________________
+### Kmax vs. growth----
+###_________________
 stem.k.gr <- erd.stem.traits %>% left_join(demo.sp, by = "sp") %>%
   left_join(traits.labels.select %>% select(trait, trait.plot), by = "trait") %>%
   droplevels()
@@ -428,6 +451,10 @@ grate.adult.leaf.traits.plot <- ggplot(leaf.k.gr %>%
 ggsave(file.path(figures.folder, paste0("grate.adult.leaf.traits.tiff")),
        plot = grate.adult.leaf.traits.plot, height = 3, width = 3, units ='in')
 
+###________________________
+## ERD vs. mortality rates----
+###________________________
+
 mfac.plot.15 <- ggplot(mrate.depth.mean,
                        aes(y = mrate, x = rdi.gr)) +
   geom_smooth(method = "lm", formula = formula) +
@@ -453,6 +480,10 @@ mfac.plot.15.sub <- mfac.plot.15 %+% subset(mrate.depth.mean, sp %in% erd.stem.t
 ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.15.sub, height = 3, width = 3, units = 'in')
 
+###________________________
+## ERD vs. growth rates----
+###________________________
+
 pg.2 <- ggplot(mrate.depth.mean,
                aes(x = rdi.gr, y = grate)) +
   # geom_smooth(method = "lm", formula = formula) +
@@ -472,6 +503,9 @@ pg.2 <- ggplot(mrate.depth.mean,
 ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_rdi.gr.jpeg")), plot = pg.2, height = 3, width = 3, units='in')
 ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_rdi.gr.tiff")), plot = pg.2, height = 3, width = 3, units='in')
 
+###______________________________
+## mortality vs. growth rates----
+###______________________________
 
 mfac.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
@@ -516,6 +550,10 @@ mfac.plot.9.0.sub <- mfac.plot.9.0 %+% subset(mrate.mfac.depth.gr.mean.mfac,
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.tiff")),
        plot = mfac.plot.9.0.sub, height = 3.5, width = 3.5, units = 'in')
 
+###________________________
+## K by Psi----
+###________________________
+
 
 pt1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_SG100C_AVG_predicted_AB.tiff", scale = 1)
 pt2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/kmax_by_psi_color_by_LMALAM_AVD_predicted_AB.tiff", scale = 1)
@@ -543,6 +581,10 @@ ggsave("plot.obs.plc.tiff", plot = plot.obs.plc, path =
 ggsave("plot.obs.plc.jpeg", plot = plot.obs.plc, path =
          file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "jpeg", height = 4.4, width = 4.4, units ='in')
 
+###________________________
+## ERD vs. Psi_crit----
+###________________________
+
 erd.data <- erd.data %>% left_join(data.model.AB.sub %>%
                                      dplyr::select(sp, Kmax, psi_kl50, psi_kl80, psi_kl20), by = "sp")
 erd.p50.plot <- ggplot(erd.data, aes(y = depth, x = psi_kl50)) +
@@ -563,7 +605,9 @@ erd.p50.plot <- ggplot(erd.data, aes(y = depth, x = psi_kl50)) +
 ggsave(file.path(figures.folder, paste0("erd.p0L.jpeg")),
        plot = erd.p50.plot, height = 3, width = 3, units ='in')
 
-## plc curves
+###________________________________
+## plc curves: data vs. model----
+###________________________________
 ## those species for which curves are fit to data in solid lines, rest predicrted from model in dashed lines
 obs.mod.plc <- obs.sp.vcurves.1 %>%
   subset(sp %in% erd.sp) %>%
@@ -608,6 +652,10 @@ ggsave(plot = obs.mod.plccurves.black, file.path("figures/PhenoDemoTraitsPsi/kma
        device = "jpeg", height = 2.7, width = 3, units='in')
 
 
+###________________________
+## ab.table----
+###________________________
+
 ab.table <- obs.data.model.AB %>%
   subset(sp %in% erd.sp) %>%
   mutate(Source = "Data") %>%
@@ -625,7 +673,6 @@ ab.table <- obs.data.model.AB %>%
   mutate(Species = tolower(Species)) %>%
   dplyr::select(Genus, Species, Family, A, B, Kmax.leaf, Psi_50.leaf, Source) %>%
   mutate(Family = as.character(Family))
-
 
 # Some familynames do not end in ceae. Correcting that
 correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),

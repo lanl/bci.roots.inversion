@@ -2350,8 +2350,11 @@ psi.stat.4.extreme.yr  <- psi.stat.4 %>%
 psi.stat.4 <- psi.stat.4 %>%
   left_join(psi.stat.4.extreme.yr, by = "depth_year")
 
-save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.Rdata"))
 save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+
+# load(file = file.path(results.folder, "psi.stat.4.Rdata"))
+# load(file = file.path(results.folder, "psi.stat.4.select.Rdata"))
 
 pct.drought.days <- psi.stat.4 %>%
   mutate(season = ifelse(doy < 120, "Dry Season", "Wet Season")) %>%
@@ -2465,31 +2468,36 @@ plot.psi.stat.7.interval.q2.5 <- plot.psi.stat.6.interval.base %+%
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5.jpeg",
        plot = plot.psi.stat.7.interval.q2.5, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
 
-psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
-plot.psi.stat.7.interval.q2.5.depth <- plot.psi.stat.5.base %+%
-  subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)") +
-  facet_wrap(plot.depth ~ interval.yrs, nrow = 3) +
-  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), linetype = "Mean"), size = 0.5) +
-  geom_ribbon(aes(x = doy, ymin = q2.5.clim, ymax = median.clim, group = as.factor(depth),
-                  fill = "Lower 95% CI"), alpha = 0.7) +
+## Graph SWP for depths used in inverse model
+plot.psi.stat.6.interval.base.select <- ggplot(psi.stat.4.select %>% subset(depth %in% c(0.5, 1, 1.7))
+                                               %>% droplevels()) +
+  scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
+  # coord_cartesian(ylim = c(-2.5, 0)) +
+  theme(panel.grid.major.y = element_line()) +
+  ylab(expression(Psi[soil]*~"(MPa)")) + xlab("Day of the Year") +
+  facet_wrap(. ~ interval.yrs.2) +
+  geom_rect(data=rectangles.4, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+            fill='gray90', alpha = 0.8) +
+  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), color = as.factor(depth)), size = 0.3, linetype = "solid") +
+  geom_ribbon(aes(x = doy, ymin = below.q5, ymax = median.clim, group = as.factor(depth_year),
+                  fill = as.factor(depth)), alpha = 0.7, show.legend = FALSE) +
   theme(panel.grid.major.y = element_line(size = 0.1)) +
+  scale_color_discrete(name = "Depth (m)", labels = c("0.5", "1", "1.7")) +
+  guides(color = guide_legend(override.aes = list(size = 3))) +
   coord_cartesian(ylim = c(-2, 0), xlim = c(0, 200)) +
-  geom_line(data = psi.stat.4 %>%
-              subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
-            aes(x = doy, y = median, group = as.factor(depth_year),
-                  color = year), size = 0.5, alpha = 1) +
-  scale_linetype_manual(name = "", values = c("solid")) +
-  scale_fill_manual(name = "", values = c("gray80")) +
-  guides(linetype = guide_legend(order = 1, title = NULL, label.position = "top"),
-         fill = guide_legend(order = 2, title = NULL, label.position = "top"),
-         color = guide_legend(order = 3, title = "Year",
-                              #label.position = "bottom", direction = "horizontal",
-                              override.aes = list(size = 3))) +
-  theme(legend.position = "bottom", legend.direction = "horizontal")
-  # geom_line(data = psi.stat.4 %>% subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
-  #           aes(x = doy, y = below.q2.5, group = as.factor(depth_year), color = year),  size = 1.5, alpha = 1, show.legend = FALSE)
-ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_by_dpeth.jpeg",
-       plot = plot.psi.stat.7.interval.q2.5.depth, file.path(figures.folder), device = "jpeg", height = 6, width = 7, units='in')
+  theme(legend.position = "top")
+
+plot.psi.stat.7.interval.q2.5.select <- plot.psi.stat.6.interval.base.select %+%
+  subset(psi.stat.4.select, depth %in% c(0.5, 1, 1.7) & interval.yrs != "(Missing)") +
+  scale_y_continuous(trans = rev_sqrt_trans(), breaks = c(0.01, 0.1, 0.5, 1, 1.5, 2.0),
+                     labels = c("0.01", "-0.1", "-0.5", "-1.0", "-1.5", "-2.0")) +
+  facet_wrap(. ~ interval.yrs, nrow = 1) +
+  geom_ribbon(aes(x = doy, ymin = below.q2.5, ymax = median.clim, group = as.factor(depth_year),
+                  fill = as.factor(depth)), alpha = 0.7, show.legend = FALSE)
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.tiff",
+       plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "tiff", height = 2.5, width = 6, units='in')
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q2.5_depths_in_inverse_model.jpeg",
+       plot = plot.psi.stat.7.interval.q2.5.select, file.path(figures.folder), device = "jpeg", height = 2.5, width = 6, units='in')
 
 ## plot over observed
 plot.psi.stat.7.interval.median <- plot.psi.stat.6.interval.base %+%

@@ -102,6 +102,13 @@ leafless_mar.apr <- read.csv("data-raw/traits/isotopes/Meinzer_1999_isotope_sp_l
 iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.csv", na.strings = c("NA", ""), header = T, row.names = NULL, check.names = F)
 
 #******************************************************
+## Load BCI traits----
+#******************************************************
+
+bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
+  rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>% mutate(sp = tolower(sp))
+
+#******************************************************
 ## Load Deciduousness-----
 #******************************************************
 
@@ -792,12 +799,6 @@ gpp.models <- list(eq.gpp.vpd.tower = eq.gpp.vpd.tower,
                    eq.gpp.rad.pet.gam = eq.gpp.rad.pet.gam)
 save(gpp.models, file = file.path(results.folder, "gpp.models.Rdata"))
 
-#******************************************************
-## Load BCI traits----
-#******************************************************
-
-bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
-  rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>% mutate(sp = tolower(sp))
 
 #******************************************************
 ### Load Hydraulic traits by Brett Wolfe ---------
@@ -1566,6 +1567,7 @@ obs.sp.vcurves <- do.call(rbind.data.frame, obs.predict.list)
 save(bci.AB, file = file.path(results.folder, "bci.AB.Rdata"))
 save(gap.models, file = file.path(results.folder, "gap.models.Rdata"))
 save(data.model.AB, file = file.path(results.folder, "data.model.AB.Rdata"))
+save(obs.data.model.AB, file = file.path(results.folder, "obs.data.model.AB.Rdata"))
 save(sp.soft.filled, file = file.path(results.folder, "sp.soft.filled.Rdata"))
 save(sp.exp.param, file = file.path(results.folder, "sp.exp.param.Rdata"))
 
@@ -2427,7 +2429,8 @@ leaf.fall.gain <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
   mutate(leaf_fall.mov = rollmean(leaf_fall, k = 14, fill = NA),
          leaf_fall.mov2 = rollmean(leaf_fall, k = 180, fill = NA)) %>%
   ## backtracking leaf_gain from leaf_lifetime
-  mutate(leaf_gain = lead(leaf_fall.mov, n = as.integer(mean(lifetime))),
+  mutate(leaf_gain = lead(leaf_fall, n = as.integer(mean(lifetime))),
+         # leaf_gain = lead(leaf_fall.mov, n = as.integer(mean(lifetime))),
          leaf_gain.mov = rollmean(leaf_gain, k = 14, fill = NA)) %>%
   ungroup(sp) %>%
   group_by(sp, sp.leaf.fall.year) %>%
@@ -2452,187 +2455,248 @@ f.fl <- ggplot(leaf.fall.gain %>% subset(sp %in% c("alsebl", "alchco", "anacex")
 ggsave("leaf.fall.gain_ts_BCI-Poachers_example_species.jpeg",
        plot = f.fl, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 9, units='in')
 
-## trying a different scheme but didn't finish
-# # fall peak date
-# fall.peak <- leaf.fall.gain %>%
-#   group_by(sp, sp.leaf.fall.beg.year) %>%
-#   arrange(desc(leaf_fall.mov), .by_group = TRUE) %>%
-#   summarise(fall.peak.date = first(date), .groups = "drop_last") %>%
-#   ungroup(sp, sp.leaf.fall.beg.year)
-#
-# leaf.fall.gain <- leaf.fall.gain %>%
-#   left_join(fall.peak, by = c("sp", "sp.leaf.fall.beg.year"))
-#
-# fall.beg <- leaf.fall.gain %>%
-#   group_by(sp, sp.leaf.fall.beg.year) %>%
-#   arrange(leaf_fall.mov, .by_group = TRUE) %>%
-#   summarise(fall.beg.date = first(date[date < fall.peak.date]), .groups = "drop_last") %>%
-#   ungroup(sp, sp.leaf.fall.beg.year)
-#
-# leaf.fall.gain <- leaf.fall.gain %>%
-#   left_join(fall.beg, by = c("sp", "sp.leaf.fall.beg.year"))
-# ## leaf gain peak
-# gain.peak <- leaf.fall.gain %>%
-#   group_by(sp, sp.leaf.gain.beg.year) %>%
-#   arrange(desc(leaf_gain.mov), .by_group = TRUE) %>%
-#   summarise(gain.peak.date = first(date), .groups = "drop_last") %>%
-#   ungroup(sp, sp.leaf.gain.beg.year)
-#
-# leaf.fall.gain <- leaf.fall.gain %>%
-#   left_join(gain.peak, by = c("sp", "sp.leaf.gain.beg.year"))
-#
-# gain.beg <- leaf.fall.gain %>%
-#   group_by(sp, sp.leaf.gain.beg.year) %>%
-#   arrange(leaf_gain.mov, .by_group = TRUE) %>%
-#   summarise(gain.beg.date = first(date[date < gain.peak.date]), .groups = "drop_last") %>%
-#   ungroup(sp, sp.leaf.gain.beg.year)
-#
-# leaf.fall.gain <- leaf.fall.gain %>%
-#   left_join(gain.beg, by = c("sp", "sp.leaf.gain.beg.year"))
-#
-# ## from leaf gain begin date until leaf-fall begin date, define a year and accumulate leaf gain
-#
-# leaf.fall.gain <- leaf.fall.gain %>%
-#   mutate(gain.cumsum.year = ifelse(date >= gain.beg.date & date < fall.beg.date, year, NA),
-#          fall.cumsum.year = ifelse(date >= fall.beg.date & date < gain.beg.date, NA, year)) %>%
-#   group_by(sp, gain.cumsum.year) %>%
-#   mutate(cumsum.gain = cumsum(leaf_gain)) %>%
-#   ungroup(sp, gain.cumsum.year) %>%
-#   group_by(sp, fall.cumsum.year) %>%
-#   mutate(cumsum.fall = cumsum(leaf_fall)) %>%
-#   ungroup(sp, fall.cumsum.year)
-#
-# ## visualise
-# f.fl <- ggplot(leaf.fall.gain %>% subset(sp %in% c("alsebl", "alchco", "anacex") & site == "BCI-Poachers" & year %in% c(1990:1993)),
-#                aes(x = date)) +
-#   facet_wrap(. ~ sp, scales = "free_y", nrow = 3) +
-#   geom_hline(yintercept = 0) +
-#   geom_line(aes(y = leaf_fall.mov, group = sp), size = 0.3, color = "brown") +
-#   # geom_line(aes(y = leaf_fall.mov2, group = sp), size = 1, color = "brown") +
-#   # geom_line(aes(y = leaf_fall, group = sp), size = 0.3, color = "red") +
-#   geom_line(aes(y = leaf_gain, group = sp), size = 0.3, color = "darkgreen") +
-#   geom_line(aes(y = cumsum.fall/100, group = sp), size = 1, color = "brown") +
-#   # geom_line(aes(y = cumsum.gain/100, group = sp), size = 1, color = "darkgreen") +
-#   scale_y_continuous(sec.axis = sec_axis(~ .*100 , name = "Leaf cumsum [g]")) +
-#   labs(y = "Leaf fall [g]") +
-#   theme(legend.position = "top", legend.title = element_blank()) +
-#   scale_color_viridis_d(drop = FALSE) +
-#   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-# # ggsave("leaf.fall.gain_ts_BCI-Poachers_example_species.jpeg",
-# #        plot = f.fl, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 9, units='in')
+# trying a different scheme but didn't finish
+# fall peak date
+fall.peak <- leaf.fall.gain %>%
+  group_by(sp, sp.leaf.fall.beg.year) %>%
+  arrange(desc(leaf_fall.mov), .by_group = TRUE) %>%
+  summarise(fall.peak.date = first(date), .groups = "drop_last") %>%
+  ungroup(sp, sp.leaf.fall.beg.year)
 
+leaf.fall.gain <- leaf.fall.gain %>%
+  left_join(fall.peak, by = c("sp", "sp.leaf.fall.beg.year"))
 
-sp.ann.tot.leaf.fall.mean <- leaf.fall.gain %>%
-  # taking annual sum only for years with obs for > 300 days
-  subset(n.obs > 300) %>%
-  group_by(sp, sp.leaf.fall.year) %>%
-  summarise(annual.leaf.fall = sum(leaf_fall, na.rm = TRUE), .groups = "drop_last") %>%
+fall.beg <- leaf.fall.gain %>%
+  group_by(sp, sp.leaf.fall.beg.year) %>%
+  arrange(leaf_fall.mov, .by_group = TRUE) %>%
+  summarise(fall.beg.date = first(date[date < fall.peak.date]), .groups = "drop_last") %>%
+  ungroup(sp, sp.leaf.fall.beg.year)
+
+## leaf gain peak
+gain.peak <- leaf.fall.gain %>%
+  group_by(sp, sp.leaf.gain.beg.year) %>%
+  arrange(desc(leaf_gain.mov), .by_group = TRUE) %>%
+  summarise(gain.peak.date = first(date), .groups = "drop_last") %>%
+  ungroup(sp, sp.leaf.gain.beg.year)
+
+leaf.fall.gain <- leaf.fall.gain %>%
+  left_join(gain.peak, by = c("sp", "sp.leaf.gain.beg.year"))
+
+gain.beg <- leaf.fall.gain %>%
+  group_by(sp, sp.leaf.gain.beg.year) %>%
+  arrange(leaf_gain.mov, .by_group = TRUE) %>%
+  summarise(gain.beg.date = first(date[date < gain.peak.date]), .groups = "drop_last") %>%
+  ungroup(sp, sp.leaf.gain.beg.year)
+
+## creating years from one fall.beg to another
+leaf.fall.gain.sp <- split(leaf.fall.gain, leaf.fall.gain$sp)
+fall.beg.sp <- split(fall.beg, fall.beg$sp)
+gain.beg.sp <- split(gain.beg, gain.beg$sp)
+for (i in 1:length(leaf.fall.gain.sp)) {
+  leaf.fall.gain.sp[[i]]$fall.beg.date.yr <- cut(leaf.fall.gain.sp[[i]]$date, as.Date(fall.beg.sp[[i]]$fall.beg.date))
+  leaf.fall.gain.sp[[i]]$gain.beg.date.yr <- cut(as.Date(leaf.fall.gain.sp[[i]]$date), as.Date(gain.beg.sp[[i]]$gain.beg.date))
+  leaf.fall.gain.sp[[i]]$leaf_fall_first_na <- leaf.fall.gain.sp[[i]]$leaf_fall
+
+  ## for some reason for species records that began in 1985, have the second beg.date that skips couple of year
+  # so removing gain for the first period for which which beg.year is superlong,
+  ## and then making leaf_fall NA for the second year, so that leaf_gain can accumulate
+  fall.rows.to.na <- which(as.Date(leaf.fall.gain.sp[[i]]$gain.beg.date.yr) %in% gain.beg.sp[[i]]$gain.beg.date[1:2])
+  leaf.fall.gain.sp[[i]]$leaf_fall_first_na[fall.rows.to.na] <- NA
+  gain.rows.to.na <- which(as.Date(leaf.fall.gain.sp[[i]]$gain.beg.date.yr) %in% gain.beg.sp[[i]]$gain.beg.date[1])
+  leaf.fall.gain.sp[[i]]$leaf_gain[gain.rows.to.na] <- NA
+}
+
+## from leaf gain begin date until leaf-fall begin date, define a year and accumulate leaf gain
+
+leaf.balance <- dplyr::bind_rows(leaf.fall.gain.sp, .id = 'sp') %>%
+  ## this will remove days before the first gain.beg.date.yr
+  ## the stage from where one can start cumulating.
+  subset(!is.na(gain.beg.date.yr)) %>%
+  subset(!is.na(leaf_gain)) %>%
+  arrange(sp, date) %>%
   group_by(sp) %>%
-  summarise(annual.leaf.fall.mean = mean(annual.leaf.fall, na.rm = TRUE),
-            annual.leaf.fall.max = max(annual.leaf.fall, na.rm = TRUE), .groups = "drop_last")
+  # group_by(sp, gain.beg.date.yr) %>%
+  mutate(leaf_fall_first_na = ifelse(is.na(leaf_fall_first_na), 0, leaf_fall_first_na),
+         cumsum.gain.fall = ifelse(cumsum(leaf_gain - leaf_fall_first_na) < 0, cumsum(leaf_gain), cumsum(leaf_gain - leaf_fall_first_na))) %>%
+         #
+         # cumsum.gain = cumsum(leaf_gain),
+         # cumsum.fall = cumsum(leaf_fall_first_na),
+         # diff.gain.fall = ifelse(leaf_fall < 0, leaf_gain, leaf_gain - leaf_fall),
+         # cumsum.gain.fall2 = ifelse(cumsum.fall < 0, cumsum.gain, cumsum.gain  - cumsum.fall),
+         # cumsum.gain.fall3 = cumsum(leaf_gain - leaf_fall_first_na),
+         # cumsum.gain.fall4 = cumsum(diff.gain.fall)) %>%
+  ungroup(sp)
 
-leaf.balance <- leaf.fall.gain %>%
-  left_join(sp.ann.tot.leaf.fall.mean, by = "sp") %>%
-  group_by(sp) %>%
-  mutate(leaf.change = c(leaf_gain - leaf_fall)) %>%
-  subset(!is.na(leaf.change)) %>%
-  ## removing partial years
-  ## for BCI-50-ha that begins in 2013, start doy are at ~180
-  ## for BCI-50-ha that begins in 2013, start doy are at ~330
-  mutate(partial.firstyear = ifelse(sp.leaf.fall.year == min(sp.leaf.fall.year, na.rm = TRUE) &
-                                      n.obs < 365, TRUE, FALSE)) %>%
-  subset(!partial.firstyear) %>%
-  ## leaf change as a precent of total canopy
-  ## two estimates of canopy: 1. mean total annual leaf fall 2. max total annual leaf fall
-  mutate(frac.leaf.change.mean = leaf.change/annual.leaf.fall.mean,
-         frac.leaf.change.max = leaf.change/annual.leaf.fall.max,
-         ## setting first date of observation in the total record as one
-         frac.leaf.change.mean = ifelse(date == min(date, na.rm = TRUE),
-                                          1, frac.leaf.change.mean),
-         frac.leaf.change.max = ifelse(date == min(date, na.rm = TRUE),
-                                        1, frac.leaf.change.max),
-         ## The cumulating change to the starting value of 1
-         leaf.balance = cumsum(frac.leaf.change.mean)) %>%
-  ungroup(sp) %>%
-  group_by(sp, doy) %>%
-  ## average leaf balance by doy across years
-  mutate(leaf.balance.mean = mean(leaf.balance, na.rm = TRUE)) %>%
-  ungroup(sp, doy) %>%
-  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
-  mutate(sp.year = paste(sp, sp.leaf.fall.year, sep ="."))
-
-f0.1 <- ggplot(leaf.balance %>% subset(site == "BCI-Poachers"),
-       aes(x = date, y = leaf.balance)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
+## visualise
+f.fl <- ggplot(leaf.balance %>% subset(sp %in% c("alsebl", "alchco", "anacex") & site == "BCI-Poachers"),
+               aes(x = date)) +
+  facet_wrap(. ~ sp, scales = "free_y", nrow = 3) +
   geom_hline(yintercept = 0) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.3) +
+  # geom_line(aes(y = leaf_fall.mov, group = sp), size = 0.3, color = "brown") +
+  # # geom_line(aes(y = leaf_fall.mov2, group = sp), size = 1, color = "brown") +
+  # # geom_line(aes(y = leaf_fall, group = sp), size = 0.3, color = "red") +
+  # geom_line(aes(y = leaf_gain.mov, group = sp), size = 0.3, color = "darkgreen") +
+  # geom_line(aes(y = cumsum.fall, group = sp), size = 1, color = "brown") +
+  # geom_line(aes(y = cumsum.gain, group = sp), size = 1, color = "darkgreen") +
+  geom_line(aes(y = cumsum.gain.fall, group = sp), size = 1, color = "darkblue") +
+  # scale_y_continuous(sec.axis = sec_axis(~ .*100 , name = "Leaf cumsum [g]")) +
+  labs(y = "Leaf Cover [g]") +
   theme(legend.position = "top", legend.title = element_blank()) +
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave("leaf.balance_ts_BCI-Poachers.jpeg",
-       plot = f0.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
-f0.2 <- f0.1 %+% subset(leaf.balance, sp %in% erd.sp & site == "BCI50-ha")
-ggsave("leaf.balance_ts_BCI50-ha.jpeg",
-       plot = f0.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
-
-f1.1 <- ggplot(leaf.balance %>% subset(site == "BCI-Poachers"),
-               aes(x = doy, y = leaf.balance)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
-  geom_hline(yintercept = 0) +
-  geom_line(aes(group = sp.leaf.fall.year, color = deciduousness), size = 0.3) +
-  # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
-  #             fill='pink', alpha=0.8) +
-  geom_line(aes(y = leaf.balance.mean), color = "red") +
-  ylab(expression('Leaf Balance')) + xlab("DOY") +
-  # geom_vline(aes(xintercept = 330), color = "red") +
-  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
-                              override.aes = list(size = 3))) +
-  theme(legend.position = "top", legend.title = element_blank()) +
-  scale_color_viridis_d(drop = FALSE) +
-  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave("leaf.balance.seasonality_BCI-Poachers.jpeg",
-       plot = f1.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
-f1.2 <- f1.1 %+% subset(leaf.balance, site == "BCI50-ha")
-ggsave("leaf.balance.seasonality_BCI50-ha.jpeg",
-       plot = f1.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+# ggsave("leaf.fall.gain_ts_BCI-Poachers_example_species.jpeg",
+#        plot = f.fl, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 9, units='in')
 
 sp.leaf_cover.for.model <- leaf.balance %>%
+  subset(year > 1990 & site == "BCI-Poachers") %>%
+  mutate(doy = as.numeric(format(date, "%j"))) %>%
   group_by(sp, doy) %>%
-  summarise(leaf.balance.mean = mean(leaf.balance, na.rm = TRUE), .groups = "drop_last") %>%
-  group_by(sp) %>%
-  mutate(min.leaf.balance.mean = min(leaf.balance.mean, na.rm = TRUE),
-         max.leaf.balance.mean = max(leaf.balance.mean, na.rm = TRUE)) %>%
-  ungroup(sp) %>%
-  group_by(sp, doy) %>%
-  ## for an evergreen species seasonal minima is -ve (aspicr, dendar), phenology is not well constrained,
-  ## shift above zero such that max is one
-  mutate(leaf.balance.mean.mod = ifelse(min.leaf.balance.mean < 0,
-                                        c(leaf.balance.mean + c(1 - max.leaf.balance.mean)),
-                                    ## otherwise keep as it is
-                                      leaf.balance.mean)) %>%
+  summarise(leaf.balance = mean(cumsum.gain.fall, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(sp, doy) %>%
-  group_by(sp) %>%
-  mutate(max.leaf.balance.mean.mod = max(leaf.balance.mean.mod, na.rm = TRUE)) %>%
-  ungroup(sp) %>%
-  mutate(leaf_cover = leaf.balance.mean.mod/max.leaf.balance.mean.mod) %>%
-  left_join(deci %>% select(sp, deciduousness), by = "sp")
+  left_join(deci %>% select(sp, deciduousness), by = "sp") %>%
+  group_by(sp, deciduousness) %>%
+  mutate(min.leaf.balance = min(leaf.balance, na.rm = TRUE),
+         max.leaf.balance = max(leaf.balance, na.rm = TRUE),
+         leaf_cover = ifelse(deciduousness == "Evergreen",
+                             leaf.balance/max.leaf.balance,
+                             c(leaf.balance - min.leaf.balance)/c(max.leaf.balance - min.leaf.balance)),
+         ## virosp has a strange pattern for some reason, since it's an evergreen making it 1
+         leaf_cover = ifelse(sp == "virosp", 1, leaf_cover)) %>%
+  ungroup(sp, deciduousness)
 
-f1.3 <- ggplot(sp.leaf_cover.for.model,
-               aes(x = doy, y = leaf_cover)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
+f.lb.base <- ggplot(sp.leaf_cover.for.model,
+               aes(x = doy)) +
+  facet_wrap(. ~ sp, scales = "free_y") +
   geom_hline(yintercept = 0) +
-  geom_line(aes(color = deciduousness), size = 1) +
-  ylab(expression('Leaf Cover')) + xlab("DOY") +
-  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
-                              override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave("leaf.cover.seasonality_mean.jpeg",
-       plot = f1.3, file.path(figures.folder.phen), device = "jpeg", height = 9, width = 14, units='in')
+f.lb <-   f.lb.base +
+  geom_line(aes(y = leaf.balance, group = sp, color = deciduousness), size = 1) +
+  labs(y = "Leaf Balance [g]")
+ggsave("leaf.balance.seasonality_mean_new.jpeg",
+       plot = f.lb, file.path(figures.folder.phen), device = "jpeg", height = 9, width = 14, units='in')
+
+f.lc <-   f.lb.base +
+  geom_line(aes(y = leaf_cover, group = sp, color = deciduousness), size = 1) +
+  labs(y = "Normalised LAI [unitless]")
+ggsave("leaf.cover.seasonality_mean_new.jpeg",
+       plot = f.lc, file.path(figures.folder.phen), device = "jpeg", height = 9, width = 14, units='in')
 
 save(leaf.balance, file = file.path(results.folder, "leaf.balance.Rdata"))
 save(sp.leaf_cover.for.model, file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
+
+# sp.ann.tot.leaf.fall.mean <- leaf.fall.gain %>%
+#   # taking annual sum only for years with obs for > 300 days
+#   subset(n.obs > 300) %>%
+#   group_by(sp, sp.leaf.fall.year) %>%
+#   summarise(annual.leaf.fall = sum(leaf_fall, na.rm = TRUE), .groups = "drop_last") %>%
+#   group_by(sp) %>%
+#   summarise(annual.leaf.fall.mean = mean(annual.leaf.fall, na.rm = TRUE),
+#             annual.leaf.fall.max = max(annual.leaf.fall, na.rm = TRUE), .groups = "drop_last")
+#
+# leaf.balance <- leaf.fall.gain %>%
+#   left_join(sp.ann.tot.leaf.fall.mean, by = "sp") %>%
+#   group_by(sp) %>%
+#   mutate(leaf.change = c(leaf_gain - leaf_fall)) %>%
+#   subset(!is.na(leaf.change)) %>%
+#   ## removing partial years
+#   ## for BCI-50-ha that begins in 2013, start doy are at ~180
+#   ## for BCI-50-ha that begins in 2013, start doy are at ~330
+#   mutate(partial.firstyear = ifelse(sp.leaf.fall.year == min(sp.leaf.fall.year, na.rm = TRUE) &
+#                                       n.obs < 365, TRUE, FALSE)) %>%
+#   subset(!partial.firstyear) %>%
+#   ## leaf change as a precent of total canopy
+#   ## two estimates of canopy: 1. mean total annual leaf fall 2. max total annual leaf fall
+#   mutate(frac.leaf.change.mean = leaf.change/annual.leaf.fall.mean,
+#          frac.leaf.change.max = leaf.change/annual.leaf.fall.max,
+#          ## setting first date of observation in the total record as one
+#          frac.leaf.change.mean = ifelse(date == min(date, na.rm = TRUE),
+#                                           1, frac.leaf.change.mean),
+#          frac.leaf.change.max = ifelse(date == min(date, na.rm = TRUE),
+#                                         1, frac.leaf.change.max),
+#          ## The cumulating change to the starting value of 1
+#          leaf.balance = cumsum(frac.leaf.change.mean)) %>%
+#   ungroup(sp) %>%
+#   group_by(sp, doy) %>%
+#   ## average leaf balance by doy across years
+#   mutate(leaf.balance.mean = mean(leaf.balance, na.rm = TRUE)) %>%
+#   ungroup(sp, doy) %>%
+#   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
+#   mutate(sp.year = paste(sp, sp.leaf.fall.year, sep ="."))
+#
+# f0.1 <- ggplot(leaf.balance %>% subset(site == "BCI-Poachers"),
+#        aes(x = date, y = leaf.balance)) +
+#   facet_wrap(sp ~ ., scales = "free_y") +
+#   geom_hline(yintercept = 0) +
+#   geom_line(aes(group = sp, color = deciduousness), size = 0.3) +
+#   theme(legend.position = "top", legend.title = element_blank()) +
+#   scale_color_viridis_d(drop = FALSE) +
+#   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+# ggsave("leaf.balance_ts_BCI-Poachers.jpeg",
+#        plot = f0.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+# f0.2 <- f0.1 %+% subset(leaf.balance, sp %in% erd.sp & site == "BCI50-ha")
+# ggsave("leaf.balance_ts_BCI50-ha.jpeg",
+#        plot = f0.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+#
+# f1.1 <- ggplot(leaf.balance %>% subset(site == "BCI-Poachers"),
+#                aes(x = doy, y = leaf.balance)) +
+#   facet_wrap(sp ~ ., scales = "free_y") +
+#   geom_hline(yintercept = 0) +
+#   geom_line(aes(group = sp.leaf.fall.year, color = deciduousness), size = 0.3) +
+#   # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
+#   #             fill='pink', alpha=0.8) +
+#   geom_line(aes(y = leaf.balance.mean), color = "red") +
+#   ylab(expression('Leaf Balance')) + xlab("DOY") +
+#   # geom_vline(aes(xintercept = 330), color = "red") +
+#   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+#                               override.aes = list(size = 3))) +
+#   theme(legend.position = "top", legend.title = element_blank()) +
+#   scale_color_viridis_d(drop = FALSE) +
+#   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+# ggsave("leaf.balance.seasonality_BCI-Poachers.jpeg",
+#        plot = f1.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+# f1.2 <- f1.1 %+% subset(leaf.balance, site == "BCI50-ha")
+# ggsave("leaf.balance.seasonality_BCI50-ha.jpeg",
+#        plot = f1.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
+
+# sp.leaf_cover.for.model <- leaf.balance %>%
+#   group_by(sp, doy) %>%
+#   summarise(leaf.balance.mean = mean(leaf.balance, na.rm = TRUE), .groups = "drop_last") %>%
+#   group_by(sp) %>%
+#   mutate(min.leaf.balance.mean = min(leaf.balance.mean, na.rm = TRUE),
+#          max.leaf.balance.mean = max(leaf.balance.mean, na.rm = TRUE)) %>%
+#   ungroup(sp) %>%
+#   group_by(sp, doy) %>%
+#   ## for an evergreen species seasonal minima is -ve (aspicr, dendar), phenology is not well constrained,
+#   ## shift above zero such that max is one
+#   mutate(leaf.balance.mean.mod = ifelse(min.leaf.balance.mean < 0,
+#                                         c(leaf.balance.mean + c(1 - max.leaf.balance.mean)),
+#                                     ## otherwise keep as it is
+#                                       leaf.balance.mean)) %>%
+#   ungroup(sp, doy) %>%
+#   group_by(sp) %>%
+#   mutate(max.leaf.balance.mean.mod = max(leaf.balance.mean.mod, na.rm = TRUE)) %>%
+#   ungroup(sp) %>%
+#   mutate(leaf_cover = leaf.balance.mean.mod/max.leaf.balance.mean.mod) %>%
+#   left_join(deci %>% select(sp, deciduousness), by = "sp")
+#
+# f1.3 <- ggplot(sp.leaf_cover.for.model,
+#                aes(x = doy, y = leaf_cover)) +
+#   facet_wrap(sp ~ ., scales = "free_y") +
+#   geom_hline(yintercept = 0) +
+#   geom_line(aes(color = deciduousness), size = 1) +
+#   ylab(expression('Leaf Cover')) + xlab("DOY") +
+#   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+#                               override.aes = list(size = 3))) +
+#   theme(legend.position = "top", legend.title = element_blank()) +
+#   scale_color_viridis_d(drop = FALSE) +
+#   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+# ggsave("leaf.cover.seasonality_mean.jpeg",
+#        plot = f1.3, file.path(figures.folder.phen), device = "jpeg", height = 9, width = 14, units='in')
+#
+# save(leaf.balance, file = file.path(results.folder, "leaf.balance.Rdata"))
+# save(sp.leaf_cover.for.model, file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
 
 # f2 <- ggplot(leaf.fall.int, aes(x = date, y = leaf_gm.int)) +
 #   geom_line(aes(group = sp, color = sp), show.legend = FALSE)

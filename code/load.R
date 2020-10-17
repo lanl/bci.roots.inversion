@@ -69,15 +69,18 @@ iso.2.raw <- read.csv("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_Mar
 ## growth. A median residual for each sp_size is caluclated only when at least data from
 # 3 trees are present across all census intervals.
 # Medians within sp_size are then centered and scaled. {residual - E(residual)/sd(residual)}
-growth.type <- "stats"
-dbh.residuals <- "on"
-solar.residuals <- "off"
-growth.selection <- "size_class_predefined_cc_scaled"
-intervals <- 5
-growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
+# growth.type <- "stats"
+# dbh.residuals <- "on"
+# solar.residuals <- "off"
+# growth.selection <- "size_class_predefined_cc_scaled"
+# intervals <- 5
 # growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
+# # growth.name <- load(file =  paste0("results/sp_size.", growth.type, "_growth_dbh.residuals_", dbh.residuals, "_", intervals, "_", growth.selection, ".Rdata"))
 
-growth <- get(growth.name); rm(growth.name)
+# growth <- get(growth.name); rm(growth.name)
+load(file.path("results/GLUEsetup_part2_BCI.RData"))
+growth <- growth_by_si.info$growth
+grate.long <- dplyr::bind_rows(growth, .id = 'sp_size')
 
 ## No. of trees by sp for grpwth data
 g.n <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
@@ -117,6 +120,7 @@ load(file = file.path(results.folder, "sp.exp.param.Rdata"))
 ### Load Leaf Cohort tracking data from the crane sites------
 #******************************************************
 load(file = file.path(results.folder, "sp.leaf_cover.Rdata"))
+load(file = file.path(results.folder, "sp.leaf_cover.mean.Rdata")) # without leaf gain
 load(file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
 
 load(file = file.path(results.folder, "cohort.Rdata"))

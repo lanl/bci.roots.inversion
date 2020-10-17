@@ -532,117 +532,112 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 ## Not ERD model dependent, so can be turned off for ERD tests
 ##*******************************************
 
-psi.stat.4 <- psi %>%
-  mutate(doy = format(date, "%j"),
-         year = format(date, "%Y")) %>%
-  ## due to time nneded for model initialisation soil layers deeper than 2.9 m
-  ## are not fully recharged until the end of 1992, layer 2.9 m recharges by the end of 1992
-  subset(!year %in% c("1990")) %>%
-  subset(!year %in% c("1990", "1991") | depth == 2.9) %>%
-  subset(!year %in% c("1990", "1991", "1992") | depth < 2.9) %>%
-  group_by(date, doy, year, interval.yrs, depth) %>%
-  summarise(median = median(psi, na.rm = TRUE),
-            q97.5 = quantile(psi, probs = 0.975),
-            q2.5 = quantile(psi, probs = 0.025),
-            q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
-  ungroup(doy, year, depth) %>%
-  mutate(doy = as.numeric(doy))
-psi.stat.5 <- psi.stat.4 %>%
-  group_by(doy, depth) %>%
-  summarise(median.clim = median(median, na.rm = TRUE),
-            q97.5.clim = quantile(median, probs = 0.975),
-            q2.5.clim = quantile(median, probs = 0.025),
-            q10.clim = quantile(median, probs = 0.1),
-            q5.clim = quantile(median, probs = 0.05), .groups = "drop_last") %>%
-  ungroup(doy, depth) %>%
-  mutate(doy = as.numeric(doy))
-rectangles.3 <- data.frame(
-  xmin = 120,
-  xmax = 335,
-  ymin = 0,
-  ymax = -2.5
-)
-## For selected depths used in inverse modeling
-# depth.sub, depth.breaks, depth.labels are defined above in section:
-psi.stat.4.select <- psi %>%
-  mutate(doy = format(date, "%j"),
-         year = format(date, "%Y")) %>%
-  ## due to time nneded for model initialisation soil layers deeper than 2.9 m
-  ## are not fully recharged until the end of 1992, layer 2.9 m recharges by the end of 1992
-  subset(!year %in% c("1990")) %>%
-  subset(!year %in% c("1990", "1991") | depth == 2.9) %>%
-  subset(!year %in% c("1990", "1991", "1992") | depth < 2.9) %>%
-  subset(depth %in% depth.sub) %>%
-  mutate(depth = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
-                     labels = depth.labels, right = TRUE)) %>%
-  group_by(date, doy, year, interval.yrs, depth) %>%
-  summarise(median = median(psi, na.rm = TRUE),
-            q97.5 = quantile(psi, probs = 0.975),
-            q2.5 = quantile(psi, probs = 0.025),
-            q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
-  ungroup(doy, year, depth) %>%
-  mutate(doy = as.numeric(doy))
-
-psi.stat.5.select <- psi.stat.4.select %>%
-  group_by(doy, depth) %>%
-  summarise(median.clim = median(median, na.rm = TRUE),
-            q97.5.clim = quantile(median, probs = 0.975),
-            q2.5.clim = quantile(median, probs = 0.025),
-            q10.clim = quantile(median, probs = 0.1),
-            q5.clim = quantile(median, probs = 0.05), .groups = "drop_last") %>%
-  ungroup(doy, depth) %>%
-  mutate(doy = as.numeric(doy))
-
-psi.stat.4 <- psi.stat.4 %>%
-  mutate(interval.yrs.2 = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = c(cut.breaks, max(psi.stat.4$date, na.rm = TRUE)),
-                                                       labels = c(cut.labels.2, "2015-2018"), right = TRUE))) %>%
-  left_join(psi.stat.5, by = c("doy", "depth")) %>%
-  mutate(below.q10 = ifelse(median < q10.clim, median, NA),
-         below.q5 = ifelse(median < q5.clim, median, NA),
-         below.q2.5 = ifelse(median < q2.5.clim, median, NA),
-         depth_year = paste(depth, year, sep = "_"))
-
-psi.stat.4.select <- psi.stat.4.select %>%
-  mutate(interval.yrs.2 = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = c(cut.breaks, max(psi.stat.4$date, na.rm = TRUE)),
-                                                       labels = c(cut.labels.2, "2015-2018"), right = TRUE))) %>%
-  left_join(psi.stat.5.select, by = c("doy", "depth")) %>%
-  mutate(below.q10 = ifelse(median < q10.clim, median, NA),
-         below.q5 = ifelse(median < q5.clim, median, NA),
-         below.q2.5 = ifelse(median < q2.5.clim, median, NA),
-         depth_year = paste(depth, year, sep = "_"))
-## this is the date that's shown in the graph, so only interested in shwoing an extreme year
-## defined for the shown doy range
-xlim.in.wet.season <- 200
-psi.stat.4.extreme.yr  <- psi.stat.4 %>%
-  subset(doy < xlim.in.wet.season) %>%
-  group_by(depth_year) %>%
-  dplyr::summarise(extreme.yr.q2.5 = if_else(any(!is.na(below.q2.5)), TRUE, FALSE), .groups = "drop")
-
-psi.stat.4 <- psi.stat.4 %>%
-  left_join(psi.stat.4.extreme.yr, by = "depth_year")
-
-psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
-
-save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.Rdata"))
-save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
-save(psi.stat.5, file = file.path(results.folder, "psi.stat.5.Rdata"))
-save(psi.stat.5.select, file = file.path(results.folder, "psi.stat.5.select.Rdata"))
-
-# psi.study <- as.data.table(psi.m)[!is.na(interval),][,
-#   ':='(doy = format(date, "%j"),
-#        year = format(date, "%Y"))][
-#   (doy < 368) & (!year %chin% c("1990")) &
-#     (!year %chin% c("1991") | depth == 3) &
-#     (!year %chin% c("1991", "1992") | depth < 3)][, c("year") := NULL][,
-#     doy := as.numeric(as.character(doy))]
-
-# psi.study <- as.data.frame(psi.study)
-
-tlp.sp <-  traits.long %>% subset(trait == "TLP") %>% select(sp, value) %>% rename(tlp = value)
-n.tlp.sp <- length(tlp.sp$sp)
-tlp.sp <- tlp.sp %>%
-  mutate(psi_threshold = tlp*0.8)
-tlp.sp.ls <- split(tlp.sp, f = list(tlp.sp$sp), drop = TRUE)
+# psi.stat.4 <- psi %>%
+#   mutate(doy = format(date, "%j"),
+#          year = format(date, "%Y")) %>%
+#   ## due to time nneded for model initialisation soil layers deeper than 2.9 m
+#   ## are not fully recharged until the end of 1992, layer 2.9 m recharges by the end of 1992
+#   subset(!year %in% c("1990")) %>%
+#   subset(!year %in% c("1990", "1991") | depth == 2.9) %>%
+#   subset(!year %in% c("1990", "1991", "1992") | depth < 2.9) %>%
+#   group_by(date, doy, year, interval.yrs, depth) %>%
+#   summarise(median = median(psi, na.rm = TRUE),
+#             q97.5 = quantile(psi, probs = 0.975),
+#             q2.5 = quantile(psi, probs = 0.025),
+#             q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
+#   ungroup(doy, year, depth) %>%
+#   mutate(doy = as.numeric(doy))
+# psi.stat.5 <- psi.stat.4 %>%
+#   group_by(doy, depth) %>%
+#   summarise(median.clim = median(median, na.rm = TRUE),
+#             q97.5.clim = quantile(median, probs = 0.975),
+#             q2.5.clim = quantile(median, probs = 0.025),
+#             q10.clim = quantile(median, probs = 0.1),
+#             q5.clim = quantile(median, probs = 0.05), .groups = "drop_last") %>%
+#   ungroup(doy, depth) %>%
+#   mutate(doy = as.numeric(doy))
+# rectangles.3 <- data.frame(
+#   xmin = 120,
+#   xmax = 335,
+#   ymin = 0,
+#   ymax = -2.5
+# )
+# ## For selected depths used in inverse modeling
+# # depth.sub, depth.breaks, depth.labels are defined above in section:
+# psi.stat.4.select <- psi %>%
+#   mutate(doy = format(date, "%j"),
+#          year = format(date, "%Y")) %>%
+#   ## due to time nneded for model initialisation soil layers deeper than 2.9 m
+#   ## are not fully recharged until the end of 1992, layer 2.9 m recharges by the end of 1992
+#   subset(!year %in% c("1990")) %>%
+#   subset(!year %in% c("1990", "1991") | depth == 2.9) %>%
+#   subset(!year %in% c("1990", "1991", "1992") | depth < 2.9) %>%
+#   subset(depth %in% depth.sub) %>%
+#   mutate(depth = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
+#                      labels = depth.labels, right = TRUE)) %>%
+#   group_by(date, doy, year, interval.yrs, depth) %>%
+#   summarise(median = median(psi, na.rm = TRUE),
+#             q97.5 = quantile(psi, probs = 0.975),
+#             q2.5 = quantile(psi, probs = 0.025),
+#             q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
+#   ungroup(doy, year, depth) %>%
+#   mutate(doy = as.numeric(doy))
+#
+# psi.stat.5.select <- psi.stat.4.select %>%
+#   group_by(doy, depth) %>%
+#   summarise(median.clim = median(median, na.rm = TRUE),
+#             q97.5.clim = quantile(median, probs = 0.975),
+#             q2.5.clim = quantile(median, probs = 0.025),
+#             q10.clim = quantile(median, probs = 0.1),
+#             q5.clim = quantile(median, probs = 0.05), .groups = "drop_last") %>%
+#   ungroup(doy, depth) %>%
+#   mutate(doy = as.numeric(doy))
+#
+# psi.stat.4 <- psi.stat.4 %>%
+#   mutate(interval.yrs.2 = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = c(cut.breaks, max(psi.stat.4$date, na.rm = TRUE)),
+#                                                        labels = c(cut.labels.2, "2015-2018"), right = TRUE))) %>%
+#   left_join(psi.stat.5, by = c("doy", "depth")) %>%
+#   mutate(below.q10 = ifelse(median < q10.clim, median, NA),
+#          below.q5 = ifelse(median < q5.clim, median, NA),
+#          below.q2.5 = ifelse(median < q2.5.clim, median, NA),
+#          depth_year = paste(depth, year, sep = "_"))
+#
+# psi.stat.4.select <- psi.stat.4.select %>%
+#   mutate(interval.yrs.2 = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = c(cut.breaks, max(psi.stat.4$date, na.rm = TRUE)),
+#                                                        labels = c(cut.labels.2, "2015-2018"), right = TRUE))) %>%
+#   left_join(psi.stat.5.select, by = c("doy", "depth")) %>%
+#   mutate(below.q10 = ifelse(median < q10.clim, median, NA),
+#          below.q5 = ifelse(median < q5.clim, median, NA),
+#          below.q2.5 = ifelse(median < q2.5.clim, median, NA),
+#          depth_year = paste(depth, year, sep = "_"))
+# ## this is the date that's shown in the graph, so only interested in shwoing an extreme year
+# ## defined for the shown doy range
+# xlim.in.wet.season <- 200
+# psi.stat.4.extreme.yr  <- psi.stat.4 %>%
+#   subset(doy < xlim.in.wet.season) %>%
+#   group_by(depth_year) %>%
+#   dplyr::summarise(extreme.yr.q2.5 = if_else(any(!is.na(below.q2.5)), TRUE, FALSE), .groups = "drop")
+#
+# psi.stat.4 <- psi.stat.4 %>%
+#   left_join(psi.stat.4.extreme.yr, by = "depth_year")
+#
+# psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
+#
+# save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.Rdata"))
+# save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+# save(psi.stat.5, file = file.path(results.folder, "psi.stat.5.Rdata"))
+# save(psi.stat.5.select, file = file.path(results.folder, "psi.stat.5.select.Rdata"))
+#
+# # psi.study <- as.data.table(psi.m)[!is.na(interval),][,
+# #   ':='(doy = format(date, "%j"),
+# #        year = format(date, "%Y"))][
+# #   (doy < 368) & (!year %chin% c("1990")) &
+# #     (!year %chin% c("1991") | depth == 3) &
+# #     (!year %chin% c("1991", "1992") | depth < 3)][, c("year") := NULL][,
+# #     doy := as.numeric(as.character(doy))]
+#
+# # psi.study <- as.data.frame(psi.study)
+##*******************************************
 
 data.model.AB.sub <- data.model.AB %>%
   ## Using parameters fitted to data when available
@@ -659,26 +654,26 @@ save(data.model.AB.sub, file = file.path(results.folder, "data.model.AB.sub.Rdat
 setdiff(unique(growth.sub$sp), unique(data.model.AB.sub$sp))
 
 # sp not present in sp.leaf_cover.mean but in growth data sets
-# sp.growth.not.leaf_cover <- setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.mean$sp))
-# sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
-#   bind_rows(data.frame(sp = rep(sp.growth.not.leaf_cover, each = max(sp.leaf_cover.mean$doy)),
-#                        doy = rep(unique(sp.leaf_cover.mean$doy), times = length(sp.growth.not.leaf_cover)),
-#                        leaf_cover.mean = NA, leaf_cover.sd = NA)) %>%
-#   left_join(deci %>% select(sp, deciduous), by = "sp") %>%
-#   mutate(leaf_cover = ifelse(deciduous == "E", 1, leaf_cover.mean)) %>%
-#   select(-leaf_cover.sd) %>%
-#   as.data.frame()
+sp.growth.not.leaf_cover <- setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.mean$sp))
+sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
+  bind_rows(data.frame(sp = rep(sp.growth.not.leaf_cover, each = max(sp.leaf_cover.mean$doy)),
+                       doy = rep(unique(sp.leaf_cover.mean$doy), times = length(sp.growth.not.leaf_cover)),
+                       leaf_cover.mean = NA, leaf_cover.sd = NA)) %>%
+  left_join(deci %>% select(sp, deciduous), by = "sp") %>%
+  mutate(leaf_cover = ifelse(deciduous == "E", 1, leaf_cover.mean)) %>%
+  select(-leaf_cover.sd) %>%
+  as.data.frame()
   ## But "ficutr", "pri2co", "termob" do not have leaf_cover data and also not Evergreen either but DB,
   ## so taking average DB species' leaf-cover,  "pri2co" 's deciduousness not known, so can't gap-fill
-#   # First joinging average deci leaf_cover then substituing for missing data by species
-# sp.leaf_cover.for.model <- sp.leaf_cover.for.model %>%
-#   left_join(sp.leaf_cover.for.model %>% group_by(deciduous, doy) %>%
-#               summarise(deci.leaf_cover = mean(leaf_cover, na.rm = TRUE), .groups = "drop"),
-#             by = c("deciduous", "doy")) %>%
-#   mutate(leaf_cover = ifelse(is.na(leaf_cover), deci.leaf_cover, leaf_cover))
-#
-# setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.for.model$sp))
-## unique(sp.leaf_cover.for.model[is.na()]$sp)
+  # First joinging average deci leaf_cover then substituing for missing data by species
+sp.leaf_cover.for.model <- sp.leaf_cover.for.model %>%
+  left_join(sp.leaf_cover.for.model %>% group_by(deciduous, doy) %>%
+              summarise(deci.leaf_cover = mean(leaf_cover, na.rm = TRUE), .groups = "drop"),
+            by = c("deciduous", "doy")) %>%
+  mutate(leaf_cover = ifelse(is.na(leaf_cover), deci.leaf_cover, leaf_cover))
+
+setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.for.model$sp))
+# unique(sp.leaf_cover.for.model[is.na()]$sp)
 
 AB.sp.ls <- split(data.model.AB.sub, f = list(data.model.AB.sub$sp), drop = TRUE)
 leaf_cover.sp.ls <- split(sp.leaf_cover.for.model, f = list(sp.leaf_cover.for.model$sp), drop = TRUE)
@@ -822,25 +817,19 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil.mean, se.mean), by = "sp") %>%
   droplevels()
 
-lmp <- function (modelobject) {
-  if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
-  f <- summary(modelobject)$fstatistic
-  p <- pf(f[1],f[2],f[3],lower.tail=F)
-  attributes(p) <- NULL
-  return(p)
-}
-corr.func.p <- corr.func.r2 <- vector("numeric", length(names.gfac))
-names(corr.func.p) <- names(corr.func.r2) <- names.gfac
+erd.model.n.sp <- erd.model.p <- erd.model.r2 <- vector("numeric", length(names.gfac))
+names(erd.model.n.sp) <- names(erd.model.p) <- names(erd.model.r2) <- names.gfac
 for(i in 1: length(names.gfac)) {
-  m.data <- ml.rsq.combine.best %>% subset(corr.func == names.gfac[i])
+  m.data <- ml.rsq.combine.best %>% subset(corr.func == names.gfac[i] & sp != "guapst")
   lm.model <- lm(depth ~ m.data$Xylem_sap_deltaD_permil, data = m.data)
-  corr.func.p[[i]] <- lmp(lm.model)
-  corr.func.r2[[i]] <- summary(lm.model)$r.squared
-
+  erd.model.p[[i]] <- lmp(lm.model)
+  erd.model.r2[[i]] <- summary(lm.model)$r.squared
+  erd.model.n.sp[[i]] <- length(m.data$sp[!is.na(m.data$depth)])
 }
+
 ## among the models for which p-value =< 0.05, chose the one that has the highest R2
-corr.func.sig <- which(corr.func.p == 0.05 | corr.func.p < 0.05)
-chosen.model <- names(corr.func.p)[which(corr.func.r2 == max(corr.func.r2[corr.func.sig], na.rm = TRUE))]
+erd.model.sig <- which(erd.model.p == 0.05 | erd.model.p < 0.05)
+chosen.model <- names(erd.model.p)[which(erd.model.r2 == max(erd.model.r2[erd.model.sig], na.rm = TRUE))]
 
 ## Plot chosen ERD
 df.erd.to.plot <- ml.rsq.combine.best %>%
@@ -851,18 +840,16 @@ df.erd.to.plot <- ml.rsq.combine.best %>%
 length(unique(df.erd.to.plot$sp))
 # 36
 save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
+save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
-
-load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
-load(file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 
 
 ##______________________________________________________________________
 
 
-hyd <- hyd %>% left_join(df.erd.to.plot %>% ungroup() %>%
+hyd.mod <- hyd %>% left_join(df.erd.to.plot %>% ungroup() %>%
                            select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
@@ -917,7 +904,7 @@ traits.labels.table.1 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                         expression('WD'[stem]),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), "LMA"))) %>% droplevels()
 
-hyd.long <- hyd %>% select(-DeciLvl) %>%
+hyd.long <- hyd.mod %>% select(-DeciLvl) %>%
   select(sp, deciduousness, deciduous, location, TLP, KmaxS, p50S, p88S,
          CWR_Total, Fcap_Xylem, CWR_Xylem, Felbow_Xylem, Fcap_Bark, CWR_Bark, Felbow_Bark, WD, LMA,
          HSM50S, HSM88S, HSMTLP, HSMFelbow_Xylem, HSMFelbow_Bark, HSMTLP.50S, HSMTLP.88S,
@@ -973,33 +960,36 @@ save(hyd.long, file = file.path(results.folder, "hyd.long.prepped.Rdata"))
 ## Plot mortality by time spent below a threshold in the preferred depth-------
 # For each sp-depth calculate number of days below a threshold with an indicator function
 ##______________________________________________________________________
+# This does not change during each ERD model testing can be turned off until tests complete
+##______________________________________________________________________
 
-names.mfac <- names(get.mfac.ls)
-mfac.interval <- vector(mode = "list", length = length(names.mfac))
-names(mfac.interval) <- names.mfac  # "psi.p50.g1", "psi.p50.g2"
-
-for (i in 1:length(names.mfac)) { #
-  mfac.interval[[i]] <- lapply(lapply(AB.sp.ls, get.mfac.ls[[i]]),
-                               as.data.frame) %>%
-    bind_rows(.id = "sp")
-}
-
-mrate.psi <- mfac.interval.long <- vector(mode = "list", length = length(names.mfac))
-names(mfac.interval.long) <- names(mrate.psi) <- names.mfac
-for (i in 1:length(names.mfac)) {
-  mfac.interval.long[[i]] <- mfac.interval[[i]] %>%
-    pivot_longer(cols = c(-sp, -interval),
-                 names_to = "depth", values_to = "mfac") %>%
-    rename(interval.num =  interval) %>%
-    mutate(depth = as.numeric(depth),
-           interval.num =  as.numeric(as.character(interval.num)),
-           size = "large")
-  mrate.psi[[i]] <- mrate.long %>%
-    left_join(mfac.interval.long[[i]], by = c("interval.num", "sp", "size"))
-}
-
-save(mfac.interval.long, file = file.path(results.folder, "mfac.interval.long.Rdata"))
+# names.mfac <- names(get.mfac.ls)
+# mfac.interval <- vector(mode = "list", length = length(names.mfac))
+# names(mfac.interval) <- names.mfac  # "psi.p50.g1", "psi.p50.g2"
+#
+# for (i in 1:length(names.mfac)) { #
+#   mfac.interval[[i]] <- lapply(lapply(AB.sp.ls, get.mfac.ls[[i]]),
+#                                as.data.frame) %>%
+#     bind_rows(.id = "sp")
+# }
+#
+# mrate.psi <- mfac.interval.long <- vector(mode = "list", length = length(names.mfac))
+# names(mfac.interval.long) <- names(mrate.psi) <- names.mfac
+# for (i in 1:length(names.mfac)) {
+#   mfac.interval.long[[i]] <- mfac.interval[[i]] %>%
+#     pivot_longer(cols = c(-sp, -interval),
+#                  names_to = "depth", values_to = "mfac") %>%
+#     rename(interval.num =  interval) %>%
+#     mutate(depth = as.numeric(depth),
+#            interval.num =  as.numeric(as.character(interval.num)),
+#            size = "large")
+#   mrate.psi[[i]] <- mrate.long %>%
+#     left_join(mfac.interval.long[[i]], by = c("interval.num", "sp", "size"))
+# }
+#
+# save(mfac.interval.long, file = file.path(results.folder, "mfac.interval.long.Rdata"))
 ## Ordered along Rooting Depth Index
+load(file = file.path(results.folder, "mfac.interval.long.Rdata"))
 mfac.on <- "mr.kl50.I"
 mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%

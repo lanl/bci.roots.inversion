@@ -1,0 +1,73 @@
+---
+title: "Drought-sensitive trees survive on deep water access in a tropical forest community"
+subtitle: 'Appendix'
+author: ''
+date: ''
+output:
+  bookdown::html_document2:
+    bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
+  number_sections: no
+theme: flatly
+bookdown::pdf_document2: default
+csl: new-phytologist.csl
+bibliography: references.bib
+number_sections: true
+# header-includes: 
+#   \usepackage{float} \floatplacement{figure}{H} 
+#   \setcounter{table}{0}  
+#   \renewcommand{\thetable}{S\arabic{table}} 
+#   \setcounter{figure}{0} 
+#   \renewcommand{\thefigure}{S\arabic{figure}}
+---
+
+```{r, include=FALSE, echo = FALSE}
+if(!require("pacman", quietly=TRUE)) install.packages("pacman")
+suppressPackageStartupMessages(
+  pacman::p_load(bookdown, knitr, pander, citr, broom))
+options(tinytex.verbose = TRUE)
+source("code/load.R")
+source("code/manuscript_data_figs.R")
+# load("results/manuWorkSpace.RData")
+# install.packages(c("vctrs", "rlang"))
+```
+
+```{r setup, echo = FALSE}
+library(knitr)
+opts_knit$set(eval.after = "fig.cap")
+```
+
+\documentclass{article}
+
+\usepackage{chngcntr}
+\begin{document}
+
+\section{Introduction}
+
+\subsection{Problem description}
+
+\begin{figure}[htp]
+  \centering Figure
+  \caption{Call this figure 1.}
+  \label{fig1}
+\end{figure}
+
+S\@ref(fig:other-erd-mods)). 
+S\@ref(fig:erd-mort-census)). 
+\appendix
+\counterwithin{figure}{section}
+
+\section{Figures}
+
+\beginsupplement
+
+```{r other-erd-mods, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-other-erd-mods}Effective Rooting Depth versus $\\delta^2H$ for each of the ERD models tested (panels). For each ERD model only those species have an estimate of ERD that have passed the test of Pearson's $\\rho$ > 0 and *R*^2^ > 0.5 during ERD parameterisation. The number of species with an ERD estimate as well as $\\delta^2H$. or each model are shown in inset, along with the goodness-of-fit (*R*^2^) and *P*-values for a linear relationship between ERD and $\\delta^2H$. See Eqs. \\@ref(eq:M1)-\\@ref(eq:M6). See Table \\@ref(tab:ab-param) for the full form of scientific names.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
+```
+
+```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD."}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
+```
+
+\end{document}

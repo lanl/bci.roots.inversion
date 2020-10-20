@@ -473,7 +473,7 @@ clim.daily.effect <- clim.daily %>%
          std.Rs.VPD = range01(Rs.VPD.effect),
          pet.PM.effect = as.numeric(predict(gpp.models$eq.gpp.pet, newdata = clim.daily)),
          # temporarily renaming VPD variable name for the model input to work
-         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd, newdata = clim.daily)), #%>% rename(VPD.tower = VPD)
+         VPD.effect = as.numeric(predict(gpp.models$eq.gpp.vpd, newdata = clim.daily)),
          Rs.effect = as.numeric(predict(gpp.models$eq.gpp.rad, newdata = clim.daily)),
          std.pet.PM = range01(pet.PM.effect),
          std.VPD = range01(VPD.effect),
@@ -654,23 +654,23 @@ save(data.model.AB.sub, file = file.path(results.folder, "data.model.AB.sub.Rdat
 setdiff(unique(growth.sub$sp), unique(data.model.AB.sub$sp))
 
 # sp not present in sp.leaf_cover.mean but in growth data sets
-sp.growth.not.leaf_cover <- setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.mean$sp))
-sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
-  bind_rows(data.frame(sp = rep(sp.growth.not.leaf_cover, each = max(sp.leaf_cover.mean$doy)),
-                       doy = rep(unique(sp.leaf_cover.mean$doy), times = length(sp.growth.not.leaf_cover)),
-                       leaf_cover.mean = NA, leaf_cover.sd = NA)) %>%
-  left_join(deci %>% select(sp, deciduous), by = "sp") %>%
-  mutate(leaf_cover = ifelse(deciduous == "E", 1, leaf_cover.mean)) %>%
-  select(-leaf_cover.sd) %>%
-  as.data.frame()
-  ## But "ficutr", "pri2co", "termob" do not have leaf_cover data and also not Evergreen either but DB,
-  ## so taking average DB species' leaf-cover,  "pri2co" 's deciduousness not known, so can't gap-fill
-  # First joinging average deci leaf_cover then substituing for missing data by species
-sp.leaf_cover.for.model <- sp.leaf_cover.for.model %>%
-  left_join(sp.leaf_cover.for.model %>% group_by(deciduous, doy) %>%
-              summarise(deci.leaf_cover = mean(leaf_cover, na.rm = TRUE), .groups = "drop"),
-            by = c("deciduous", "doy")) %>%
-  mutate(leaf_cover = ifelse(is.na(leaf_cover), deci.leaf_cover, leaf_cover))
+# sp.growth.not.leaf_cover <- setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.mean$sp))
+# sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
+#   bind_rows(data.frame(sp = rep(sp.growth.not.leaf_cover, each = max(sp.leaf_cover.mean$doy)),
+#                        doy = rep(unique(sp.leaf_cover.mean$doy), times = length(sp.growth.not.leaf_cover)),
+#                        leaf_cover.mean = NA, leaf_cover.sd = NA)) %>%
+#   left_join(deci %>% select(sp, deciduous), by = "sp") %>%
+#   mutate(leaf_cover = ifelse(deciduous == "E", 1, leaf_cover.mean)) %>%
+#   select(-leaf_cover.sd) %>%
+#   as.data.frame()
+#   ## But "ficutr", "pri2co", "termob" do not have leaf_cover data and also not Evergreen either but DB,
+#   ## so taking average DB species' leaf-cover,  "pri2co" 's deciduousness not known, so can't gap-fill
+#   # First joinging average deci leaf_cover then substituing for missing data by species
+# sp.leaf_cover.for.model <- sp.leaf_cover.for.model %>%
+#   left_join(sp.leaf_cover.for.model %>% group_by(deciduous, doy) %>%
+#               summarise(deci.leaf_cover = mean(leaf_cover, na.rm = TRUE), .groups = "drop"),
+#             by = c("deciduous", "doy")) %>%
+#   mutate(leaf_cover = ifelse(is.na(leaf_cover), deci.leaf_cover, leaf_cover))
 
 setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.for.model$sp))
 # unique(sp.leaf_cover.for.model[is.na()]$sp)
@@ -775,7 +775,8 @@ ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
   group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp, deci_sp.plot) %>%
-  subset(corr >= 0.7071068) %>% # that is R2 >= 0.5 and corr >= 0
+  # subset(corr >= 0.7071068) %>% # that is R2 >= 0.5 and corr >= 0
+  subset(corr >= 0 & R2 >= 0.5) %>%
   summarise(depth.se = sd(depth, na.rm = TRUE)/sqrt(n()),
             depth = median(depth, na.rm = TRUE),
             corr.se = sd(corr, na.rm = TRUE)/sqrt(n()),
@@ -817,19 +818,23 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil.mean, se.mean), by = "sp") %>%
   droplevels()
 
-erd.model.n.sp <- erd.model.p <- erd.model.r2 <- vector("numeric", length(names.gfac))
-names(erd.model.n.sp) <- names(erd.model.p) <- names(erd.model.r2) <- names.gfac
-for(i in 1: length(names.gfac)) {
-  m.data <- ml.rsq.combine.best %>% subset(corr.func == names.gfac[i] & sp != "guapst")
-  lm.model <- lm(depth ~ m.data$Xylem_sap_deltaD_permil, data = m.data)
-  erd.model.p[[i]] <- lmp(lm.model)
-  erd.model.r2[[i]] <- summary(lm.model)$r.squared
-  erd.model.n.sp[[i]] <- length(m.data$sp[!is.na(m.data$depth)])
-}
+ml.rsq.combine.sub.iso <- ml.rsq.combine.best %>%
+  mutate(depth = as.numeric(depth)) %>%
+  subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
+  left_join(bci.traits %>%
+              dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
+              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
+                     sp = tolower(Code)) %>%
+              dplyr::select(sp, s.names), by = "sp") %>%
+  subset(source == "Meinzer et al.1999 Fig. 4") %>%
+  droplevels()
 
-## among the models for which p-value =< 0.05, chose the one that has the highest R2
-erd.model.sig <- which(erd.model.p == 0.05 | erd.model.p < 0.05)
-chosen.model <- names(erd.model.p)[which(erd.model.r2 == max(erd.model.r2[erd.model.sig], na.rm = TRUE))]
+depth.rsq.isotopes <- ml.rsq.combine.best %>%
+  group_by(corr.func, sp, size) %>%
+  summarise_at(c("depth", "depth.se","Xylem_sap_deltaD_permil", "se"), mean, na.rm = TRUE) %>%
+  ungroup(corr.func, sp, size)
+
+save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 
 ## Plot chosen ERD
 df.erd.to.plot <- ml.rsq.combine.best %>%
@@ -840,16 +845,48 @@ df.erd.to.plot <- ml.rsq.combine.best %>%
 length(unique(df.erd.to.plot$sp))
 # 36
 save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
-save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 
 
+erd.model.n.sp <- erd.model.iso.n.sp <- erd.model.p <- erd.model.r2 <- vector("numeric", length(names.gfac))
+names(erd.model.n.sp) <- names(erd.model.iso.n.sp) <- names(erd.model.p) <- names(erd.model.r2) <- names.gfac
+for(i in 1: length(names.gfac)) {
+  erd.sp.data <- ml.rsq.combine.best %>%
+    subset(corr.func == names.gfac[i]) %>%
+    subset(!duplicated(sp) & !is.na(depth)) %>% droplevels()
+  erd.model.n.sp[[i]] <- length(erd.sp.data$sp[!is.na(erd.sp.data$depth)])
+
+  m.data <- ml.rsq.combine.sub.iso %>%
+    # subset(sp != "guapst") %>%
+    subset(corr.func == names.gfac[i])
+  if(nrow(m.data) > 0) {
+    lm.model <- lm(depth ~ Xylem_sap_deltaD_permil, data = m.data)
+    if(is.na(summary(lm.model)$coefficients[2])) {
+      erd.model.p[[i]] <- NA; erd.model.r2[[i]] <- NA
+    } else {
+      erd.model.p[[i]] <- lmp(lm.model)
+      erd.model.r2[[i]] <- summary(lm.model)$adj.r.squared
+      erd.model.iso.n.sp[[i]] <- length(m.data$sp[!is.na(m.data$depth)])
+    }
+  }
+}
+erd.model.n.sp
+erd.model.iso.n.sp
+erd.model.p
+erd.model.r2
+## among the models for which p-value =< 0.05, chose the one that has the highest R2
+# erd.model.sig <- which(erd.model.p == 0.05 | erd.model.p < 0.05)
+# chosen.model <- names(erd.model.p)[which(erd.model.r2 == max(erd.model.r2[erd.model.sig], na.rm = TRUE))]
+
+chosen.model <- "gr.Psi.VPD.multi"
+save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
 ##______________________________________________________________________
 
 
-hyd.mod <- hyd %>% left_join(df.erd.to.plot %>% ungroup() %>%
+hyd.mod <- hyd %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
+                               subset(corr.func == chosen.model) %>%
                            select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
@@ -994,7 +1031,7 @@ mfac.on <- "mr.kl50.I"
 mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%
   # mrate.long %>%
-  left_join(df.erd.to.plot %>%
+  left_join(subset(depth.rsq.isotopes, corr.func == chosen.model) %>%
               rename(rdi.gr = depth) %>%
               dplyr::select(sp, rdi.gr, depth.se) %>%
               mutate(size = "large"), by = c("sp", "size")) %>%
@@ -1007,6 +1044,15 @@ mrate.mfac.depth <- mrate.depth %>%
              # mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
              #                             `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")),
              by = c("interval.num", "sp", "size")) %>%
+  left_join(psi.study %>%
+              subset(depth == unique(psi.study$depth)[1] & par.sam == unique(psi.study$par.sam)[1]) %>%
+              mutate(censusint.m = recode(interval, `1` = "1982-85", `2` = "1985-90",
+                                          `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")) %>%
+              group_by(censusint.m) %>%
+              summarise(days = length(date), .groups = "drop"), #%>%
+            # mutate(interval = as.numeric(interval)),
+            by = c("censusint.m")) %>%
+  mutate(mfac.rate = mfac*100/days) %>% # expressed in days per year
   mutate(sp_size = paste(sp, size, sep = "_")) %>%
   group_by(sp, size, censusint.m) %>%
   mutate(mfac.soil.column = sum(mfac, na.rm = TRUE)) %>%
@@ -1014,3 +1060,4 @@ mrate.mfac.depth <- mrate.depth %>%
 
 save(mrate.depth, file = file.path(results.folder, "mrate.depth.Rdata"))
 save(mrate.mfac.depth, file = file.path(results.folder, "mrate.mfac.depth.Rdata"))
+

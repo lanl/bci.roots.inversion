@@ -609,7 +609,18 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 #   mutate(below.q10 = ifelse(median < q10.clim, median, NA),
 #          below.q5 = ifelse(median < q5.clim, median, NA),
 #          below.q2.5 = ifelse(median < q2.5.clim, median, NA),
-#          depth_year = paste(depth, year, sep = "_"))
+#          depth_year = paste(depth, year, sep = "_")) %>%
+#   mutate(freq.below.q10 = ifelse(median < q10.clim, 1, NA),
+#             freq.below.q5 = ifelse(median < q5.clim, 1, NA),
+#             freq.below.q2.5 = ifelse(median < q2.5.clim, 1, NA))
+#
+# psi.stat.4.select.freq <- psi.stat.4.select %>%
+#   group_by(interval.yrs, doy, depth) %>%
+#   summarise(freq.below.q10 = sum(freq.below.q10, na.rm = TRUE),
+#             freq.below.q5 = sum(freq.below.q5, na.rm = TRUE),
+#             freq.below.q2.5 = sum(freq.below.q2.5, na.rm = TRUE), .groups = "drop") %>%
+#   mutate(depth = as.numeric(as.character(depth)))
+#
 # ## this is the date that's shown in the graph, so only interested in shwoing an extreme year
 # ## defined for the shown doy range
 # xlim.in.wet.season <- 200
@@ -625,6 +636,7 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 #
 # save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.Rdata"))
 # save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+# save(psi.stat.4.select.freq, file = file.path(results.folder, "psi.stat.4.select.freq.Rdata"))
 # save(psi.stat.5, file = file.path(results.folder, "psi.stat.5.Rdata"))
 # save(psi.stat.5.select, file = file.path(results.folder, "psi.stat.5.select.Rdata"))
 #

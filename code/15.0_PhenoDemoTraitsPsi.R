@@ -542,6 +542,7 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 #   subset(!year %in% c("1990", "1991", "1992") | depth < 2.9) %>%
 #   group_by(date, doy, year, interval.yrs, depth) %>%
 #   summarise(median = median(psi, na.rm = TRUE),
+#             q100 = quantile(psi, probs = 1),
 #             q97.5 = quantile(psi, probs = 0.975),
 #             q2.5 = quantile(psi, probs = 0.025),
 #             q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
@@ -550,6 +551,7 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 # psi.stat.5 <- psi.stat.4 %>%
 #   group_by(doy, depth) %>%
 #   summarise(median.clim = median(median, na.rm = TRUE),
+#             q100.clim = quantile(median, probs = 1),
 #             q97.5.clim = quantile(median, probs = 0.975),
 #             q2.5.clim = quantile(median, probs = 0.025),
 #             q10.clim = quantile(median, probs = 0.1),
@@ -577,6 +579,7 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 #                      labels = depth.labels, right = TRUE)) %>%
 #   group_by(date, doy, year, interval.yrs, depth) %>%
 #   summarise(median = median(psi, na.rm = TRUE),
+#             q100 = quantile(psi, probs = 1),
 #             q97.5 = quantile(psi, probs = 0.975),
 #             q2.5 = quantile(psi, probs = 0.025),
 #             q5 = quantile(psi, probs = 0.05), .groups = "drop_last") %>%
@@ -586,6 +589,7 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 # psi.stat.5.select <- psi.stat.4.select %>%
 #   group_by(doy, depth) %>%
 #   summarise(median.clim = median(median, na.rm = TRUE),
+#             q100.clim = quantile(median, probs = 1),
 #             q97.5.clim = quantile(median, probs = 0.975),
 #             q2.5.clim = quantile(median, probs = 0.025),
 #             q10.clim = quantile(median, probs = 0.1),

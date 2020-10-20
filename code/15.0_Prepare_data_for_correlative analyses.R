@@ -654,10 +654,10 @@ gpp.vpd.tower <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
                npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
-  stat_fit_glance(method = 'lm',
+  stat_fit_glance(aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                   method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),		                  aes(label = paste0("P < 0.001")),
                   npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*~m^-2*~day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.tower.jpeg"),
@@ -675,10 +675,10 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD)) +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
                npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
-  stat_fit_glance(method = 'lm',
+  stat_fit_glance(aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),		                  aes(label = paste0("P < 0.001")),
                   npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*~m^-2*~day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.jpeg"),

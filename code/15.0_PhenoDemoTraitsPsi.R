@@ -795,7 +795,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
             corr = mean(corr, na.rm = TRUE),
             R2.se = sd(R2, na.rm = TRUE)/sqrt(n()),
             R2 = mean(R2, na.rm = TRUE), .groups = "drop_last") %>%
-  select(sp, depth, corr, R2, everything()) %>%
+  dplyr::select(sp, depth, corr, R2, everything()) %>%
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 
 ###____________________________
@@ -894,12 +894,13 @@ erd.model.r2
 
 chosen.model <- "gr.Psi.VPD.multi"
 save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
+save(erd.model.p, file = file.path(results.folder, "erd.model.p.Rdata"))
 ##______________________________________________________________________
 
 
 hyd.mod <- hyd %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
                                subset(corr.func == chosen.model) %>%
-                           select(sp, depth, depth.se), by = "sp") %>%
+                           dplyr::select(sp, depth, depth.se), by = "sp") %>%
   left_join(iso.1.3.join %>% subset(source == "Meinzer et al.1999 Fig. 4") %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil, se), by = "sp") %>%
   droplevels()
@@ -953,8 +954,8 @@ traits.labels.table.1 <- data.frame(trait = factor(c("depth", "Xylem_sap_deltaD_
                                                         expression('WD'[stem]),
                                                         expression('Panama'[wet]), expression('Plot'[wet]), "LMA"))) %>% droplevels()
 
-hyd.long <- hyd.mod %>% select(-DeciLvl) %>%
-  select(sp, deciduousness, deciduous, location, TLP, KmaxS, p50S, p88S,
+hyd.long <- hyd.mod %>% dplyr::select(-DeciLvl) %>%
+  dplyr::select(sp, deciduousness, deciduous, location, TLP, KmaxS, p50S, p88S,
          CWR_Total, Fcap_Xylem, CWR_Xylem, Felbow_Xylem, Fcap_Bark, CWR_Bark, Felbow_Bark, WD, LMA,
          HSM50S, HSM88S, HSMTLP, HSMFelbow_Xylem, HSMFelbow_Bark, HSMTLP.50S, HSMTLP.88S,
          Panama.moist.pref, Plot.swp.pref, lwp.min_Diurnal, lwp.min_Predawn, depth, Xylem_sap_deltaD_permil) %>% # , , se
@@ -978,25 +979,25 @@ hyd.labels.data <- hyd.labels %>%
               summarise(value = max(value, na.rm = TRUE)), by = c("trait"), .groups = "drop_last") %>%
   subset(deciduousness != "NA") %>%
   droplevels() %>%
-  left_join(traits.labels.table.1 %>% select(trait, trait.plot), by = "trait")
+  left_join(traits.labels.table.1 %>% dplyr::select(trait, trait.plot), by = "trait")
 
 hyd.long <- hyd.long %>%
   left_join(traits.labels.table.1, by = "trait")
 
-hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
+hyd.error <- hyd %>% dplyr::select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
   rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
   gather(trait, se, -sp) ## But note that for TLP it's not se but sd
 
 hyd.depth <- hyd.long %>%
   subset(trait == "depth") %>%
-  select(sp, deciduousness, trait.plot.chart, value) %>%
+  dplyr::select(sp, deciduousness, trait.plot.chart, value) %>%
   pivot_wider(names_from = trait.plot.chart, values_from = value)
 
 erd.stem.traits <- hyd.long %>%
   subset(trait %in% c("KmaxS", "TLP", "p88S", "HSM88S", "lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   subset(trait != "depth") %>%
-  left_join(hyd.depth %>% select(sp, `Depth[italic("Rsq")]`), by = "sp") %>%
-  select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%
+  left_join(hyd.depth %>% dplyr::select(sp, `Depth[italic("Rsq")]`), by = "sp") %>%
+  dplyr::select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%
   # bind_rows(depth.traits.kunert %>% subset(trait == "KmaxL") %>%
   #             select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value)) %>%
   left_join(hyd.error, by = c("sp", "trait"))

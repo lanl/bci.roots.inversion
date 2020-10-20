@@ -270,7 +270,6 @@ load("results/demo.sp.RData")
 load("results/demo.sp_size.RData")
 load("results/mrate.long.RData")
 load("results/adult.mrate.long.RData")
-
 ## growth rates when dbh.residuals = "on" are residuals from a dbh mixed effects model (for spp) of
 ## growth. A median residual for each sp_size is calculated only when at least data from
 # 3 trees are present across all census intervals.
@@ -282,7 +281,6 @@ growth.name <- load(file = paste0("results/sp_size.stats_growth_dbh.residuals_on
 
 growth <- get(growth.name); rm(growth.name)
 grate.long <- dplyr::bind_rows(growth, .id = 'sp_size')
-
 ## to add absolute growth
 load(file = paste0("results/gro.long.cc.med_", intervals, "_", growth.selection, ".Rdata"))
 
@@ -438,17 +436,17 @@ clim.daily.min.max <- clim.dat %>%
 
 ## Matteo:between 11:00 15:00 GPP will be most related to VPD
 select.time = c(paste0(rep(11:14, each = 2), rep(c(":00", ":30"), times = length(c(11:14)))), "15:00")
-
 clim.dat.vpd <- clim.dat %>%
-  # subset(time %in% select.time) %>%
+  subset(time %in% select.time) %>%
   group_by(date) %>%
-  summarise(VPD = mean(VPD, na.rm = TRUE), .groups = "drop_last")
+  summarise(VPD = mean(VPD, na.rm = TRUE),
+            Rs = mean(SR_W_m2, na.rm = TRUE)*0.0864, # from W/m2 MJ/m2/day
+            .groups = "drop_last")
 
 clim.daily <- clim.dat %>%
   dplyr::select(-datetime, -Rainfall_mm_hr) %>%
   group_by(date, Year) %>%
-  dplyr::summarise(Rs = mean(SR_W_m2, na.rm = TRUE)* 0.0864, # from W/m2 MJ/m2/day
-            uz = mean(Wind_Speed_km_hr, na.rm = TRUE)* 1000 / 3600, # to convert in m/s from km/hr
+  dplyr::summarise(uz = mean(Wind_Speed_km_hr, na.rm = TRUE)* 1000 / 3600, # to convert in m/s from km/hr
             Temp = mean(Temp_deg_C, na.rm = TRUE),
             RH = mean(RH_prc, na.rm = TRUE),
             Bp = mean(BP_Pa, na.rm = TRUE), .groups = "drop_last") %>%
@@ -553,7 +551,7 @@ obs.gpp.d <- bci.tower %>%
   select(datetime, time, gpp, vpd, FLAG) %>% # in mumol/m2/2: units must be mumol/m2/s
   ## removing GPP when FLAG = 0 (that is data is gap-filled, does increase the daily relationship R2 to 0.78,
   ## but retaining gap-filled data gives a better monthly-scale relationship (r2 = 0.13, so retained.))
-  # subset(time %in% select.time & FLAG == 0) %>%
+  subset(time %in% select.time) %>%
   mutate(date = as.Date(format(datetime, "%Y-%m-%d")),
          gpp.mumol = as.numeric(as.character(gpp)),
          vpd = as.numeric(as.character(vpd))) %>%
@@ -651,16 +649,16 @@ gpp.vpd.tower <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula = formula.poly, colour = "red") +
   stat_poly_eq(aes(label = stat(eq.label)),
-               npcx = 0.97, npcy = 0.16, rr.digits = 2,
+               npcx = 0.97, npcy = 0.95, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
-               npcx = 0.95, npcy = 0.07, rr.digits = 2,
+               npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste0("P < 0.001")),
-                  npcx = 0.95, npcy = 0.02, size = 4, colour = "red") +
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),		                  aes(label = paste0("P < 0.001")),
+                  npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*~m^-2*~day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.tower.jpeg"),
        plot = gpp.vpd.tower, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -672,16 +670,16 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD)) +
   stat_smooth(method="lm", se=TRUE, fill=NA,
               formula = formula.poly, colour = "red") +
   stat_poly_eq(aes(label = stat(eq.label)),
-               npcx = 0.97, npcy = 0.16, rr.digits = 2,
+               npcx = 0.97, npcy = 0.95, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
-               npcx = 0.95, npcy = 0.07, rr.digits = 2,
+               npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste0("P < 0.001")),
-                  npcx = 0.95, npcy = 0.02, size = 4, colour = "red") +
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),		                  aes(label = paste0("P < 0.001")),
+                  npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
   ylab(expression('GPP (gC'*~m^-2*~day^-1*')')) + xlab("VPD (kPa)")
 ggsave(paste0(data.scale.on,"_gpp.vpd.jpeg"),
        plot = gpp.vpd, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -740,6 +738,22 @@ gpp.pan <- ggplot(gpp.rel, aes(y = gpp.tower, x = Pan.Evap)) +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Pan Evaporation (mm)")#xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.pan.jpeg"),
        plot = gpp.pan, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
+
+gpp.rad.tower <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
+  geom_point(size = point.size, alpha = 0.7) +
+  stat_smooth(method="lm", se=TRUE, fill=NA,
+              formula=formula.poly, colour = "red") +
+  stat_poly_eq(aes(label = paste(stat(eq.label), stat(adj.rr.label), sep = "~~~~")),
+               npcx = 0.95, npcy = 0.98, rr.digits = 2,
+               formula = formula.poly, parse = TRUE, size = 4, color = "red") +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula.poly),
+                  geom = 'text_npc',
+                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+  ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab(expression('Solar Radiation (MJ'*m^-2*day^-1*')'))
+ggsave(paste0(data.scale.on,"_gpp.rad.tower.jpeg"),
+       plot = gpp.rad.tower, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
 
 gpp.rad <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
   geom_point(size = point.size, alpha = 0.7) +

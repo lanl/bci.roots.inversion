@@ -3,6 +3,7 @@
 #******************************************************
 load(file = file.path(results.folder, "psi.stat.4.Rdata"))
 load(file = file.path(results.folder, "psi.stat.4.select.Rdata"))
+load(file = file.path(results.folder, "psi.stat.4.select.freq.Rdata"))
 load(file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 load(file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
 load(file = file.path(results.folder, "chosen.model.Rdata"))
@@ -70,7 +71,7 @@ rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 plot.psi.stat.7.interval.q2.5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)") %>% droplevels()) +
   geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), linetype = "Mean"), size = 0.5) +
   geom_ribbon(aes(x = doy, ymin = q2.5.clim, ymax = median.clim, group = as.factor(depth),
-                  fill = "Lower 95% CI"), alpha = 0.7) +
+                  fill = "2.5% Quantile"), alpha = 0.7) +
   theme(panel.grid.major.y = element_line(size = 0.1)) +
   geom_line(data = psi.stat.4 %>%
               subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
@@ -97,9 +98,41 @@ ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatolo
        plot = plot.psi.stat.7.interval.q2.5.depth.wo.int, file.path(figures.folder), device = "jpeg", height = 6, width = 6, units='in')
 
 
+plot.psi.stat.7.interval.q5.depth.freq.base <-
+  ggplot(subset(psi.stat.4.select.freq, depth %in% c(0.5, 1, 1.7) &
+                  interval.yrs != "(Missing)") %>% droplevels()) +
+  facet_wrap(depth ~ interval.yrs, nrow = 3) +
+  geom_count(aes(x = doy, y = freq.below.q5, color = depth), size = 0.5) +
+  theme(panel.grid.major.y = element_line(size = 0.1)) +
+  scale_linetype_manual(name = "", values = c("solid")) +
+  guides(linetype = guide_legend(order = 1, title = NULL, label.position = "top"),
+         fill = guide_legend(order = 2, title = NULL, label.position = "top"),
+         color = guide_legend(order = 3, title = "Depth (m)",
+                              override.aes = list(size = 3))) +
+  scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
+  scale_y_continuous(breaks = c(0:5)) +
+  coord_cartesian(xlim = c(0, 200)) +
+  ylab(expression('Frequency of extreme '*Psi[soil]*~"(No. of Years)")) + xlab("Day of the Year")
 ## Minimum Soil water potential reached at depth 1.7 + CI
 psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
   subset(median == min(median, na.rm = TRUE))
+
+# Heatmap
+droughts.psi.heat <- ggplot(psi.stat.4.select.freq %>%
+                              subset(depth %in% c(0.5, 1, 1.7) &
+                                       interval.yrs != "(Missing)") %>% droplevels(),
+                            aes(x = doy, y = as.factor(-depth),
+                                fill = as.factor(freq.below.q5))) +
+  # scale_y_reverse() +
+  facet_grid(. ~ interval.yrs) +
+  geom_tile() + ylab("Depth (m)") + xlab("Day of Year") +
+  scale_fill_viridis(option = "D", breaks = c(0, 1, 2), discrete = TRUE) +
+  guides(fill = guide_legend(order = 1, title = expression("Frequency of extreme soil drought (No. of Years)"),
+                             direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "top")
+ggsave("Frequency of extreme soil droughts_heatmap.jpeg", plot = droughts.psi.heat, path =
+         file.path(figures.folder), device = "jpeg", height = 2.5, width = 9, units='in')
 
 #****************************
 ## LAI seasonality by species----
@@ -680,14 +713,14 @@ ggsave(plot = obs.mod.plccurves.black, file.path("figures/PhenoDemoTraitsPsi/kma
 ## ab.table----
 #****************************
 
-ab.table <- obs.data.model.AB %>%
+ab.table.obs <- obs.data.model.AB %>%
   subset(sp %in% erd.sp) %>%
   mutate(Source = "Data") %>%
   rename(A = data.A, B = data.B) %>%
-  select(sp, A, B, Kmax, psi_kl50, Source) %>%
-  bind_rows(data.model.AB %>%
+  select(sp, A, B, Kmax, psi_kl50, Source)
+ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
               ## only those ERD species that for which data unavailable
-              subset(sp %in% erd.sp[!erd.sp %in% unique(obs.mod.plc$sp)]) %>%
+              subset(sp %in% erd.sp[!erd.sp %in% unique(ab.table.obs$sp)]) %>%
               mutate(Source = "Model") %>%
               rename(A = model.A, B = model.B) %>%
               select(sp, A, B, Kmax, psi_kl50, Source)) %>%
@@ -698,24 +731,25 @@ ab.table <- obs.data.model.AB %>%
   dplyr::select(Genus, Species, Family, A, B, Kmax.leaf, Psi_50.leaf, Source) %>%
   mutate(Family = as.character(Family))
 
-# # Some familynames do not end in ceae. Correcting that
-# correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
-#                              correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
-#                                          "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
-#                                          "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
-#   mutate(misspelt = as.character(misspelt),
-#          correct = as.character(correct))
-# ## Which row in Family.sub matches with correct.family$misspelt
-# rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
-# matched.rows <- match(ab.table$Family, correct.family$misspelt)
-# ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
-#
-# correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
-#                                correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
-#   mutate(misspelt = as.character(misspelt),
-#          correct = as.character(correct))
-# rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
-# matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
-# ab.table$Family[rows.to.replace.2] <-
-#   correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
-#
+# Some familynames do not end in ceae. Correcting that
+correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
+                             correct = c("Anacardiaceae", "Euphorbiaceae", "Flacourtiaceae", "Nyctaginaceae")) %>%
+                             # correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
+                             #             "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
+                             #             "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
+  mutate(misspelt = as.character(misspelt),
+         correct = as.character(correct))
+## Which row in Family.sub matches with correct.family$misspelt
+rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
+matched.rows <- match(ab.table$Family, correct.family$misspelt)
+ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
+
+correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
+                               correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
+  mutate(misspelt = as.character(misspelt),
+         correct = as.character(correct))
+rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
+matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
+ab.table$Family[rows.to.replace.2] <-
+  correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
+

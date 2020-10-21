@@ -736,8 +736,11 @@ for (i in names(gfac.interval)) {
     subset(!is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
   demo.psi.ls <- split(demo.psi,
                        f = list(demo.psi$sp, demo.psi$par.sam), drop = TRUE)
+  ## Get for each sp-par.sam get AIC scores <= min(AIC) + 2 and corresponding depths, ml, R2 and corr
   ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
+  ## Retain the one with maximum likelihood
   ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
+  ## Get corresponding R, corr and depth
   ml.corr.ls[[i]] <- do.call(rbind.data.frame, ml.ls[[i]])
   ml.rsq.ls[[i]] <- do.call(rbind, lapply(ml.ls[[i]], get.ml.depth.rsq))
 }

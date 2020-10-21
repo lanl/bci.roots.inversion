@@ -255,26 +255,27 @@ erd.iso_sp_N_by_model <- ml.rsq.combine.sub %>%
 
 p3.2 <- ggplot(ml.rsq.combine.sub,
                aes(x = Xylem_sap_deltaD_permil, y = depth)) +
-  coord_cartesian(ylim = c(13, 0.3)) +
+  # coord_cartesian(ylim = c(13, 0.3)) +
   geom_smooth(data = ml.rsq.combine.sub %>% subset(significant), aes(group = models.plot1),
               method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05) +
-  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = s.names), size = 0.5) +
+  geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se, color = s.names), size = 0.5, width = 0.2) +
   facet_wrap( ~ models.plot1, nrow = 2) +
-  geom_text(data = erd.iso_sp_N_by_model, aes(x = -60, y = 0.3, label = paste0("n = ", N), group = models.plot1),
-            vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
+  geom_text(data = erd.iso_sp_N_by_model, aes(x = -60, y = 0.01,
+                                              label = sprintf('italic(n)~"="~%.2f', N), group = models.plot1),
+            parse = TRUE, vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
   ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans="reverse", breaks = unique(ml.rsq.combine$depth)) +
+  scale_y_continuous(trans="reverse", breaks = unique(ml.rsq.combine.sub$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.98, npcy = 0.15, rr.digits = 2,
+               npcx = 0.95, npcy = 0.15, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
-                  parse = TRUE, npcx = 0.98, npcy = 0.05, size = 4) +
+                  parse = TRUE, npcx = 0.95, npcy = 0.05, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
   guides(fill = guide_legend(title = "Species", order = 1),
          color = FALSE) +

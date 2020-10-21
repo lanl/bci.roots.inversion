@@ -267,8 +267,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.85, npcy = 0.1, size = 6) +
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.85, npcy = 0.1, size = 6) +
         ggtitle(paste0("TLPlevel = ", tlplevels[j], ", ",subsetting[i], "\nSpecies Uptake Depth Vs Xylem Sap deltaD\n"))
       p0 +
         geom_point(size = 3, show.legend = TRUE)
@@ -300,8 +300,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.85, npcy = 0.1, size = 6) +
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.85, npcy = 0.1, size = 6) +
         ggtitle(paste0("TLPlevel = ", tlplevels[j], ", ",subsetting[i],
                        "\nSpecies Uptake Depth: Modelled Vs. Isotopic\n")) +
         ylab(expression("Modelled Water Uptake Depth (m)")) + xlab("Isotopic Water Uptake Depth (m)") +
@@ -341,8 +341,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.85, npcy = 0.1, size = 6) +
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.85, npcy = 0.1, size = 6) +
         ggtitle(paste0("TLPlevel = ", tlplevels[j], ", ",subsetting[i], "\nSpecies Uptake Depth Vs Xylem Sap deltaD\n"))
       p0 +
         geom_point(size = 3, show.legend = TRUE)
@@ -374,8 +374,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.85, npcy = 0.1, size = 6) +
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.85, npcy = 0.1, size = 6) +
         ggtitle(paste0("TLPlevel = ", tlplevels[j], ", ",subsetting[i],
                        "\nSpecies Uptake Depth: Modelled Vs. Isotopic\n")) +
         ylab(expression("Modelled Water Uptake Depth (m)")) + xlab("Isotopic Water Uptake Depth (m)") +
@@ -412,8 +412,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
 #         stat_fit_glance(method = 'lm',
 #                         method.args = list(formula = formula),
 #                         geom = 'text_npc',
-#                         aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-#                         npcx = 0.85, npcy = 0.1, size = 6) +
+#                         aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+  # parse = TRUE, npcx = 0.85, npcy = 0.1, size = 6) +
 #         ggtitle(paste0("TLPlevel = ", tlplevels[j], ", ",subsetting[i], "\nSpecies Uptake Depth Vs Xylem Sap deltaD\n")) +
 #         ylab(expression("Water-Stress Depth (m)")) + xlab(xylem.label) + scale_y_reverse()
 #       # scale_y_continuous(trans="rev_sqrt", breaks = c(0.00001, soil.depths))
@@ -459,8 +459,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.87, npcy = 0.1, size = 4)
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.87, npcy = 0.1, size = 4)
       ggsave(file.path(file.path.udi.best.ll, paste0("Comparison_with_Meinzer1999_deltaD_vs.modelled_uptake.depth_cor",
                                                   goodness.fit, "_", tlplevels[j], "_", subsetting[i], ".jpeg")), height = 5, width = 6, units ='in')
       p0 +
@@ -471,8 +471,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.87, npcy = 0.1, size = 4)
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.87, npcy = 0.1, size = 4)
       ggsave(file.path(file.path.udi.best.ll, paste0("Comparison_with_Meinzer1999_deltaD_vs.modelled_uptake.depth_phenology_cor",
                                                   goodness.fit, "_", tlplevels[j], "_", subsetting[i], ".jpeg")), height = 5, width = 8, units ='in')
       if(i == 1) {
@@ -484,8 +484,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
           stat_fit_glance(method = 'lm',
                           method.args = list(formula = formula),
                           geom = 'text_npc',
-                          aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                          npcx = 0.88, npcy = 0.1, size = 4, color = "darkgray") +
+                          aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                          parse = TRUE, npcx = 0.88, npcy = 0.1, size = 4, color = "darkgray") +
           geom_smooth(data = subset(iso.udi.sub, !sp %in% c("sponra", "guapst")),
                       method = "lm", se = FALSE, color = "black", size = 0.5) +
           stat_poly_eq(data = subset(iso.udi.sub, !sp %in% c("sponra", "guapst")), aes(label = paste(..rr.label..)),
@@ -494,8 +494,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
           stat_fit_glance(data = subset(iso.udi.sub, !sp %in% c("sponra", "guapst")), method = 'lm',
                           method.args = list(formula = formula),
                           geom = 'text_npc',
-                          aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                          npcx = 0.9, npcy = 0.2, size = 4)
+                          aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                          parse = TRUE, npcx = 0.9, npcy = 0.2, size = 4)
       }
       ggsave(file.path(file.path.udi.best.ll, paste0("Comparison_with_Meinzer1999_deltaD_vs.modelled_uptake.depth_cor",
                                                   goodness.fit, "_", tlplevels[j], "_", subsetting[i], "_lm.jpeg")), height = 5, width = 6, units ='in')
@@ -529,8 +529,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
         stat_fit_glance(method = 'lm',
                         method.args = list(formula = formula),
                         geom = 'text_npc',
-                        aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                        npcx = 0.9, npcy = 0.1, size = 6, color = "darkgray") +
+                        aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                        parse = TRUE, npcx = 0.9, npcy = 0.1, size = 6, color = "darkgray") +
         ylab(expression("Water Uptake Depth (m)")) + xlab(xylem.label) + scale_y_reverse() +
         geom_point(size = 3, show.legend = TRUE) + theme(text = element_text(size = 22), axis.text = element_text(size = 22)) +
         geom_smooth(method = "lm", se = FALSE, lty = "dotted", color = "darkgray")
@@ -544,8 +544,8 @@ iso.compare <- function(goodness.fit = goodness.fit,
           stat_fit_glance(data = subset(iso.udi.sub, !sp %in% c("sponra", "guapst")), method = 'lm',
                           method.args = list(formula = formula),
                           geom = 'text_npc',
-                          aes(label = paste("P = ", signif(..p.value.., digits = 2), sep = "")),
-                          npcx = 0.9, npcy = 0.2, size = 6)
+                          aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                          parse = TRUE, npcx = 0.9, npcy = 0.2, size = 6)
 
       } else {
         p1

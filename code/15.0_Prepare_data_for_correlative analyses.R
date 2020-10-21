@@ -654,8 +654,8 @@ gpp.vpd.tower <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD.tower)) +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
                npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
-  stat_fit_glance(aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                   method = 'lm',
+  stat_fit_glance(aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
@@ -675,8 +675,8 @@ gpp.vpd <- ggplot(gpp.rel, aes(y = gpp.tower, x = VPD)) +
   stat_poly_eq(aes(label = stat(adj.rr.label)),
                npcx = 0.95, npcy = 0.87, rr.digits = 2,
                formula = formula.poly, parse = TRUE, size = 4, colour = "red") +
-  stat_fit_glance(aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  method = 'lm',
+  stat_fit_glance(aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
                   npcx = 0.95, npcy = 0.77, size = 4, colour = "red") +
@@ -701,8 +701,8 @@ gpp.aet <- ggplot(gpp.rel, mapping.gpp.aet) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("AET (mm)")#xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.aet.jpeg"),
        plot = gpp.aet, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -717,8 +717,8 @@ gpp.pet <- ggplot(gpp.rel, aes(y = gpp.tower, x = pet.PM.tower)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.pet.jpeg"),
        plot = gpp.pet, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -733,8 +733,8 @@ gpp.pan <- ggplot(gpp.rel, aes(y = gpp.tower, x = Pan.Evap)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab("Pan Evaporation (mm)")#xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_gpp.pan.jpeg"),
        plot = gpp.pan, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -749,8 +749,8 @@ gpp.rad.tower <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab(expression('Solar Radiation (MJ'*m^-2*day^-1*')'))
 ggsave(paste0(data.scale.on,"_gpp.rad.tower.jpeg"),
        plot = gpp.rad.tower, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -765,8 +765,8 @@ gpp.rad <- ggplot(gpp.rel, aes(y = gpp.tower, x = Rs.tower)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab(expression('GPP (gC'*m^-2*day^-1*')')) + xlab(expression('Solar Radiation (MJ'*m^-2*day^-1*')'))
 ggsave(paste0(data.scale.on,"_gpp.rad.jpeg"),
        plot = gpp.rad, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -788,8 +788,8 @@ aet.pet <- ggplot(gpp.rel, mapping.aet.pet) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.poly),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.90, size = 4, color = "red") +
   ylab("AET (mm)") +xlab("Penman-Monteith PET (mm)") #xlab("Penman-Monteith PET (mm)")
 ggsave(paste0(data.scale.on,"_aet.pet.jpeg"),
        plot = aet.pet, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 3, units='in')
@@ -1113,8 +1113,8 @@ s.trade <- ggplot(hyd,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.3),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.75, size = 4)
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.75, size = 4)
 ls.trade <- cowplot::plot_grid(l.trade, s.trade, labels = c('A', 'B'),
                                label_size = 12, ncol = 2, rel_widths = c(1, 1))
 ggsave("leaf.stem.trade_off.tiff", plot = ls.trade, path =
@@ -2076,8 +2076,8 @@ ggplot(data.model.AB.stem, aes(x = model.B, y = data.B)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.05, npcy = 0.8, size = 4)
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kstem, paste0("B_data_vs_model.jpeg")),
        device = "jpeg", height = 2.2, width = 2.2, units='in')
 
@@ -2095,8 +2095,8 @@ ggplot(data.model.AB.stem, aes(x = model.A, y = data.A)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.05, npcy = 0.8, size = 4)
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kstem, paste0("A_data_vs_model.jpeg")),
        device = "jpeg", height = 2.2, width = 2.2, units='in')
 ## So poor predictors
@@ -2304,8 +2304,8 @@ ll.lma.comm <- ggplot(bci.lifetime, aes(x = LMA, y = lifetime.filled)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.9, npcy = 0.85, size = 6)
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.9, npcy = 0.85, size = 6)
 ggsave(("lifetime_by_lma_community.jpeg"),
        plot = ll.lma.comm, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
@@ -2920,8 +2920,8 @@ coh.plot5 <- ggplot(coh.sp.summ,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.7, size = 6) +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.8, npcy = 0.7, size = 6) +
   facet_wrap(site ~ .)
 ggsave(("leaf_longevity_vs_leaf_born_days_concentration.jpeg"),
        plot = coh.plot5, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
@@ -2939,8 +2939,8 @@ coh.plot6 <- ggplot(coh.sp.summ,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.8, npcy = 0.75, size = 6) +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.8, npcy = 0.75, size = 6) +
   facet_wrap(site ~ .)
 ggsave(("leaf_longevity_vs_leaf_death_days_concentration.jpeg"),
        plot = coh.plot6, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')

@@ -30,14 +30,14 @@ deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osv
 deci.level_key <- c("Evg" = "1", "DF" = "2", "DB" = "3", "DO" = "4") #c(a = "apple", b = "banana", c = "carrot")
 
 deci <- deci %>% mutate(sp = tolower(sp6)) %>%
-  select(sp4, sp, deciduous) %>%
+  dplyr::select(sp4, sp, deciduous) %>%
   subset(deciduous %in% c("E", "DF", "DO", "DB")) %>%
   mutate(deciduousness = recode_factor(as.factor(deciduous), `E` = "Evergreen", `DO` = "Obligate Deciduous", `DF` = "Facultative Deciduous",
                                        `DB` = "Brevideciduous"), ordered = TRUE) %>%
   transform(deciduousness = factor(deciduousness,
                                    levels = c("Evergreen", "Brevideciduous",
-                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE))
-  select(sp4, sp, deciduous, deciduousness)
+                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE)) %>%
+  dplyr::select(sp4, sp, deciduous, deciduousness)
 
 head(iso)
 # adding species codes
@@ -77,7 +77,7 @@ iso <- iso %>% mutate(se = SE,
                         Brevideciduous = 3,  `Partially deciduous` = 4,  `Deciduous` = 5),
               Phenology = factor(Phenology, levels = c("Evergreen", "Facultatively deciduous",
                                                   "Brevideciduous", "Partially deciduous", "Deciduous"), ordered = TRUE)) %>%
-  left_join(deci, select(-sp4), by = "sp")
+  left_join(deci, dplyr::select(-sp4), by = "sp")
 
 iso.sp <- iso$sp #[!is.na(iso$Xylem_sap_deltaD_permil)]
 save(iso.sp, file = "results/sp_with_isotopic_record.Rdata")
@@ -117,8 +117,8 @@ iso.2 <- iso.2.raw %>%
             n = n(),
             DBH = mean(DBH, na.rm = TRUE))
 
-iso.2 <- iso.2 %>% left_join(iso %>% select(sp, Phenology), by = "sp") %>%
-  left_join(iso.change, by = "sp") %>%
+iso.2 <- iso.2 %>% left_join(iso %>% dplyr::select(sp, Phenology), by = "sp") %>%
+  left_join(iso.change %>% rename(change.source = source), by = "sp") %>%
   arrange(Phenology)
 View(iso.2)
 
@@ -138,6 +138,7 @@ depth.m1.label1 = paste0("Depth = ", round(depth.m1$coefficients[2], 2),
 depth.m1.label2 = paste0("R2 = ", round(summ.depth.m1$r.squared, 2),
                          "\np = ", round(summ.depth.m1$coefficients[2, 4], 4))
 # label.df <- data.frame(x = -40, y= 0, label = deparse(depth.m1.label1))
+formula <- 'y ~ x'
 g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
   xlab(soil.label) + ylab("Depth (cm)") +
   scale_y_reverse() +
@@ -154,15 +155,15 @@ g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 5), sep = "")),
-                  npcx = 0.05, npcy = 0.75, size = 3)
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.05, npcy = 0.75, size = 3)
 ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg")),
        height = 3, width = 3.2, units='in')
 ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.tiff")),
        height = 3, width = 3.2, units='in')
 
-g1 +   geom_smooth(method = "loess", se = FALSE, span = 0.7) +
-  geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5)
+g1 +   geom_smooth(method = "loess", se = FALSE, span = 0.7) #+
+  # geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5)
 
 depth.m2 <- lm(depth ~ soil.deltaD, data = iso.soil.2)
 summ.depth.m2 <- summary(depth.m2)
@@ -171,7 +172,7 @@ depth.m2.label1 = paste0("Depth = ", round(depth.m2$coefficients[2], 2),
                          "*Soil delta 2H ", round(depth.m2$coefficients[1], 2))
 depth.m2.label2 = paste0("R2 = ", round(summ.depth.m2$r.squared, 2),
                          "\np = ", round(summ.depth.m2$coefficients[2, 4], 4))
-
+# but iso.soil.2 does not have se
 g1 %+% iso.soil.2 + geom_smooth(method = "glm", se = FALSE) +
   geom_text(x = -35, y= 0, label = depth.m2.label1, color = "black", size = 3) +
   geom_text(x = -10, y= -85, label = depth.m2.label2, color = "black", size = 4) +
@@ -191,9 +192,11 @@ head(iso)
 xylem.label <- expression('Xylem Sap '*delta^2*H~"(\u2030)"*'')
 change.xylem.label <- expression('Change in Xylem Sap '*delta^2*H~"(\u2030)"*day^-1)
 
-iso.2.raw <- iso.2.raw %>% left_join(iso %>% select(sp, Phenology, deciduousness), by = "sp") %>%
-  left_join(iso.change, by = "sp") %>% left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp")
-
+iso.2.raw <- iso.2.raw %>%
+  left_join(iso %>% dplyr::select(sp, Phenology, deciduousness), by = "sp") %>%
+  left_join(iso.change %>% rename(change.source = source) %>%
+              dplyr::select(-location), by = "sp") %>%
+  left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp")
 
 ggplot(iso.2.raw, aes(y =  Xylem_sap_deltaD_permil, x = DBH, color = tlp)) +
   geom_text(aes(y =  Xylem_sap_deltaD_permil + 1.5, x = DBH, label = sp),
@@ -239,7 +242,7 @@ iso.3 <- read.csv("data-raw/traits/isotopes/Oecologia 1995 Jackson _Fig3_Fig4.cs
 iso.3 <- iso.3 %>% arrange(Xylem_sap_deltaD_permil) %>%
   left_join(tlp %>% mutate(sp = as.character(sp)), by = "sp") %>%
   mutate(source = "Jackson et al. 1995") %>%
-  left_join(deci, select(-sp4), by = "sp")  %>%
+  left_join(deci, dplyr::select(-sp4), by = "sp")  %>%
   unite("deci_sp", deciduous, sp, remove = FALSE) %>%
   mutate(deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
 
@@ -265,9 +268,10 @@ ggsave(file.path(paste0("data-raw/traits/isotopes/Oecologia 1995 Jackson _Fig3_F
        plot = g4, height = 5, width = 6, units='in')
 
 iso.1.3.join <- iso %>% subset(!is.na(Xylem_sap_deltaD_permil)) %>%
-  select(sp, deci_sp.plot, Xylem_sap_deltaD_permil, deciduousness, se, source) %>%
-  bind_rows(iso.3 %>% select(sp, deci_sp.plot, Xylem_sap_deltaD_permil, deciduousness, se, source)) %>%
-  mutate(deci_sp.plot = factor(deci_sp.plot, levels=unique(deci_sp.plot[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
+  dplyr::select(sp, Xylem_sap_deltaD_permil, deciduous, deciduousness, se, source) %>%
+  bind_rows(iso.3 %>% dplyr::select(sp, Xylem_sap_deltaD_permil, deciduous, deciduousness, se, source)) %>%
+  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
+  mutate(deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
 
 g5 <- g3 %+% subset(iso.1.3.join, !is.na(deciduousness)) +
   facet_wrap(. ~ source) +
@@ -286,10 +290,10 @@ View(iso)
 iso.all.list <- list(iso, iso.2.raw, iso.3, iso.change)
 names(iso.all.list) <- c(iso$source[1], iso.2.raw$source[1], iso.3$source[1], iso.change$source[1])
 
-iso.all <- iso %>% select(sp, location, source, Xylem_sap_deltaD_permil, se) %>%
-  rbind(iso.3 %>% select(sp, location, source, Xylem_sap_deltaD_permil, se)) %>%
-  rbind(iso.2.raw %>% mutate(se = NA) %>% select(sp, location, source, Xylem_sap_deltaD_permil, se)) %>%
-  left_join(iso.change %>% select(-source, -location), by = "sp")
+iso.all <- iso %>% dplyr::select(sp, location, source, Xylem_sap_deltaD_permil, se) %>%
+  rbind(iso.3 %>% dplyr::select(sp, location, source, Xylem_sap_deltaD_permil, se)) %>%
+  rbind(iso.2.raw %>% mutate(se = NA) %>% dplyr::select(sp, location, source, Xylem_sap_deltaD_permil, se)) %>%
+  left_join(iso.change %>% dplyr::select(-source, -location), by = "sp")
 View(iso.all)
 save(iso.all, file = "results/all_isotopic_record.Rdata")
 

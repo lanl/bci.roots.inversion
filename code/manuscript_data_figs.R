@@ -229,7 +229,8 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == chosen.model),
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE,
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3.5) +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), color = "black",
@@ -238,6 +239,7 @@ p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == chosen.model),
   theme(legend.text = element_text(face = "italic", size = 8))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
        plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4.3, units = 'in')
+
 
 ## as "gr.Psi.VPD.add" is not present
 df.pval <- bind_rows(erd.model.p) %>% pivot_longer(cols = everything(), names_to = "corr.func", values_to = "pval")
@@ -271,8 +273,8 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.98, npcy = 0.05, size = 4) +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.98, npcy = 0.05, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
   guides(fill = guide_legend(title = "Species", order = 1),
          color = FALSE) +
@@ -363,8 +365,8 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.05, size = 4) +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.05, size = 4) +
   theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
         strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
         plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
@@ -476,8 +478,8 @@ grate.adult.stem.traits.plot <- ggplot(stem.k.gr, aes(y = grate.adult, x = value
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.87, npcy = 0.8, size = 3) +
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.87, npcy = 0.8, size = 3) +
   theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
         strip.text.x = element_text(size = 12, vjust = 2.5),
         plot.margin = margin(0.2, 0.2, -1, 0.2, "cm"))
@@ -503,8 +505,8 @@ mrate.plot.15 <- ggplot(mrate.depth.mean,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.84, size = 6) #+ scale_y_sqrt()
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.84, size = 6) #+ scale_y_sqrt()
 ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.tiff")),
        plot = mrate.plot.15, height = 3.1, width = 3.1, units='in')
 ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.jpeg")),
@@ -544,8 +546,8 @@ mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-                  npcx = 0.95, npcy = 0.82, size = 4)
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.tiff")),
        plot = mrate.plot.15.1, height = 2.5, width = 10, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.jpeg")),
@@ -785,8 +787,8 @@ erd.p50.plot <- ggplot(erd.data, aes(y = depth, x = psi_kl50)) +
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  parse = TRUE,
                   npcx = 0.05, npcy = 0.05, size = 4)
 ggsave(file.path(figures.folder, paste0("erd.p0L.jpeg")),
        plot = erd.p50.plot, height = 3, width = 3, units ='in')

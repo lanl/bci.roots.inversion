@@ -20,12 +20,6 @@ load(file = file.path(results.folder, "comm.sp.vcurves.1.Rdata"))
 #****************************
 ###   Custom Functions   ####
 #****************************
-rectangles.4 <- data.frame(
-  xmin = 120,
-  xmax = 335,
-  ymin = 0,
-  ymax = -3.0
-)
 rev_sqrt_trans <- function() {
   scales::trans_new(
     name = "rev_sqrt",
@@ -66,26 +60,40 @@ rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 ### PSI significant droughts----
 #****************************
 
-
+psi.rectangle.1 <- data.frame(
+  xmin = 120,
+  xmax = 310,
+  ymin = 0,
+  ymax = -2.0,
+  type = "Wet Season"
+)
 ### Calculate Correlation of growth rates with psi by depth
 
-plot.psi.stat.7.interval.q5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)") %>% droplevels()) +
+plot.psi.stat.7.interval.q5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) &
+                                                          interval.yrs != "(Missing)") %>% droplevels()) +
+  geom_rect(data = psi.rectangle.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color = "dodgerblue",
+            alpha = 0.8, fill = NA, size = 0.3) +
   geom_ribbon(aes(x = doy, ymin = q5.clim, ymax = q100.clim, group = as.factor(depth),
-                  fill = "95% CI"), alpha = 0.7) +
+                  fill = "95% CI"), alpha = 0.5) +
   theme(panel.grid.major.y = element_line(size = 0.1)) +
+  # geom_line(data = psi.stat.4 %>%
+  #             subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
+  #           aes(x = doy, y = median, group = as.factor(depth_year),
+  #               color = year), size = 0.5, alpha = 1) +
+  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth),
+                linetype = "Median"), color = "gray30", size = 0.5) +
   geom_line(data = psi.stat.4 %>%
               subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
-            aes(x = doy, y = median, group = as.factor(depth_year),
-                color = year), size = 0.5, alpha = 1) +
-  geom_line(aes(x = doy, y = median.clim, group = as.factor(depth), linetype = "Median"), size = 0.5) +
+            aes(x = doy, y = below.q5, group = as.factor(depth_year),
+                color = year), size = 1.3, alpha = 0.7) +
   scale_linetype_manual(name = "", values = c("solid")) +
   scale_fill_manual(name = "", values = c("gray80")) +
   guides(linetype = guide_legend(order = 1, title = NULL, label.position = "top"),
          fill = guide_legend(order = 2, title = NULL, label.position = "top"),
          color = guide_legend(order = 3, title = "Year",
                               override.aes = list(size = 3))) +
-  scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
-  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 200)) +
+  # scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
+  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 360)) +
   ylab(expression(Psi[soil]*~"(MPa)")) + xlab("Day of the Year")
 
 plot.psi.stat.7.interval.q5.depth <- plot.psi.stat.7.interval.q5.depth.base +
@@ -108,7 +116,7 @@ plot.psi.stat.7.interval.q5.depth.freq.base <-
   scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
   scale_y_continuous(breaks = c(0:5)) +
   coord_cartesian(xlim = c(0, 200)) +
-  ylab(expression('Frequency of extreme '*Psi[soil]*~"(No. of Years)")) + xlab("Day of the Year")
+  ylab(expression('Frequency of extreme '*Psi[soil]*~"(years)")) + xlab("Day of the Year")
 ## Minimum Soil water potential reached at depth 1.7 + CI
 psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
   subset(median == min(median, na.rm = TRUE))
@@ -132,7 +140,7 @@ droughts.psi.heat <- ggplot(psi.freq.to.plot) +
   scale_fill_manual(values = c("gray90", "#feb24c", "#f03b20"), breaks = c(0, 1, 2)) +
   # scale_fill_manual(values =   c("gray80", "#fec44f", "#d95f0e"), breaks = c(0, 1, 2)) +
 
-  guides(fill = guide_legend(order = 1, title = expression("Frequency of extreme soil drought (No. of Years)"),
+  guides(fill = guide_legend(order = 1, title = expression("Frequency of extreme soil drought (years)"),
                              direction = "horizontal",
                               override.aes = list(size = 1)),
          color = guide_legend(order = 2, title = NULL,
@@ -606,8 +614,8 @@ ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-
 
 mrate.plot.15.1.evg.flipped <- ggplot(mrate.depth.select.evg, aes(x = mrate, y = rdi.gr)) +
   coord_cartesian(ylim = c(10, 0)) +
-  scale_y_reverse(breaks = seq(from = 0, to = 8, by = 2)) +
-  # scale_x_continuous(breaks = seq(from = 0, to = 8, by = 2)) +
+  # scale_y_reverse(breaks = seq(from = 0, to = 10, by = 2)) +
+  scale_y_reverse(breaks = unique(mrate.depth.select.evg$rdi.gr)) +
   geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula, color = "gray10") +
   geom_errorbar(aes(ymax = rdi.gr + depth.se, ymin = rdi.gr - depth.se), width = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
@@ -641,7 +649,7 @@ mfac.plot.9.1 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0.2, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   ylab("Effective Rooting Depth (m)") +
-  xlab(expression('Time below '*Psi['crit']*' (%year'^-1*')'))
+  xlab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.tiff")),
        plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),

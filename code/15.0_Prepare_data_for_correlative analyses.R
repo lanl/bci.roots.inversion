@@ -2277,7 +2277,7 @@ gap.models.ll$LMA.lifetime <- lm(lifetime ~ LMA, data =
 save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
 
 bci.lifetime <- bci.ll %>%
-  left_join(ll.lma %>%
+  full_join(ll.lma %>%
             subset(strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA") %>%
               select(sp, lifetime), by = "sp") %>%
   mutate(lifetime.filled = lifetime,
@@ -2289,6 +2289,7 @@ bci.lifetime <- bci.ll %>%
 
 ## there shouldn't be any duplicate records for species
 # bci.lifetime[duplicated(bci.lifetime$sp),]
+save(bci.lifetime, file = file.path(results.folder, "bci.lifetime.Rdata"))
 
 formula <- y ~ x
 ll.lma.comm <- ggplot(bci.lifetime, aes(x = LMA, y = lifetime.filled)) +

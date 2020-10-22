@@ -3,11 +3,11 @@ title: "Hydraulically-vulnerable trees survive on deep-water access in a tropica
 author: ''
 date: ''
 output:
-  bookdown::pdf_document2: default
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
+  bookdown::pdf_document2: default
   bookdown::word_document2:
         reference_docx: manuscriptstyle.docx
         fig_caption: yes
@@ -191,7 +191,9 @@ Table \@ref(tab:symbols) here.
 
 #### Leaf Area Index (LAI)
 \
-To explore the effect of species seasonality in leaf phenology on growth, we assumed species-specific seasonal curves for leaf area index ($LAI$, range 0-1, unitless). For evergreen species we assumed $LAI$ = 1 throughout the year, whereas for non-evergreen species (various deciduous classes), we assumed $LAI$ = 1 during the wet season (DOY = 150 to 300) given the high forest-level leaf area index for this period (not shown), and obtained an estimate of $LAI$ for the rest of the year as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate, scaled to express daily leaf fall as a fraction of the total leaf fall in a given year and obtained an average leaf fall fraction by DOY estimate across years ($LeafFall$, range 0-1, unitless). Thus for non-evergreen species, we cumulatively deducted $LeafFall$ from $LAI$ = 1 beginning DOY = 300 and obtained a $LAI$ by DOY curve (Fig. S\@ref(fig:leaf-cover)). We obtained species-specific parameters $A$ & $B$ for Eq. \@ref(eq:k-soil) either from data when available, or a model based on LMA or WSG as described in the earlier section, and used K standardized between 0 and 1 within species (K*) in Eq. \@ref(eq:M-chosen).
+To explore the effect of species seasonality in leaf phenology on growth, we assumed species-specific seasonal curves for leaf area index normalised between 0 and 1 (LAI, unitless), using a combination of observations for long-term records of leaf-fall and leaf-lifespan (see SI). 
+
+We obtained species-specific parameters $A$ & $B$ for Eq. \@ref(eq:k-soil) either from data when available, or a model based on LMA or WSG as described in the earlier section, and used K standardized between 0 and 1 within species (K*) in Eq. \@ref(eq:M-chosen).
 
 #### Vapor Pressure Deficit (VPD)
 \
@@ -395,6 +397,12 @@ Streamflow data are analyzed by software custom-built by author SP. The program 
 We collected volumetric water content (VWC) data (2012-2018) from a point location at the eddy flux tower with a vertical time domain reflectometry (TDR) probe. The relationship between the output from the TDR probe and VWC was calibrated based on measurements of gravimetric water content (GWC) on several occasions from representative soils near the vertical probe (0-0.15 m) (Fig. S\@ref(fig:TDR-calib)). GWC was converted to VWC based on the observed mean bulk dry density of 0.8 g cm^-3^ near the TDR probe (*n* = 5, cylinder volume = 1250 cm^3^). Beginning in 2016 we additionally installed three horizontal probes at depths of 0.15, 0.4 and 1 m and we applied the same calibration equation to these data (2016-2018) as that for the vertical probe. 
 
 We also leveraged exisiting GWC measurements by @Kupers:2019 at the depths of 0.15, 0.4 and 1 m in summer 2015 (February, March and April) and 0.15, 0.4 in summer 2016 (March)--1299 samples that covered all soil types and habitats in the plot. The sampling periods were 6, 5, 10 and 8 days long, respectively. The 2016 dry season was associated with the 2015–2016 El Niño (see @Kupers:2019 for further details). We converted these GWC measurements to VWC assuming a bulk density of 0.8 g cm^-3^. $\theta_{0.15 m}$, $\theta_{0.4 m}$ and $\theta_{1 m}$ refer to the plot-wide VWC averages by depth over each sampling period. Middle date of a sampling period is used for comparison with model simulations.
+
+### Leaf Area Index
+
+We generated an estimate of the mean seasonality curve for normalised leaf area index (LAI$*$, range 0-1) for individual species as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate. We lead this daily leaf-fall time series by the species-specific average leaf-lifespan (in days) and used it as an estimate of the daily leaf-gain time-series. The difference between leaf-fall and leaf-gain gave an estimate of daily leaf-change time series, which was then scaled to express as a fraction of the total leaf fall in a given year. Beginning with the LAI$*$ of 1 at the end of the wet season in the first year of the record, we acccumulated leaf-change over it to obtain a running estimate of the leaf-cover fraction, avaraged it by DOY across years and normalised it to obtain the species-specific seasonality curve in LAI$*$ (range 0-1, unitless). [@Osnas:2018]. (Fig. S\@ref(fig:leaf-cover)). 
+
+For five species, an estimate of leaf lifespan was available from direct observations [@Osnan:2018]. For the rest erd.sp.wo.ll species, leaf lifespan was predicted from LMA ($\overline{lifespan} = `r lma.ll.cf[1]` + `r lma.ll.cf[2]`LMA$; *R*^2^ = `r lma.ll.r2`; *p* `r lma.ll.p`, *n* = `r lma.ll.n`).
 
 ### Leaf hydraulic conductivity and vulnerability to cavitation {#SIData.joseph}
 

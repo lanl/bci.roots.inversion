@@ -16,6 +16,8 @@ load(file = file.path(results.folder, "obs.data.model.AB.Rdata"))
 load(file = file.path(results.folder, "data.model.AB.sub.Rdata"))
 load(file = file.path(results.folder, "obs.sp.vcurves.1.Rdata"))
 load(file = file.path(results.folder, "comm.sp.vcurves.1.Rdata"))
+load(file = file.path(results.folder, "bci.lifetime.Rdata"))
+
 
 #****************************
 ###   Custom Functions   ####
@@ -885,3 +887,8 @@ matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
 ab.table$Family[rows.to.replace.2] <-
   correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
 
+#****************************
+## species with lifespan----
+#****************************
+erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
+erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])

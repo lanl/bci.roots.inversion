@@ -157,7 +157,7 @@ By varying ‘z’, we estimated species effective rooting depths (ERD), defined
 ERD_{s} = \underset{\forall \, h \, \in \, H}{median} \Big\{z,h\,\Big|\, \Big(Likelihood_{s~|~z,~h} = \underset{\forall \, z \,\in\,Z}{maximum}(Likelihood_{s~|~z,~h})\Big) \cap \Big(r_{s~|~z,~h} \ge 0.71\Big)\Big\}
 (\#eq:erd)
 \end{equation} 
-where $H$ $\in$ {1, .., 100}, refer to the 100 hydrological realisations and $Z$ $\in$ 0.5, {`r paste(soil.depths[8:length(soil.depths)], collapse=", ")`} m, covering the range of soil depths in ELM-FATES after above parametarision [@Chonggang, Depths 0.21, 0.37 and 0.62 were all labelled as 0.5 m for model evaluation. How do I explain that? Do they need to be retained as their original depths?].
+where $H$ $\in$ {1, .., 100}, refer to the 100 hydrological realisations and $Z$ $\in$ 0.5, {`r paste(soil.depths[8:length(soil.depths)], collapse=", ")`} m, covering the range of soil depths in ELM-FATES after above parametarision [AT:Chonggang, So that we can perform model evaluation, depths 0.21, 0.37 and 0.62 were all taken to be as 0.5 m (not averaged). How do I explain that? So hereafter 0.21, 0.37 and 0.62 were not retained, but only 0.5 m. How do I explain that? Or should I retain them?].
 
 ### Model parameterization
 
@@ -400,9 +400,9 @@ We also leveraged exisiting GWC measurements by @Kupers:2019 at the depths of 0.
 
 ### Leaf Area Index
 
-We generated an estimate of the mean seasonality curve for normalised leaf area index (LAI$*$, range 0-1) for individual species as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate. We lead this daily leaf-fall time series by the species-specific average leaf-lifespan (in days) and used it as an estimate of the daily leaf-gain time-series. The difference between leaf-fall and leaf-gain gave an estimate of daily leaf-change time series, which was then scaled to express as a fraction of the total leaf fall in a given year. Beginning with the LAI$*$ of 1 at the end of the wet season in the first year of the record, we acccumulated leaf-change over it to obtain a running estimate of the leaf-cover fraction, avaraged it by DOY across years and normalised it to obtain the species-specific seasonality curve in LAI$*$ (range 0-1, unitless). [@Osnas:2018]. (Fig. S\@ref(fig:leaf-cover)). 
+We generated an estimate of the mean seasonality curve for normalised leaf area index (LAI$*$, range 0-1) for individual species as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate [@Wright.1990aeo]. We lead this daily leaf-fall time series by the species-specific average leaf-lifespan (in days) and used it as an estimate of the daily leaf-gain time-series. The difference between leaf-fall and leaf-gain gave an estimate of daily leaf-change time series, which was then scaled to express as a fraction of the total leaf fall in a given year. Beginning with the LAI$*$ of 1 at the end of the wet season in the first year of the record, we acccumulated leaf-change over it to obtain a running estimate of the leaf-cover fraction, avaraged it by DOY across years and normalised it to obtain the species-specific seasonality curve in LAI$*$ (range 0-1, unitless). (Fig. S\@ref(fig:leaf-cover)). 
 
-For five species, an estimate of leaf lifespan was available from direct observations [@Osnan:2018]. For the rest erd.sp.wo.ll species, leaf lifespan was predicted from LMA ($\overline{lifespan} = `r lma.ll.cf[1]` + `r lma.ll.cf[2]`LMA$; *R*^2^ = `r lma.ll.r2`; *p* `r lma.ll.p`, *n* = `r lma.ll.n`).
+For five species, an estimate of leaf lifespan was available from direct observations [@Osnas.2018]. For the rest erd.sp.wo.ll species, leaf lifespan was predicted from LMA ($\overline{lifespan} = `r ll.lma.cf[1]` + `r ll.lma.cf[2]`LMA$; *R*^2^ = `r ll.lma.r2`; *p* `r ll.lma.p`, *n* = `r ll.lma.n`).
 
 ### Leaf hydraulic conductivity and vulnerability to cavitation {#SIData.joseph}
 

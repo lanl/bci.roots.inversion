@@ -127,15 +127,12 @@ load(file = file.path(results.folder, "data.model.AB.Rdata"))
 load(file = file.path(results.folder, "sp.soft.filled.Rdata"))
 load(file = file.path(results.folder, "sp.exp.param.Rdata"))
 #******************************************************
-### Load Leaf Cohort tracking data from the crane sites------
+### Load Leaf Life-span and Cover estiamtes------
 #******************************************************
 load(file = file.path(results.folder, "sp.leaf_cover.Rdata"))
 # load(file = file.path(results.folder, "sp.leaf_cover.mean.Rdata")) # without leaf gain
 load(file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
-
-load(file = file.path(results.folder, "cohort.Rdata"))
-load(file = file.path(results.folder, "coh.sp.summ.Rdata"))
-
+load(file = file.path(results.folder, "gap.models.ll.Rdata"))
 soil.depths <- unique(psi$depth)
 
 #******************************************************
@@ -243,8 +240,18 @@ a.wsg.cf <- as.numeric(round(k_by_psi.models$A.WSG100$coefficients, 2))
 
 vpd.cf <- as.numeric(round(gpp.models$eq.gpp.vpd$coefficients, 2))
 
+#************************
+### Leaf lifespan from LMA model
+#************************
+
+ll.lma.cf <- as.numeric(round(gap.models.ll$LMA.lifetime$coefficients, 2))
+ll.lma.r2 <- round(summary(gap.models.ll$LMA.lifetime)$r.squared, 2)
+ll.lma.n <- length(gap.models.ll$LMA.lifetime$residuals)
+ll.lma.p <- ifelse(broom::glance(gap.models.ll$LMA.lifetime)$p.value < 0.001,
+                  paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models.ll$LMA.lifetime)$p.value, 2)))
+
 #******************************************************
-### Tables
+### Tables-----
 #******************************************************
 hypo.table <-
   data.frame(

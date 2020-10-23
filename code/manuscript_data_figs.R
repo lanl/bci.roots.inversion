@@ -494,6 +494,12 @@ ggsave(file.path(figures.folder, paste0("grate.adult.stem.traits.tiff")),
 #****************************
 ## Mortality rates vs. ERD----
 #****************************
+lm.mrate.mean <- lm(mrate ~ rdi.gr, data = mrate.depth.mean)
+mrate.mean.cf <- as.numeric(round(lm.mrate.mean$coefficients, 2))
+mrate.mean.r2 <- round(summary(lm.mrate.mean)$r.squared, 2)
+mrate.mean.n <- length(lm.mrate.mean$residuals)
+mrate.mean.p <- ifelse(broom::glance(lm.mrate.mean)$p.value < 0.001,
+                   paste0("< 0.001"), paste0("= ", signif(broom::glance(lm.mrate.mean)$p.value, 2)))
 
 mrate.plot.15 <- ggplot(mrate.depth.mean,
                         aes(y = mrate, x = rdi.gr)) +
@@ -534,11 +540,12 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_evergreen.jpe
 mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ])))[2,4]
 })
-mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in% names(mrate.p.vals)[mrate.p.vals < 0.1],]
+mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in%
+                                         names(mrate.p.vals)[round(mrate.p.vals, 2) < 0.1 | round(mrate.p.vals, 2) == 0.1],]
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
-  scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+  # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_smooth(data = mrate.p.vals.dat, method = "lm", formula = formula, color = "gray10") +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
@@ -551,7 +558,7 @@ mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = sprintf('italic(p)~"="~%.2f', stat(p.value))),
                   parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.tiff")),
        plot = mrate.plot.15.1, height = 2.5, width = 10, units = 'in')
@@ -590,7 +597,8 @@ mrate.depth.select.evg <- subset(mrate.depth.select, deciduous == "E")
 mrate.p.vals.evg = sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ])))[2,4]
 })
-mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in% names(mrate.p.vals.evg)[mrate.p.vals.evg < 0.1],]
+mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in%
+                                                 names(mrate.p.vals.evg)[round(mrate.p.vals.evg, 2) < 0.1 | round(mrate.p.vals.evg, 2) == 0.1],]
 
 mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
@@ -655,7 +663,7 @@ mfac.plot.9.1 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0.2, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   xlab("Effective Rooting Depth (m)") +
-  ylab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
+  ylab(expression('Time below '*Psi['crit']*' (%year'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
 mfac.plot.9.1.sub <- mfac.plot.9.1 %+% subset(mrate.mfac.depth.gr.mean.mfac,

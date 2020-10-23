@@ -636,7 +636,7 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 # psi.stat.4 <- psi.stat.4 %>%
 #   left_join(psi.stat.4.extreme.yr, by = "depth_year")
 #
-# psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), "m"))
+# psi.stat.4 <- psi.stat.4 %>% mutate(plot.depth = paste0(round(depth, 1), " m"))
 #
 # save(psi.stat.4, file = file.path(results.folder, "psi.stat.4.Rdata"))
 # save(psi.stat.4.select, file = file.path(results.folder, "psi.stat.4.select.Rdata"))

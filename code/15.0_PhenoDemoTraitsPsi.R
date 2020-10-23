@@ -1066,7 +1066,7 @@ mrate.mfac.depth <- mrate.depth %>%
              by = c("interval.num", "sp", "size")) %>%
   left_join(psi.study %>%
               subset(depth == unique(psi.study$depth)[1] & par.sam == unique(psi.study$par.sam)[1]) %>%
-              mutate(censusint.m = recode(interval, `1` = "1982-85", `2` = "1985-90",
+              mutate(censusint.m = recode(interval, `1` = "1981-85", `2` = "1985-90",
                                           `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")) %>%
               group_by(censusint.m) %>%
               summarise(days = length(date), .groups = "drop"), #%>%

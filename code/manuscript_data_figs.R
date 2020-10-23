@@ -65,16 +65,17 @@ rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 psi.rectangle.1 <- data.frame(
   xmin = 120,
   xmax = 310,
-  ymin = 0,
-  ymax = -2.0,
+  ymin = 1,
+  ymax = -2.5,
   type = "Wet Season"
 )
 ### Calculate Correlation of growth rates with psi by depth
 
-plot.psi.stat.7.interval.q5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) &
-                                                          interval.yrs != "(Missing)") %>% droplevels()) +
-  geom_rect(data = psi.rectangle.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color = "dodgerblue",
-            alpha = 0.8, fill = NA, size = 0.3) +
+plot.psi.stat.7.interval.q5.depth.base <-
+  ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) &
+                  interval.yrs != "(Missing)") %>% droplevels()) +
+  geom_rect(data = psi.rectangle.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill = type), color = NA,
+            alpha = 0.8, size = 0.3) + #  #cce6ff
   geom_ribbon(aes(x = doy, ymin = q5.clim, ymax = q100.clim, group = as.factor(depth),
                   fill = "95% CI"), alpha = 0.5) +
   theme(panel.grid.major.y = element_line(size = 0.1)) +
@@ -89,20 +90,20 @@ plot.psi.stat.7.interval.q5.depth.base <- ggplot(subset(psi.stat.4, depth %in% c
             aes(x = doy, y = below.q5, group = as.factor(depth_year),
                 color = year), size = 1.3, alpha = 0.7) +
   scale_linetype_manual(name = "", values = c("solid")) +
-  scale_fill_manual(name = "", values = c("gray80")) +
+  scale_fill_manual(name = "", values = c("gray80", "#e6f2ff")) +
   guides(linetype = guide_legend(order = 1, title = NULL, label.position = "top"),
          fill = guide_legend(order = 2, title = NULL, label.position = "top"),
          color = guide_legend(order = 3, title = "Year",
                               override.aes = list(size = 3))) +
   # scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
-  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 360)) +
+  coord_cartesian(ylim = c(-2, 0), xlim = c(0, 200)) +
   ylab(expression(Psi[soil]*~"(MPa)")) + xlab("Day of the Year")
 
 plot.psi.stat.7.interval.q5.depth <- plot.psi.stat.7.interval.q5.depth.base +
-  facet_wrap(plot.depth ~ interval.yrs, nrow = 3) +
+  facet_grid(plot.depth ~ interval.yrs) +
   theme(legend.position = "bottom", legend.direction = "horizontal")
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q5_by_depth.jpeg",
-       plot = plot.psi.stat.7.interval.q5.depth, file.path(figures.folder), device = "jpeg", height = 6, width = 7, units='in')
+       plot = plot.psi.stat.7.interval.q5.depth, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units='in')
 
 plot.psi.stat.7.interval.q5.depth.freq.base <-
   ggplot(subset(psi.stat.4.select.freq, depth %in% c(0.5, 1, 1.7) &
@@ -533,7 +534,7 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_evergreen.jpe
 mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ])))[2,4]
 })
-mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in% names(mrate.p.vals)[mrate.p.vals < 0.05],]
+mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in% names(mrate.p.vals)[mrate.p.vals < 0.1],]
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
@@ -588,7 +589,7 @@ mrate.depth.select.evg <- subset(mrate.depth.select, deciduous == "E")
 mrate.p.vals.evg = sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ])))[2,4]
 })
-mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in% names(mrate.p.vals.evg)[mrate.p.vals.evg < 0.05],]
+mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in% names(mrate.p.vals.evg)[mrate.p.vals.evg < 0.1],]
 
 mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
@@ -647,19 +648,14 @@ ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-
 #****************************
 ## mfac.rate vs. ERD ----
 #****************************
-
 mfac.plot.9.1 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
-                        aes(x = mfac.rate, y = depth)) +
-  scale_y_reverse(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
-  # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+                        aes(y = mfac.rate, x = depth)) +
+  scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0.2, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
-  ylab("Effective Rooting Depth (m)") +
-  xlab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
-ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.tiff")),
-       plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
+  xlab("Effective Rooting Depth (m)") +
+  ylab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
-
 mfac.plot.9.1.sub <- mfac.plot.9.1 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               sp %in% erd.stem.traits.sp)
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.tiff")),
@@ -668,6 +664,21 @@ ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_tr
 mfac.plot.9.1.evg <- mfac.plot.9.1 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               deciduous == "E")
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_evergreen.jpeg")),
+       plot = mfac.plot.9.1.evg, height = 3.1, width = 3.5, units = 'in')
+
+mfac.plot.9.1.flipped <- ggplot(mrate.mfac.depth.gr.mean.mfac,
+                        aes(x = mfac.rate, y = depth)) +
+  scale_y_reverse(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+  # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+  geom_jitter(height = 0.2, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
+  ylab("Effective Rooting Depth (m)") +
+  xlab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
+ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_flipped.jpeg")),
+       plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
+
+mfac.plot.9.1.evg.flipped <- mfac.plot.9.1 %+% subset(mrate.mfac.depth.gr.mean.mfac,
+                                              deciduous == "E")
+ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_evergreen_flipped.jpeg")),
        plot = mfac.plot.9.1.evg, height = 3.1, width = 3.5, units = 'in')
 
 #****************************

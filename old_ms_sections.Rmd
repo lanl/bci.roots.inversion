@@ -29,7 +29,18 @@ library(knitr)
 opts_knit$set(eval.after = "fig.cap")
 ```
 
+## Intro
+
+Historic climatic variation is relatively small (Mora et al., 2013), and, though data have been scant, trees' hydraulic safety margins are reportedly relatively narrow (Choat et al., 2012; but see Oliveira et al., 2019). 
+
+
+## M&M
+
 For each species $s$ we calculated mean mortality rate across all intervals as $\textrm{Mort}_{s,\textrm{mean}} = \frac{1}{6}\sum_{t=1}^{6} {\textrm{Mort}_{s,t}}$. 
+
+## Results
+
+The hydraulic efficiency-safety trade-off between high values of maximum stem conductivity (high $K_\textrm{max,stem}$) and cavitation-resistance (low $\Psi$~50,stem~ or $\Psi$~88,stem~) is hypothesized although community-wide examples are rare [@Hacke:2006; @Gleason.2016]. We report such a trade-off ($n$ = 26 species) at our study site stem level. 
 
 Species with deeper ERD showed lower mean mortality rates across the 35-yrs record (1982-2015; *R*^2^ = 0.11, *p* = 0.075, *n* = `r length(erd.mrate.sp)`; Fig. \@ref(fig:erd-mort)), and this relationship was stronger among evergreen species. 
 
@@ -41,6 +52,6 @@ At the community level, we filled data gaps in $LMA$ for `r sum(c.lma.gaps[-whic
 
 From Discussion first para
 
-Deeper ERD species had on average more hydraulically efficient, but risky, suite of traits optimized for an environment of more reliable and greater water source at depth that resulted in a lower mortality risk. By contrast shallow ERD species had inefficient, but safer, xylem likely optimized for high variability in $\Psi_{soil}$ in the shallow soil layers, and resulting in higher variance in mortality rates across censuses as $\Psi_{soil,~z = ERD}$ crossed ERD $\Psi_{crit}$. Mortality rates of shallow ERD species may have been exacerbated by increased drought events during the study period. @Condit.2017 showed that half of the extreme dry seasons (< 1 SD annual water deficit) during 1931-2015 (85-yr) occurred during 1982-2005 (24-yr) of the 34-yr long study period (1982-2015).
+Mortality rates of shallow ERD species may have been exacerbated by increased drought events during the study period. @Condit.2017 showed that half of the extreme dry seasons (< 1 SD annual water deficit) during 1931-2015 (85-yr) occurred during 1982-2005 (24-yr) of the 34-yr long study period (1982-2015).
 
 The model in @Chitra-Tarak.2018 estimated six species-specific phenomenological parameters: three as root fraction for corresponding lumped vadose zone layers, and three as shape parameters for water uptake vs availability curves. For each species, they calculated daily water uptake successively from three layers, that is, the supply, to satisfy the demand of the daily maximum evapotranspiration, a function of PET and LAI. They regressed total supply to total demand ratio over census intervals as a growth coefficient against growth (five data points), and chose values for six parameters that best-fit (highest *R*^2^, that is, two additional parameters). Our inverse ERD model fits only two parameters by way of regressing depth-specific model against five growth data points. Our model was constrained on VPD and species leaf vulnerability curves, variables that are shown to be physiologically meaningful.

@@ -638,7 +638,7 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = sprintf('italic(p)~"="~%.2f', stat(p.value))),
-                  npcx = 0.95, npcy = 0.82, size = 4)
+                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
 
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen.tiff")),
        plot = mrate.plot.15.1.evg, height = 2.5, width = 10, units = 'in')

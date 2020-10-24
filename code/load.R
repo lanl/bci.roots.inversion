@@ -273,9 +273,9 @@ symbols.table <-
       "$\\Psi$~crit~ or $\\Psi$~50,leaf~",
       "$\\Psi$~88,stem~",
       "$\\Psi$~min~",
-      "K~leaf~",
-      "K~max,leaf~",
-      "K~max,stem~",
+      "*K*~leaf~",
+      "*K*~max,leaf~",
+      "*K*~max,stem~",
       "WSG",
       "LMA"
     ),

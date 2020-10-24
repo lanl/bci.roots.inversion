@@ -534,11 +534,11 @@ knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Dept
 knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_daily_all_depths_params.top.few_full.jpeg"))
 ```
 
-```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-plc-curves}Vulnerability curves fitted to observed $K_\textrm{leaf}$ vs. $\\Psi$~leaf~ data on ", length(sp.exp.param$sp)," tree species from BCI (A & B) with equation \\@ref(eq:vc-exp)--in absolute terms (A, B), as well as, in terms of loss of conductivity (%) (C, D). Each line represents a species, color coded by WSG (A, C), or LMA (B, D), with blue tones indicating smaller values of WSG or LMA and red tones indicating larger values.")}
+```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-plc-curves}Vulnerability curves fitted to observed $K_\\textrm{leaf}$ vs. $\\Psi$~leaf~ data on ", length(sp.exp.param$sp)," tree species from BCI (A & B) with equation \\@ref(eq:vc-exp)--in absolute terms (A, B), as well as, in terms of loss of conductivity (%) (C, D). Each line represents a species, color coded by WSG (A, C), or LMA (B, D), with blue tones indicating smaller values of WSG or LMA and red tones indicating larger values.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.obs.plc.jpeg"))
 ```
 
-```{r obs-comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-comm-plc-curves}Percent loss of vulnerability curves for species with ERD estimates. Each line represents a species, color coded by source of the curve: fitted to observed data for $K_\textrm{leaf}$ vs. $\\Psi$~leaf~ are in yellow and those based on scaling relationship with WSG and LMA are in gray.")}
+```{r obs-comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-comm-plc-curves}Percent loss of vulnerability curves for species with ERD estimates. Each line represents a species, color coded by source of the curve: fitted to observed data for $K_\\textrm{leaf}$ vs. $\\Psi$~leaf~ are in yellow and those based on scaling relationship with WSG and LMA are in gray.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/obs.mod_plccurves_fits_ggplot_no_col.jpeg"))
 ```
 
@@ -566,7 +566,7 @@ knitr::kable(eddy.table, caption = 'QA/QC procedure applied to eddy covariance f
 ```
 
 ```{r ab-param, results = 'asis', echo = FALSE}
-knitr::kable(ab.table, caption = 'Leaf vulnerability curves parameters A & B, $K_\\textrm{max,leaf}$ and $\\Psi$ for the ", length(erd.sp), " species with ERD estimates. Species for which curves were fitted to observed data for $K_\textrm{leaf}$ vs. $\\Psi$~leaf~ are identified with Source as Data, while species for which curves were obtained based on trait-proxies are identified with Source as Model', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(ab.table))))
+knitr::kable(ab.table, caption = 'Leaf vulnerability curves parameters A & B, $K_\\textrm{max,leaf}$ and $\\Psi$ for the ", length(erd.sp), " species with ERD estimates. Species for which curves were fitted to observed data for $K_\\textrm{leaf}$ vs. $\\Psi$~leaf~ are identified with Source as Data, while species for which curves were obtained based on trait-proxies are identified with Source as Model', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(ab.table))))
 ```
 
 # References

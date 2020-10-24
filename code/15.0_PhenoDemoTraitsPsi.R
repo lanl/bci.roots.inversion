@@ -512,17 +512,20 @@ psi.m <- psi %>%
                      std.Rs, std.pet.PM, std.VPD, VPD.effect), by = "date")
 depth.sub <- c(soil.depths[5:length(soil.depths)])
 depth.breaks <- c(soil.depths[5], soil.depths[7:length(soil.depths)])
-depth.labels <- c(0.5, soil.depths[8:length(soil.depths)])
+depth.labels <- c(0.4, soil.depths[8:length(soil.depths)]) # mean(c(0.21, 0.37, 0.62))
 
+#cut(depth.sub, include.lowest = TRUE, breaks = depth.breaks, labels = depth.labels, right = TRUE)
 psi.study <- as.data.table(psi.m)[!is.na(interval),][,
   ':='(doy = format(date, "%j"), year = format(date, "%Y"))][
   (doy < 368) & (!year %chin% c("1990")) &
     (!year %chin% c("1991") | depth == 2.9) &
     (!year %chin% c("1991", "1992") | depth < 2.9)][,
      c("year") := NULL][,
-      doy := as.numeric(as.character(doy))][depth %chin% depth.sub][, ':='(depth = cut(depth, include.lowest = TRUE, breaks = depth.breaks,
-                                                                                                   labels = depth.labels, right = TRUE))][, by = .(date, interval, interval.yrs, par.sam, depth),
-                                                                                                                                          lapply(.SD, median, na.rm = TRUE)]
+      doy := as.numeric(as.character(doy))][
+        depth %chin% depth.sub][,':='(depth = cut(depth, include.lowest = TRUE,
+                                                  breaks = depth.breaks, labels = depth.labels, right = TRUE))][,
+                                                                    by = .(date, interval, interval.yrs, par.sam, depth), lapply(.SD, mean, na.rm = TRUE)]
+
 ##_______________________________________________________
 ## Note above: There are lines above at the far right end
 ##_______________________________________________________
@@ -855,20 +858,6 @@ depth.rsq.isotopes <- ml.rsq.combine.best %>%
 
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 
-## Plot chosen ERD
-df.erd.to.plot <- ml.rsq.combine.best %>%
-  subset(corr.func == chosen.model) %>%
-  mutate(size = as.character(size)) %>%
-  subset(!duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
-  transform(sp = reorder(sp, depth))
-length(unique(df.erd.to.plot$sp))
-# 36
-save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
-save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
-save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
-save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
-
-
 erd.model.n.sp <- erd.model.iso.n.sp <- erd.model.p <- erd.model.r2 <- vector("numeric", length(names.gfac))
 names(erd.model.n.sp) <- names(erd.model.iso.n.sp) <- names(erd.model.p) <- names(erd.model.r2) <- names.gfac
 for(i in 1: length(names.gfac)) {
@@ -900,8 +889,22 @@ erd.model.r2
 # chosen.model <- names(erd.model.p)[which(erd.model.r2 == max(erd.model.r2[erd.model.sig], na.rm = TRUE))]
 
 chosen.model <- "gr.Psi.VPD.multi"
+save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
 save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
 save(erd.model.p, file = file.path(results.folder, "erd.model.p.Rdata"))
+## Plot chosen ERD
+df.erd.to.plot <- ml.rsq.combine.best %>%
+  subset(corr.func == chosen.model) %>%
+  mutate(size = as.character(size)) %>%
+  subset(!duplicated(sp) & !is.na(depth)) %>% droplevels() %>%
+  transform(sp = reorder(sp, depth))
+length(unique(df.erd.to.plot$sp))
+# 36
+
+save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
+save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
+save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
+
 ##______________________________________________________________________
 
 

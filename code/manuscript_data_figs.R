@@ -218,7 +218,10 @@ ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   droplevels()
 
 formula = y~x
-p4 <- ggplot(ml.rsq.combine.sub %>% subset(corr.func == chosen.model),
+ml.rsq.combine.chosen <- ml.rsq.combine.sub %>% subset(corr.func == chosen.model)
+lm.erd.iso <- lm(Xylem_sap_deltaD_permil ~ depth, data = ml.rsq.combine.chosen)
+lm.erd.iso.r2 <- round(summary(lm.erd.iso)$r.squared, 2); lm.erd.iso.p <- round(coef(summary(lm.erd.iso))[2,4], 2)
+p4 <- ggplot(ml.rsq.combine.chosen,
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
@@ -542,6 +545,15 @@ mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
 })
 mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in%
                                          names(mrate.p.vals)[round(mrate.p.vals, 2) < 0.1 | round(mrate.p.vals, 2) == 0.1],]
+mrate.r2.vals <- sapply(unique(mrate.depth.select$censusint.m), function(i) {
+  round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ]))$r.squared, 2)*100
+})
+
+m.p.90 <- round(mrate.p.vals["1985-90"], 1)
+m.p.05 <- round(mrate.p.vals["2000-05"], 2)
+m.p.10 <- round(mrate.p.vals["2005-10"], 1)
+
+m.r2 <- c(mrate.r2.vals["1985-90"], mrate.r2.vals["2000-05"], mrate.r2.vals["2005-10"])
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
@@ -593,12 +605,23 @@ ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.jpeg")),
 # ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_only_with_stem_traits.tiff")),
 #        plot = mrate.plot.15.1.sub, height = 2.5, width = 10, units = 'in')
 
+
 mrate.depth.select.evg <- subset(mrate.depth.select, deciduous == "E")
-mrate.p.vals.evg = sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
+mrate.p.vals.evg <- sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ])))[2,4]
 })
 mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in%
                                                  names(mrate.p.vals.evg)[round(mrate.p.vals.evg, 2) < 0.1 | round(mrate.p.vals.evg, 2) == 0.1],]
+mrate.r2.vals.evg <- sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
+  round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ]))$r.squared, 2)*100
+})
+m.evg.p.90 <- round(mrate.p.vals.evg["1985-90"], 1)
+m.evg.p.05 <- round(mrate.p.vals.evg["2000-05"], 2)
+m.evg.p.10 <- round(mrate.p.vals.evg["2005-10"], 2)
+
+m.evg.r2.90 <- mrate.r2.vals.evg["1985-90"]
+m.evg.r2.05 <- mrate.r2.vals.evg["2000-05"]
+m.evg.r2.10 <- mrate.r2.vals.evg["2005-10"]
 
 mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +

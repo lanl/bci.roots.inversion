@@ -614,7 +614,7 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = sprintf('italic(p)~"="~%.2f', stat(p.value))),
                   npcx = 0.95, npcy = 0.82, size = 4)
 
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen.tiff")),
@@ -881,9 +881,9 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
               dplyr::select(sp, A, B, Kmax, psi_kl50, Source)) %>%
   left_join(bci.traits %>% dplyr::select(sp, GENUS., SPECIES., FAMILY.), by = "sp") %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.,
-                Kmax.leaf = Kmax, Psi_50.leaf = psi_kl50) %>%
+                Kmax_leaf = Kmax, Psi_50_leaf = psi_kl50) %>%
   mutate(Species = tolower(Species)) %>%
-  dplyr::select(Genus, Species, Family, A, B, Kmax.leaf, Psi_50.leaf, Source) %>%
+  dplyr::select(Genus, Species, Family, A, B, Kmax_leaf, Psi_50_leaf, Source) %>%
   mutate(Family = as.character(Family))
 
 # Some familynames do not end in ceae. Correcting that

@@ -227,7 +227,7 @@ p4 <- ggplot(ml.rsq.combine.chosen,
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05, show.legend = FALSE) +
-  geom_smooth(method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
+  geom_smooth(method = "lm", se = TRUE, size = 0.5, formula = formula) +
   ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans="reverse", breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -264,7 +264,7 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
                aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   # coord_cartesian(ylim = c(13, 0.3)) +
   geom_smooth(data = ml.rsq.combine.sub %>% subset(significant), aes(group = models.plot1),
-              method = "lm", se = TRUE, color = "black", size = 0.5, formula = formula) +
+              method = "lm", se = TRUE, size = 0.5, formula = formula) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05) +

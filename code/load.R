@@ -283,7 +283,7 @@ symbols.table <-
     ),
     Definition = c(
       "Soil water potential at depth $\\z$",
-      "Water potential of leaf or stem",
+      "Water potential of leaf or stem, respectively",
       "Bulk leaf turgor loss point, the $\\mathrm{\\Psi}$~leaf~ where turgor potential = 0",
       "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",

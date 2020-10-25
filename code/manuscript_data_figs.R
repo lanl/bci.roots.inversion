@@ -545,7 +545,7 @@ mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ])))[2,4]
 })
 mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in%
-                                         names(mrate.p.vals)[round(mrate.p.vals, 2) < 0.1 | round(mrate.p.vals, 2) == 0.1],]
+                                         names(mrate.p.vals)[round(mrate.p.vals, 2) < 0.1 | round(mrate.p.vals, 1) == 0.1],]
 mrate.r2.vals <- sapply(unique(mrate.depth.select$censusint.m), function(i) {
   round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ]))$r.squared, 2)*100
 })
@@ -612,7 +612,7 @@ mrate.p.vals.evg <- sapply(unique(mrate.depth.select.evg$censusint.m), function(
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ])))[2,4]
 })
 mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in%
-                                                 names(mrate.p.vals.evg)[round(mrate.p.vals.evg, 2) < 0.1 | round(mrate.p.vals.evg, 2) == 0.1],]
+                                                 names(mrate.p.vals.evg)[round(mrate.p.vals.evg, 2) < 0.1 | round(mrate.p.vals.evg, 1) == 0.1],]
 mrate.r2.vals.evg <- sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
   round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ]))$r.squared, 2)*100
 })

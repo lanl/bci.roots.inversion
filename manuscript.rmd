@@ -3,14 +3,14 @@ title: "Hydraulically-vulnerable trees survive on deep-water access in a tropica
 author: ''
 date: ''
 output:
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
+  bookdown::pdf_document2: default
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
-  bookdown::pdf_document2: default
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
 bibliography: references.bib
 csl: new-phytologist.csl
 ---
@@ -38,6 +38,30 @@ Rutuja Chitra-Tarak
 E: arutuj@gmail.com
 \
 T: +1(505) 665 1647
+\
+\
+
+Section  | Word Count
+------------- | -------------
+Summary | 197
+Main text  | 7412
+Introduction | 892
+Methods | 3567
+Results | 871
+Discussion | 2082
+Key-words | 6 out of 8
+
+\
+\
+\
+
+Item | Count
+------------- | -------------
+Figures (all in color)  | 8
+Tables | 2
+Supplementary Material |  1 file
+
+
 
 # Summary
 
@@ -47,7 +71,7 @@ T: +1(505) 665 1647
 - The role of deep-water access in alleviating mortality of hydraulically-vulnerable trees has important implications for our predictive understanding of forest dynamics under current and future climates.
 
 \
-Keywords: below-ground traits, deep-water access, drought-induced mortality, drought tolerance, rooting depths, tropical forest, life-history strategies
+Keywords: hydraulic vulnerability, deep-water access, drought-induced mortality, drought tolerance, rooting depths, tropical forest, life-history strategies, safety margins
 
 # Introduction
 
@@ -140,7 +164,7 @@ We ran ELM-FATES with the chosen 100 ensemble members from 1985-2018, with the f
 
 ## Model for effective rooting depth (ERD)
 
-To estimate effective rooting depth, we tested alternate models for growth (Eq. \@ref(eq:M-chosen) and those in SI), which use effective rooting depth as an input. There are many intrinsic and extrinsic factors that limit plant growth, including soil moisture, VPD, leaf area seasonality and radiation [@Lawrence.2019]. Rhizosphere soil water potential ($\mathrm{\Psi}$~soil~) down-regulates plant tissue water potentials [@Christoffersen:2016kd2d]. In moist forests $\mathrm{\Psi}$~leaf~ equilibrates with $\mathrm{\Psi}$~soil~ at night and declines through the day as plants transpire. $\mathrm{\Psi}$~leaf~ in turn controls leaf conductance ($K_\textrm{leaf}$), which in turn controls stomatal conductance and photosynthetic rates [@Sack.2012]. We therefore used maximum diurnal leaf conductance ($K_\textrm{leaf}$) as determined by $\mathrm{\Psi}$~soil~ as a proxy for the soil water limitation on growth. In our ERD models $K_\textrm{leaf}$ therefore incorporates the effects of rooting depth and rhizosphere water potential. This approach does not specifically incorporate the buffering effect of stem water storage on $K_\textrm{leaf}$, which may cause the model to slightly overestimate ERD (see Discussion). VPD has a positive impact on transpiration and thus photosynthesis and growth upto a VPD threshold, after which VPD has a negative impact [@Grossiord.2020]. The fraction of a tree's leaf cover present at a given time further limits it's growth potential. We therefore regressed species-specific growth in a census interval against census interval means of multiplicative or additive effects of one or more factors calculated daily: VPD, $K_\textrm{leaf}$ and the leaf area index (LAI), all standardized between 0 and 1. Based on our preliminary analyses, additional incorporation of radiation did not improve model fitting. At our study site, due to the coincidence of higher temperature, higher radiation, and lower humidity during the dry season, the impact of VPD may as well be a combined impact of not only temperature and humidity, but also radiation.
+To estimate effective rooting depth, we tested alternate models for growth (Eq. \@ref(eq:M-chosen) and those in SI), which use effective rooting depth as an input. There are many intrinsic and extrinsic factors that limit plant growth, including soil moisture, VPD, leaf area seasonality and radiation [@Lawrence.2019]. Rhizosphere soil water potential ($\mathrm{\Psi}$~soil~) down-regulates plant tissue water potentials [@Christoffersen:2016kd2d]. In moist forests $\mathrm{\Psi}$~leaf~ equilibrates with $\mathrm{\Psi}$~soil~ at night declining through the day as plants transpire. $\mathrm{\Psi}$~leaf~ in turn controls leaf conductance ($K_\textrm{leaf}$), which can in turn control transpiration and photosynthetic rates [@Sack.2012]. We therefore used maximum diurnal ($K_\textrm{leaf}$) as determined by $\mathrm{\Psi}$~soil~ as a proxy for the soil water limitation on growth, and thus $K_\textrm{leaf}$ in our models incorporates the effects of rooting depth and rhizosphere water potential. This does not specifically account for stem water storage capacitance, which may cause the model to slightly overestimate ERD (see Discussion). Transpiration increases with VPD upto a VPD threshold, after which VPD has a negative impact as leaf pores (stomata) close, reducing photosynthesis and growth  [@Grossiord.2020]. Apart from stomatal control leaf-drop may further limit water-uptake and transpiration. We therefore regressed species-specific growth rates from 5-yrly censuses against census interval means of multiplicative or additive effects of one or more factors calculated daily: VPD, $K_\textrm{leaf}$ and the leaf area index (LAI), all standardized between 0 and 1. Based on our preliminary analyses, additional incorporation of radiation did not improve model fitting. At our study site, due to the coincidence of higher temperature, higher radiation, and lower humidity during the dry season, the impact of VPD may as well be a combined impact of not only temperature and humidity, but also radiation.
 
 \
 \    For the chosen model (see Model validation and selection below), daily average growth for species $s$, $G_{s,t|z}$, in the census interval $t$ for depth $z$ and for a given hydrological realisation $h$ is described as follows:
@@ -152,7 +176,7 @@ G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^
 where n~t~ be the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1, and $\epsilon$ is the model error term. See SI for equations for all the alternate models tested.
 
 \
-\    To account for the non-linear impact of VPD on growth, we used a locally derived polynomial relationship between gross primary productivity (GPP) and VPD (see Model parametarisation) and used GPP standardised between 0 and 1 (hereafter, VPD*) in Eq. \@ref(eq:M-chosen).
+\    To account for the non-linear impact of VPD on growth, we used a locally derived polynomial relationship between gross primary productivity (GPP) and VPD (see SI) and used GPP standardised between 0 and 1 (hereafter, VPD*) in Eq. \@ref(eq:M-chosen).
 
 \
 \    For each species, we estimated diurnal maximum value of $K_{\textrm{leaf},s,i|z,h}$ for a species $s$ by substituting $\mathrm{\Psi}_{\textrm{soil},s,i|z,h}$in the leaf vulnerability curves defined below in Eq. \@ref(eq:vc-exp) using species-specific parameters $A_{s}$ and $B_{s}$ as:
@@ -173,7 +197,7 @@ where $L$ is the likelihood, $H$ = {1, .., 100}, refer to the 100 hydrological r
 
 #### Growth data
 
-For growth estimates, to minimize the effect of light variation among trees, we selected only large trees ($\ge$ 30 cm dbh, the diameter at breast height) and also species whose maximum height was $\ge$ 30 m (hereafter, canopy species) and thus are likely to be fully exposed to the sun. We selected trees for which the height of the diameter measurements were unchanged across all censuses (1990, 1995, 2000, 2005, 2010, 2015). For each individual tree ($i$), we calculated absolute growth rates ($G_{i,t}$, cm yr^-1^) for each of the five census intervals ($t$) as the difference between tree dbh measured in successive censuses prorated by the inter-census interval based on the exact date of measurements. We eliminated positive outliers as any growth rates amounting to >75 mm yr^-1^, as this was the highest rate observed with confidence for fastest growing species [@Condit.2017]. Negative outliers were removed based on known measurement error, $\sigma_{e} = 0.006214d + 0.903$, where *d* is dbh. Any stem whose later dbh measurement fell <4$\sigma_{e}$ the earlier measurement was removed [@Condit.2017]. As tree growth rates vary with size [@Muller-Landau:2006], to keep growth rates comparable across census intervals, we obtained residuals from a dbh model of tree growth based on a tree's dbh at the beginning of a census interval ($\textrm{Resid}_{i,t} = G_{i,t} - f(d_{i,t})$). The diameter model of growth, $f(d_{i, t})$, a B-spline based polynomial equation with five degrees of freedom, was fitted to growth rates from all trees pooled together as there was insufficient species-specific data for large trees (Fig. S\@ref(fig:dbh-model)). We retained only those trees that had $\textrm{Resid}_{i,t}$ estimates for all census intervals (total trees = `r sum(g.n$n)`) and standardized (centered and scaled) individual tree time series of $\textrm{Resid}_{i,t}$. We then obtained `r length(erd.sp)` species-level time-series of medians of $\textrm{Resid}_{i,t}$ ($G_{t}$). These were obtained for only those species with complete records on at least three trees (median $n$ = `r median(g.n$n)`, max $n$ = `r max(g.n$n)` trees per species).
+For growth estimates, to minimize the effect of light variation among trees, we selected only large trees ($\ge$ 30 cm dbh, the diameter at breast height) and also species whose maximum height was $\ge$ 30 m (hereafter, canopy species) and thus are likely to be fully exposed to the sun. We calculated individual tree diameter growth rates (cm yr^-1^) across six censuses (1990, 1995, 2000, 2005, 2010, 2015), as the difference between tree dbh measured prorated by exact date of measurements. After removing growth outliers due to measurement error, to account for temporal changes in growth rates due to increasing tree size, we obtained residuals from a dbh model of tree growth. (see SI for details). Retaining trees with a complete record in all censuses (total trees = `r sum(g.n$n)`) and centering and scaling residuals of each tree, we obtained species-level median time series of residuals ($G_{t}$) used in the ERD model, for only those species ($n$ = `r length(erd.sp)`) with complete records on at least three trees (median $n$ = `r median(g.n$n)`, max $n$ = `r max(g.n$n)` trees per species).
 
 #### Leaf hydraulic vulnerability curves
 
@@ -209,17 +233,13 @@ Table \@ref(tab:symbols) here.
 
 #### Leaf Area Index (LAI)
 
-In the exploratory model for effective rooting depth, we explored the effect of seasonality in leaf area index (LAI, unitless) on growth. We assumed species-specific mean seasonal curves for LAI normalised between 0 and 1 (LAI, unitless), informed by a combination of long-term records for leaf-fall [@Wright.1990aeo] and leaf-lifetime [@Osnas.2018] (see SI). 
-
-#### Vapor Pressure Deficit (VPD)
-
-We fitted a polynomial curve between monthly average of mean midday values (11:00 to 15:00 hrs) of gross primary productivity (gC m^2^ day^-1^) we collected from the eddy flux tower located 75 m from the 50-ha plot (2012-2017) and VPD (kPa) calculated using the climate forcing data (for any day $i$, $\textrm{GPP}_i = `r vpd.cf[1]` + `r vpd.cf[2]`\textrm{VPD}_i + `r vpd.cf[3]`\textrm{VPD}_i^2 + error_{i}$; Fig. S\@ref(fig:gpp-vpd)); used VPD to predict GPP from 1990-2015, standardized it between 0 and 1, and used it as $\textrm{VPD}^*$ in Eq. \@ref(eq:M-chosen)).
+In some of the alternative models for effective rooting depth, we explored the effect of seasonality in leaf area index (LAI, unitless) on growth. We assumed species-specific mean seasonal curves for LAI normalised between 0 and 1 (LAI, unitless), informed by a combination of long-term records for leaf-fall [@Wright.1990aeo] and leaf-lifetime [@Osnas.2018] (see SI). 
 
 ### Model validation and selection
-
-Xylem sap $\mathrm{\delta}$^2^H values (hereafter, $\mathrm{\delta}$^2^H~xylem~) can provide an index of rooting depth, which we used to validate the ERD models as an independent observation of ERD. We used species $\mathrm{\delta}$^2^H~xylem~ values from BCI given in @Meinzer:2001 for the dry-season of March 1997 as this period showed largest seasonal divergence among species, with a corresponding vertical gradient of $\mathrm{\delta}$^2^H in the soil (hereafter, $\mathrm{\delta}$^2^H~soil~ ). (Fig. S\@ref(fig:iso-data)). Briefly, this isotopic approach makes use of a naturally formed gradient in deuterium to hydrogen ratio of soil water vertically belowground, which is generally formed due to evaporative enrichment (here, during the dry season). Shallow soil water has a greater deuterium to hydrogen content than deep soil water (here, $\mathrm{\delta}$^2^H~soil~ ranged from -16.5 to -50 ‰ over the depth of 0.5-1 m), with ground-water having the lowest deuterium to hydrogen content (here, -60 ‰), typically reflecting un-fractionated rain water. As root water-uptake is generally a non-fractionating process, $\mathrm{\delta}$^2^H~xylem~ of a tree reflects the signature of the source water. Thus water-sourcing depth of the tree can be identified as the depth with the same value of $\mathrm{\delta}$^2^H~soil~, or as that of $\mathrm{\delta}$^2^H~xylem~, with the uncertainty that the value of $\mathrm{\delta}$^2^H~xylem~ may also result from a mixing of water from shallower or deeper depths [@Dawson.1991]. Analyses of $\mathrm{\delta}$^2^H~xylem~ of the 12 species studied by @Meinzer:2001 showed that four species sourced water between 1 m and ground water. Two other had water access at least 0.8 m deep, one was restricted to water access between 0 to 0.2 m and five fell in the range over which the relationship between soil depth and $\mathrm{\delta}$^2^H~soil~ was variable in the 0.2 to 0.7 m depth range. 
-
-\   We compared six species with data for $\mathrm{\delta}$^2^H~xylem~ as well as modelled estimates of ERD, after removing those species in @Meinzer:2001 that are likely to have no leaves in March 1997 because xylem sap $\mathrm{\delta}$^2^H of these species may not be linked with water sourced at the time of measurement and thus may not be comparable with other species that had leaves. We also removed *Guapira standleyana*, whose xylem sap isotope value was not well constrained by the soil water isotope depth profile. For each model of ERD (Eq. \@ref(eq:M-chosen) and Eqs. in SI), estimated species ERD was regressed against species $\mathrm{\delta}$^2^H~xylem~ (‰).
+\
+As root water-uptake is generally a non-fractionating process, 2^H/1^H content of the tree xylem sap (hereafter, $\mathrm{\delta}$^2^H~xylem~) reflects the signature of the source water. Given a vertical gradient in $\mathrm{\delta}$^2^H water by depth, $\mathrm{\delta}$^2^H~xylem~ can be used as an index of rooting depth [@Dawson.1991]. We thus used $\mathrm{\delta}$^2^H~xylem~ as an independent observation to validate the ERD models. We leveraged $\mathrm{\delta}$^2^H~xylem~ values from BCI given in @Meinzer:2001 for the dry-season of March 1997 as this period showed largest seasonal divergence in $\mathrm{\delta}$^2^H~xylem~ among species, in soil and ground water $\mathrm{\delta}$^2^H at natural abundance level (Fig. S\@ref(fig:iso-data)). Analyses of $\mathrm{\delta}$^2^H~xylem~ of the 12 species studied by @Meinzer:2001 showed that four species sourced water between 1 m and ground water, two other at least 0.8 m deep, one between 0 to 0.2 m, and five in the 0.2 to 0.7 m depth range over which the relationship between soil depth and $\mathrm{\delta}$^2^H~soil~ was variable. 
+\
+\   We removed those species that would be leafless in March 1997 because xylem sap $\mathrm{\delta}$^2^H for these species may not be linked with water sourced at the time of measurement and thus may not be comparable with other species that had leaves. We also removed one species whose $\mathrm{\delta}$^2^H~xylem~ was in the uncertain depth range. For each model of ERD (Eq. \@ref(eq:M-chosen) and Eqs. in SI), estimated species ERD was regressed against species $\mathrm{\delta}$^2^H~xylem~, for a maximum of six species.
 
 ## Relationship of ERD with above-ground hydraulic traits
 
@@ -227,10 +247,10 @@ To evaluate whether ERD was associated with above-ground hydraulic traits ($n$ =
 
 ## Mortality analyses and species-specific drought experience
 
-To test whether ERD plays a role in alleviating mortality risk, we calculated mortality rates for large trees ($\ge$ 10 cm dbh) of species with ERD estimates (all canopy species with maximum height $\ge$30 m) and average abundance of at least 20 trees (one species with an average abundance of 9 trees was eliminated; $n$ = `r length(erd.mrate.sp)`). For each of the seven census intervals $t$ in the 35-yr record (1981-82, 1985, 1990, 2000, 2005, 2010, 2015, 2015), $\textrm{Mort}_{t}$ (% yr^-1^) for species $s$ for two successive censuses, $c_{1}$ and $c_{2}$, was calculated as $\textrm{Mort}_{s,t} = \frac{D_{s,c_{1}}}{N_{s,c_{2}}}\times\frac{100}{\textrm{d}}$, where $N_{s,c_{1}}$ and $D_{s,c_{2}}$ are the total number of trees of a species $s$ present in $c_{1}$ and dead in $c_{2}$, respectively, in the 50 ha plot and $d$ is the duration based on mean dates of $c_{1}$ and $c_{2}$. 
+To test whether ERD plays a role in alleviating mortality risk, we calculated mortality rates for large trees ($\ge$ 10 cm dbh) of species with ERD estimates (all canopy species with maximum height $\ge$ 30 m) and average abundance of at least 20 trees ($n$ = `r length(erd.mrate.sp)`). For each of the seven census intervals $t$ in the 35-yr record (1981-82, 1985, 1990, 2000, 2005, 2010, 2015, 2015), $\textrm{Mort}_{t}$ (% yr^-1^) for species $s$ for two successive censuses, $c_{1}$ and $c_{2}$, was calculated as $\textrm{Mort}_{s,t} = \frac{D_{s,c_{1}}}{N_{s,c_{2}}}\times\frac{100}{\textrm{d}}$, where $N_{s,c_{1}}$ and $D_{s,c_{2}}$ are the total number of trees of a species $s$ present in $c_{1}$ and dead in $c_{2}$, respectively, in the 50 ha plot and $d$ is the duration based on mean dates of $c_{1}$ and $c_{2}$. 
 
 \
-\   We regressed species ERD against species ($\textrm{Mort}_{s,t}$ for each of the census interval $t$). To assess whether deeper ERD species escaped the experience of significant soil drought, we calculated for each species the proportion of days in the simulation period (1990-2015) during which soil water potential in the soil zone matching species ERD ($\mathrm{\Psi}_{\textrm{soil},z=\textrm{ERD}}$) were below species $\mathrm{\Psi}$~crit~. $\mathrm{\Psi}$~crit~ was defined as $\mathrm{\Psi}$~50,leaf~.
+\   We regressed species ERD against species ($\textrm{Mort}_{s,t}$ for each of the census interval $t$) (with and without deciduous species). To assess whether deeper ERD species escaped the experience of significant soil drought, we calculated for each species the proportion of days in the simulation period (1990-2015) during which soil water potential in the soil zone matching species ERD ($\mathrm{\Psi}_{\textrm{soil},z=\textrm{ERD}}$) were below species $\mathrm{\Psi}$~crit~. $\mathrm{\Psi}$~crit~ was defined as $\mathrm{\Psi}$~50,leaf~.
 
 \
 All statistical analyses were conducted in R statistical environment (version 3.5.3, @R:2019).
@@ -306,7 +326,7 @@ By estimating ERD for large trees of `r length(erd.sp)` canopy tree species, we 
 The relationships that we identify between above- and below-ground traits, the water environment vertically below-ground and mortality rates are important for representing diversity in Dynamic Global Vegetation Models, which intrinsically rely on the parameterization of contrasting life history strategies [@Scheiter:2013] and the simulation of competition between those strategies. We found that LMA and WSG were strong predictors of PLC curves for leaves, but not for stems (not shown). This offers the promise of a greater ability to parameterise the 'hard' hydraulic traits with the abundant soft trait data, thus allowing much better representation of forest hydrodynamics. The relationships between ERD and above-ground hydraulic traits that we find will provide an important insight on how to model rooting depths and their coordination or trade-offs with other traits, including hydraulic vulnerability, in order to better represent the functional diversity of tropical forests, and their trajectories into the future.
 
 \
-\   Our inverse ERD model was parameterized on 5-year growth data, with five data points over a 25-yr period, which decouples climate events and demographic outcomes. Future studies could better constrain the ERD model with higher resolution growth data such as those from dendrometer bands. However, trees' stem diameter change is a sum total of not just growth, the addition of wood, but also changes due to reversible stem dehydration (xylem, phloem and bark), the importance of which increases with temporal resolution [@Chitra-Tarak.2016; @Chitra-Tarak.2015]. Use of dendrometer band data would thus entail accounting for reversible stem dehydration [@Zweifel:2018], but may also be an avenue to account for stem water storage and temporal dynamics of ERD, a limitation in our current approach. Three of our exploratory ERD models included seasonality in leaf area fraction, but we did not select them as they worsened the fit with growth data for many species (Fig. S\@ref(fig:other-erd-mods)). We interpret this result as that VPD and PLC curves may be adequate to explain growth, but also acknowledge that our estimates of seasonality of LAI is a tentative estimate combining leaf fall data and the timing of  leaf-gain backtracked from leaf lifetime, and omits inter-annual variation. Future studies could further develop models of LAI seasonality and make use of data from new technologies such as drone based monitoring of LAI in species-rich tropical forests [@Park.2019]. This would also open the possibility of testing, whether deciduous species are more shallow rooted than evergreen species as generally observed [@Fan:2017].
+\   Our inverse ERD model was parameterized on 5-year growth data, with five data points over a 25-yr period, which decouples climate events and demographic outcomes. Future studies could better constrain the ERD model with higher resolution growth data such as those from dendrometer bands. However, trees' stem diameter change is a sum total of not just growth, the addition of wood, but also changes due to reversible stem dehydration (xylem, phloem and bark), the importance of which increases with temporal resolution [@Chitra-Tarak.2016; @Chitra-Tarak.2015]. Use of dendrometer band data would thus entail accounting for reversible stem dehydration [@Zweifel:2018], but may also be an avenue to account for stem water storage and temporal dynamics of ERD, a limitation in our current approach. Three of our exploratory ERD models included seasonality in leaf area fraction, but we did not select them as they worsened the fit with growth data for many species (Fig. S\@ref(fig:other-erd-mods)). We interpret this result as that VPD and PLC curves may be adequate to explain inter-census differences in growth, but also acknowledge that our estimates of seasonality of LAI is a tentative estimate combining leaf fall data and the timing of leaf-gain backtracked from leaf lifetime, and omits inter-annual variation. Future studies could further develop models of LAI seasonality and make use of data from new technologies such as drone based monitoring of LAI in species-rich tropical forests [@Park.2019]. This would also open the possibility of testing, whether deciduous species are more shallow rooted than evergreen species as generally observed [@Fan:2017].
 
 \
 \   In forests such as BCI where understory tree growth is more limited by availability of light rather than water, inversely estimating ERD for smaller tree size classes, especially from a few growth data points, may need accounting for variation in trees' light environment over time and among trees of the same size class, an issue we minimized by limiting ERD estimates to canopy trees. In sites where water does not limit growth, it may not be possible to parametarize ERD models from growth dynamics, and other avenues such as sap-flux or leaf water-potential dynamics could be explored [@Brum.2017].
@@ -365,17 +385,19 @@ Figure \@ref(fig:sp-erd): Modelled Effective Rooting Depth (ERD; mean $\pm$ 1SE 
 Figure \@ref(fig:erd-iso): Matrix for pairwise correlations (circles) among Effective Rooting Depth (ERD) and hydraulic properties for `r nrow(cor.data)` canopy species found on Barro Colorado Island (Panama). Each circle is color coded by the Spearman's $r$ with red shades for positive $r$ values, while blue shades for negative values, respectively. $p$-values are given only when they are $\ge$0.05. Units are as follows: ERD in m, K~max~ in mmol m^-1^ s^-1^ MPa^-1^), all variables with $\mathrm{\Psi}$ in MPa.
 
 \
-Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE) versus Modelled Effective Rooting Depth (ERD; mean $\pm$ 1SE in m) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen, canopy species found on Barro Colorado Island over seven census intervals (1981-2015). $R$^2^ and $p$-values for linear model fits are given in panel insets. Model fits with SE (gray area) are shown for significant fits at $\alpha$ = 0.1.
+Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE) versus Modelled Effective Rooting Depth (ERD; mean $\pm$ 1SE in m) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen, canopy species found on Barro Colorado Island over seven census intervals (1981-2015). $R$^2^ and $p$-values for linear model fits are given in panel insets. Model fits (blue lines) with SE (gray area) are shown for significant fits at $\alpha$ = 0.1.
 
 \
 Figure \@ref(fig:erd-time): Modelled species Effective Rooting Depth (ERD; mean $\pm$ 1SE in m) versus time spent below critical hydraulic threshold--the number of days for which $\mathrm{\Psi}_{\textrm{soil},z}$ was below $\mathrm{\Psi}$~crit~, defined as $\mathrm{\Psi}$~80,leaf~, over 1990-2015, where $z$ is the soil depth matching species ERD--for `r length(erd.mrate.sp)` canopy species found on Barro Colorado Island. Each circle represents a species. Circles are colored and slightly jittered horizontally for clarity.
 
 # Tables
 
+\newpage
 ```{r hypo, results = 'asis', echo = FALSE}
 knitr::kable(hypo.table, caption = '', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(hypo.table))))
 ```
 
+\newpage
 ```{r symbols, results = 'asis', echo = FALSE}
 knitr::kable(symbols.table, caption = '', booktabs = TRUE, escape = FALSE)
 ```
@@ -424,6 +446,10 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mean_mfac vs. rdi.
 # Supplementary material {-}
 
 ## Data Descriptions 
+
+### Growth Data
+\
+We selected trees for which the height of the diameter measurements were unchanged across all censuses (1990, 1995, 2000, 2005, 2010, 2015). For each individual tree ($i$), we calculated absolute growth rates ($G_{i,t}$, cm yr^-1^) for each of the five census intervals ($t$) as the difference between tree dbh measured in successive censuses prorated by the inter-census interval based on the exact date of measurements. We eliminated positive outliers as any growth rates amounting to >75 mm yr^-1^, as this was the highest rate observed with confidence for fastest growing species [@Condit.2017]. Negative outliers were removed based on known measurement error, $\sigma_{e} = 0.006214d + 0.903$, where *d* is dbh. Any stem whose later dbh measurement fell <4$\sigma_{e}$ the earlier measurement was removed [@Condit.2017]. As tree growth rates vary with size [@Muller-Landau:2006], to keep growth rates comparable across census intervals, we obtained residuals from a dbh model of tree growth based on a tree's dbh at the beginning of a census interval ($\textrm{Resid}_{i,t} = G_{i,t} - f(d_{i,t})$). The diameter model of growth, $f(d_{i, t})$, a B-spline based polynomial equation with five degrees of freedom, was fitted to growth rates from all trees pooled together as there was insufficient species-specific data for large trees (Fig. S\@ref(fig:dbh-model)). We retained only those trees that had $\textrm{Resid}_{i,t}$ estimates for all census intervals (total trees = `r sum(g.n$n)`) and standardized (centered and scaled) individual tree time series of $\textrm{Resid}_{i,t}$. We then obtained `r length(erd.sp)` species-level time-series of medians of $\textrm{Resid}_{i,t}$ ($G_{t}$). These were obtained for only those species with complete records on at least three trees (median $n$ = `r median(g.n$n)`, max $n$ = `r max(g.n$n)` trees per species).
 
 ### Microclimatic tower {#SIData.matteo}
 
@@ -554,7 +580,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/o
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
 ```
 
-```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and $p$-values for linear model fits are given in panel insets. Model fits with SE (gray area) are shown for significant fits at $\\alpha$ = 0.1."}
+```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and $p$-values for linear model fits are given in panel insets. Model fits (blue lines) with SE (gray area) are shown for significant fits at $\\alpha$ = 0.1."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
 ```
 

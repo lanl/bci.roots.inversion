@@ -128,7 +128,7 @@ iso.soil.2 <- read.csv("data-raw/traits/isotopes/Oecologia 1995 Jackson_fig2_soi
 
 depth.m1 <- lm(depth ~ soil.deltaD, data = iso.soil.1)
 summ.depth.m1 <- summary(depth.m1)
-soil.label <- expression('Soil '*delta^2*H~"(\u2030)"*'')
+soil.label <- delta^2*H[soil]~"( \u2030)"
 ## expression(paste(delta^{2}, "H (\u2030)")))
 # depth.m1.label1 = bquote(Depth*''==''*.(round(depth.m1$coefficients[1], 2)) ~''+''~
 #                            .(round(depth.m1$coefficients[2], 2)) ~ delta^{2}*H)
@@ -189,8 +189,8 @@ iso <- iso %>% mutate(depth = predict.lm(depth.m1, newdata = data.frame(soil.del
 head(iso)
 
 
-xylem.label <- expression('Xylem Sap '*delta^2*H~"(\u2030)"*'')
-change.xylem.label <- expression('Change in Xylem Sap '*delta^2*H~"(\u2030)"*day^-1)
+xylem.label <- expression(delta^2*H[xylem]~"( \u2030)")
+change.xylem.label <- expression('Change in '*delta^2*H[xylem]~"( \u2030)"*day^-1)
 
 iso.2.raw <- iso.2.raw %>%
   left_join(iso %>% dplyr::select(sp, Phenology, deciduousness), by = "sp") %>%

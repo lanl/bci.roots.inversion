@@ -205,7 +205,6 @@ ggsave("ERD_by_sp_large_canopy.jpeg",
 ## ERD by isotopes----
 #****************************
 
-xylem.label <- expression('Xylem Sap '*delta~""^2*"H (\u2030)"*'')
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   mutate(depth = as.numeric(depth)) %>%
   subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
@@ -221,6 +220,8 @@ formula = y~x
 ml.rsq.combine.chosen <- ml.rsq.combine.sub %>% subset(corr.func == chosen.model)
 lm.erd.iso <- lm(Xylem_sap_deltaD_permil ~ depth, data = ml.rsq.combine.chosen)
 lm.erd.iso.r2 <- round(summary(lm.erd.iso)$r.squared, 2); lm.erd.iso.p <- round(coef(summary(lm.erd.iso))[2,4], 2)
+
+xylem.label <- expression(delta^2*H[xylem]~"( \u2030)")
 p4 <- ggplot(ml.rsq.combine.chosen,
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
@@ -682,9 +683,9 @@ ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-
 #****************************
 mfac.plot.9.1 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
                         aes(y = mfac.rate, x = depth)) +
-  coord_cartesian(xlim = c(0, max(mrate.mfac.depth.gr.mean.mfac$depth, na.rm = TRUE))) +
+  coord_cartesian(xlim = c(0, max(mrate.mfac.depth.gr.mean.mfac$depth, na.rm = TRUE) + 0.3)) +
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
-  geom_jitter(height = 0.2, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
+  geom_jitter(height = 0, width = 0.2, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   xlab("Effective Rooting Depth (m)") +
   ylab(expression('Time below '*Psi['crit']*' (%year'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
@@ -722,7 +723,7 @@ mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select,
   scale_y_continuous(trans = "reverse", breaks =
                        c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   # scale_x_log10(breaks = c(0.01, 0.1, 1, 10)) +
-  geom_jitter(height = 0.02, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
+  geom_jitter(height = 0, width = 0.02, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   # geom_point(size = 2, shape = 21, alpha = 0.6, color = "white", fill = "black", show.legend = FALSE) +
   ylab("Effective Rooting Depth (m)") +
   xlab(expression('Time below '*Psi['crit']*' (%year'^-1*')')) +

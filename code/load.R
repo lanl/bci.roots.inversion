@@ -267,7 +267,7 @@ hypo.table <-
 symbols.table <-
   data.frame(
     Symbol = c(
-      "$\\mathrm{\\Psi}_{\textrm{soil},z}",
+      "$\\mathrm{\\Psi}_{\textrm{soil},z}$",
       "$\\mathrm{\\Psi}$~leaf~, $\\mathrm{\\Psi}$~stem~",
       "$\\mathrm{\\Psi}$~tlp~",
       "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~50,leaf~",
@@ -278,12 +278,11 @@ symbols.table <-
       "*K*~max,stem~",
       "WSG",
       "LMA",
-      "$\\mathrm{\\delta}$^2^H~xylem~",
-      "$\\mathrm{\\delta}$^2^H~soil~"
+      "$\\mathrm{\\delta}$^2^H~xylem~"
     ),
     Definition = c(
       "Soil water potential at depth $\\z$",
-      "Water potential of leaf or stem, respectively",
+      "Water potential of leaf, or stem, respectively",
       "Bulk leaf turgor loss point, the $\\mathrm{\\Psi}$~leaf~ where turgor potential = 0",
       "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",
@@ -293,8 +292,7 @@ symbols.table <-
       "Maximum stem area-specific hydraulic conductivity of stem",
       "Wood specific gravity",
       "Leaf mass per unit area",
-      "$\\mathrm{\\delta}$^2^H of tree xylem sap",
-      "$\\mathrm{\\delta}$^2^H of soil water"
+      "$\\mathrm{\\delta}$^2^H of tree xylem sap"
     ),
     Units = c(
       "MPa",
@@ -308,7 +306,6 @@ symbols.table <-
       "kg m^-1^ s^-1^ MPa^-1^",
       "g cm^-3^",
       "g m^-2^",
-      "‰",
       "‰"
     )
 

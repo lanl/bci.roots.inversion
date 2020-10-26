@@ -59,6 +59,32 @@ erd.sp.names <- bci.traits %>%
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 
 #****************************
+### ELM-FATES param sensitivity----
+#****************************
+
+
+sm1 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of daily soil water content at 1 m to parameters_2016-04.jpeg", scale = 1)
+sm2 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of daily soil water content at 1 m to parameters_2016-07.jpeg", scale = 1)
+
+et1 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of monthly ET to parameters_2015-02.jpeg", scale = 1)
+et2 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of monthly ET to parameters_2016-04.jpeg", scale = 1)
+
+sens.sm.et <- cowplot::plot_grid(sm1, sm2, et1, et2, labels = c('a', 'b', 'c', 'd'),
+                              label_size = 14, nrow = 2, ncol = 2, rel_widths = c(1, 1))
+ggsave("sens.sm.et.jpeg", plot = sens.sm.et, path =
+         file.path("figures/ELM_FATES_parameter_sensitivity"), device = "jpeg", height = 7, width = 7.5, units ='in')
+
+run1 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of monthly runoff to parameters_2015-02.jpeg", scale = 1)
+run2 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of monthly runoff to parameters_2015-07.jpeg", scale = 1)
+run3 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of monthly runoff to parameters_2015-10.jpeg", scale = 1)
+run4 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of monthly runoff to parameters_2016-07.jpeg", scale = 1)
+
+sens.run <- cowplot::plot_grid(run1, run2, run3, run4, labels = c('a', 'b', 'c', 'd'),
+                                   label_size = 14, ncol = 2, nrow = 2, rel_widths = c(1, 1))
+ggsave("sens.run.jpeg", plot = sens.run, path =
+         file.path("figures/ELM_FATES_parameter_sensitivity"), device = "jpeg", height = 7, width = 7.5, units ='in')
+
+#****************************
 ### PSI significant droughts----
 #****************************
 
@@ -760,7 +786,7 @@ ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.jpeg")),
 ## Composite: mrate, droughts and mfac.rate ----
 #*********************************************
 composite.mort <- cowplot::plot_grid(mrate.plot.15.1.evg.flipped.sub, droughts.psi.heat,
-                                     labels = c('A', 'B'),
+                                     labels = c('a', 'b'),
                                     label_size = 14, ncol = 1, nrow = 2, rel_heights = c(1, 1.15), hjust = -2.5)
 ggsave("erd_mrate_interval_droughts.jpeg", plot = composite.mort, path =
          file.path(figures.folder), device = "jpeg", height = 5, width = 9, units ='in')
@@ -769,7 +795,7 @@ ggsave("erd_mrate_interval_droughts.tiff", plot = composite.mort, path =
 
 composite.mort.mfac <- cowplot::plot_grid(mrate.plot.15.1.evg.flipped.sub, droughts.psi.heat,
                                           mfac.plot.9.0.int.evg,
-                                     labels = c('A', 'B', 'C'),
+                                     labels = c('a', 'b', 'c'),
                                      label_size = 14, ncol = 1, nrow = 3,
                                      rel_heights = c(1.05, 1.2, 1), hjust = -2.5)
 ggsave("erd_mrate_mfac_interval_droughts.jpeg", plot = composite.mort.mfac, path =
@@ -810,7 +836,7 @@ pt2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_
 pb1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB.tiff", scale = 1)
 pb2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB.tiff", scale = 1)
 
-plot.comm.plc <- cowplot::plot_grid(pt1, pt2, pb1, pb2, labels = c('A', 'B', 'C', 'D'),
+plot.comm.plc <- cowplot::plot_grid(pt1, pt2, pb1, pb2, labels = c('a', 'b', 'c', 'd'),
                                     label_size = 14, ncol = 2, nrow = 2, rel_widths = c(1, 1))
 ggsave("plot.comm.plc.tiff", plot = plot.comm.plc, path =
          file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "tiff", height = 4.4, width = 4.4, units ='in')
@@ -823,7 +849,7 @@ pt2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_
 
 pb1 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_SG100C_AVG_predicted_AB_for_data_sp.tiff", scale = 1)
 pb2 <- cowplot::ggdraw() + cowplot::draw_image("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/std.k.spkmax_by_psi_color_by_LMALAM_AVD_predicted_AB_for_data_sp.tiff", scale = 1)
-plot.obs.plc <- cowplot::plot_grid(pt1, pt2, pb1, pb2, labels = c('A', 'B', 'C', 'D'),
+plot.obs.plc <- cowplot::plot_grid(pt1, pt2, pb1, pb2, labels = c('a', 'b', 'c', 'd'),
                                    label_size = 14, ncol = 2, nrow = 2, rel_widths = c(1, 1))
 ggsave("plot.obs.plc.tiff", plot = plot.obs.plc, path =
          file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf"), device = "tiff", height = 4.4, width = 4.4, units ='in')

@@ -1020,36 +1020,34 @@ save(hyd.long, file = file.path(results.folder, "hyd.long.prepped.Rdata"))
 ## Plot mortality by time spent below a threshold in the preferred depth-------
 # For each sp-depth calculate number of days below a threshold with an indicator function
 ##______________________________________________________________________
-# This does not change during each ERD model testing can be turned off until tests complete
-##______________________________________________________________________
 
-# names.mfac <- names(get.mfac.ls)
-# mfac.interval <- vector(mode = "list", length = length(names.mfac))
-# names(mfac.interval) <- names.mfac  # "psi.p50.g1", "psi.p50.g2"
-#
-# for (i in 1:length(names.mfac)) { #
-#   mfac.interval[[i]] <- lapply(lapply(AB.sp.ls, get.mfac.ls[[i]]),
-#                                as.data.frame) %>%
-#     bind_rows(.id = "sp")
-# }
-#
-# mrate.psi <- mfac.interval.long <- vector(mode = "list", length = length(names.mfac))
-# names(mfac.interval.long) <- names(mrate.psi) <- names.mfac
-# for (i in 1:length(names.mfac)) {
-#   mfac.interval.long[[i]] <- mfac.interval[[i]] %>%
-#     pivot_longer(cols = c(-sp, -interval),
-#                  names_to = "depth", values_to = "mfac") %>%
-#     rename(interval.num =  interval) %>%
-#     mutate(depth = as.numeric(depth),
-#            interval.num =  as.numeric(as.character(interval.num)),
-#            size = "large")
-#   mrate.psi[[i]] <- mrate.long %>%
-#     left_join(mfac.interval.long[[i]], by = c("interval.num", "sp", "size"))
-# }
-#
-# save(mfac.interval.long, file = file.path(results.folder, "mfac.interval.long.Rdata"))
+names.mfac <- names(get.mfac.ls)
+mfac.interval <- vector(mode = "list", length = length(names.mfac))
+names(mfac.interval) <- names.mfac  # "psi.p50.g1", "psi.p50.g2"
+
+for (i in 1:length(names.mfac)) { #
+  mfac.interval[[i]] <- lapply(lapply(AB.sp.ls, get.mfac.ls[[i]]),
+                               as.data.frame) %>%
+    bind_rows(.id = "sp")
+}
+
+mrate.psi <- mfac.interval.long <- vector(mode = "list", length = length(names.mfac))
+names(mfac.interval.long) <- names(mrate.psi) <- names.mfac
+for (i in 1:length(names.mfac)) {
+  mfac.interval.long[[i]] <- mfac.interval[[i]] %>%
+    pivot_longer(cols = c(-sp, -interval),
+                 names_to = "depth", values_to = "mfac") %>%
+    rename(interval.num =  interval) %>%
+    mutate(depth = as.numeric(depth),
+           interval.num =  as.numeric(as.character(interval.num)),
+           size = "large")
+  mrate.psi[[i]] <- mrate.long %>%
+    left_join(mfac.interval.long[[i]], by = c("interval.num", "sp", "size"))
+}
+
+save(mfac.interval.long, file = file.path(results.folder, "mfac.interval.long.Rdata"))
 ## Ordered along Rooting Depth Index
-load(file = file.path(results.folder, "mfac.interval.long.Rdata"))
+# load(file = file.path(results.folder, "mfac.interval.long.Rdata"))
 mfac.on <- "mr.kl50.I"
 mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%

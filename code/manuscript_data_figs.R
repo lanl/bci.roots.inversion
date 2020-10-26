@@ -119,7 +119,7 @@ plot.psi.stat.7.interval.q5.depth.freq.base <-
   scale_x_continuous(breaks = c(seq(0, 360, by = 60))) +
   scale_y_continuous(breaks = c(0:5)) +
   coord_cartesian(xlim = c(0, 200)) +
-  ylab(expression('Frequency of extreme '*Psi[soil]*~"(years)")) + xlab("Day of the Year")
+  ylab(expression('Frequency of extreme '*Psi[soil]*~"(yrs)")) + xlab("Day of the Year")
 ## Minimum Soil water potential reached at depth 1.7 + CI
 psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
   subset(median == min(median, na.rm = TRUE))
@@ -227,7 +227,7 @@ p4 <- ggplot(ml.rsq.combine.chosen,
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05, show.legend = FALSE) +
-  geom_smooth(method = "lm", se = TRUE, size = 0.5, formula = formula) +
+  geom_smooth(method = "lm", se = TRUE, size = 0.5, formula = formula, color = "gray10") +
   ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
   scale_y_continuous(trans="reverse", breaks = unique(ml.rsq.combine$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
@@ -264,7 +264,7 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
                aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   # coord_cartesian(ylim = c(13, 0.3)) +
   geom_smooth(data = ml.rsq.combine.sub %>% subset(significant), aes(group = models.plot1),
-              method = "lm", se = TRUE, size = 0.5, formula = formula) +
+              method = "lm", se = TRUE, size = 0.5, formula = formula, color = "gray10") +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
                      xmin = Xylem_sap_deltaD_permil - se, color = s.names),
                  size = 0.5, height = 0.05) +
@@ -507,7 +507,7 @@ mrate.mean.p <- ifelse(broom::glance(lm.mrate.mean)$p.value < 0.001,
 
 mrate.plot.15 <- ggplot(mrate.depth.mean,
                         aes(y = mrate, x = rdi.gr)) +
-  geom_smooth(method = "lm", formula = formula, color = "gray10") +
+  geom_smooth(method = "lm", formula = formula) +
   geom_errorbar(aes(ymin = mrate - mrate.se, ymax = mrate + mrate.se), width = 0.15, size = 0.1) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
@@ -559,11 +559,11 @@ m.r2 <- c(mrate.r2.vals["1985-90"], mrate.r2.vals["2000-05"], mrate.r2.vals["200
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
-  geom_smooth(data = mrate.p.vals.dat, method = "lm", formula = formula, color = "gray10") +
+  geom_smooth(data = mrate.p.vals.dat, method = "lm", formula = formula) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  +
-  ylab(expression('Mortality Rate (%'*'year'^-1*')')) +
+  ylab(expression('Mortality Rate (%'*'yr'^-1*')')) +
   facet_grid(. ~ censusint.m) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,
@@ -626,7 +626,7 @@ m.evg.r2.10 <- mrate.r2.vals.evg["2005-10"]
 
 mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
-  geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula, color = "gray10") +
+  geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  +
@@ -655,7 +655,7 @@ mrate.plot.15.1.evg.flipped <- ggplot(mrate.depth.select.evg, aes(x = mrate, y =
   coord_cartesian(ylim = c(10, 0)) +
   # scale_y_reverse(breaks = seq(from = 0, to = 10, by = 2)) +
   scale_y_reverse(breaks = unique(mrate.depth.select.evg$rdi.gr)) +
-  geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula, color = "gray10") +
+  geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula) +
   geom_errorbar(aes(ymax = rdi.gr + depth.se, ymin = rdi.gr - depth.se), width = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   ylab("Effective Rooting Depth (m)")  +
@@ -687,9 +687,10 @@ mfac.plot.9.1 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0, width = 0.2, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   xlab("Effective Rooting Depth (m)") +
-  ylab(expression('Time below '*Psi['crit']*' (%year'^-1*')'))
+  ylab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
+
 mfac.plot.9.1.sub <- mfac.plot.9.1 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               sp %in% erd.stem.traits.sp)
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_only_with_stem_traits.tiff")),
@@ -708,7 +709,7 @@ mfac.plot.9.1.flipped <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   ylab("Effective Rooting Depth (m)") +
   xlab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_flipped.jpeg")),
-       plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
+       plot = mfac.plot.9.1.flipped, height = 3.1, width = 3.5, units = 'in')
 
 mfac.plot.9.1.evg.flipped <- mfac.plot.9.1 %+% subset(mrate.mfac.depth.gr.mean.mfac,
                                               deciduous == "E")
@@ -718,30 +719,42 @@ ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_evergreen_flipped
 #****************************
 ## mfac.rate vs. ERD by interval ----
 #****************************
-mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select,
-                            aes(x = mfac.rate, y = depth)) +
-  scale_y_continuous(trans = "reverse", breaks =
-                       c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
-  # scale_x_log10(breaks = c(0.01, 0.1, 1, 10)) +
-  geom_jitter(height = 0, width = 0.02, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
-  # geom_point(size = 2, shape = 21, alpha = 0.6, color = "white", fill = "black", show.legend = FALSE) +
-  ylab("Effective Rooting Depth (m)") +
-  xlab(expression('Time below '*Psi['crit']*' (%year'^-1*')')) +
+mfac.plot.9.0.int.base <- ggplot(mrate.mfac.depth.select,
+                            aes(y = mfac.rate, x = depth)) +
+  xlab("Effective Rooting Depth (m)") +
+  ylab(expression('Time below '*Psi['crit']*' (% yr'^-1*')')) +
   facet_grid(. ~ censusint.m)
+
+mfac.plot.9.0.int <- mfac.plot.9.0.int.base +
+  geom_jitter(height = 0, width = 0.2, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE)
+
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.tiff")),
        plot = mfac.plot.9.0.int, height = 3, width = 9, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.0.int, height = 3, width = 9, units = 'in')
 
-mfac.plot.9.0.int.sub <- mfac.plot.9.0.int %+% subset(mrate.mfac.depth.select,
-                                                      sp %in% erd.stem.traits.sp)
+mfac.plot.9.0.int.sub <- mfac.plot.9.0.int.base %+% subset(mrate.mfac.depth.select,
+                                                      sp %in% erd.stem.traits.sp) +
+  geom_jitter(height = 0, width = 0.5, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE)
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_only_with_stem_traits.jpeg")),
        plot = mfac.plot.9.0.int.sub, height = 3, width = 9, units = 'in')
 
-mfac.plot.9.0.int.evg <- mfac.plot.9.0.int %+% subset(mrate.mfac.depth.select,
-                                                      deciduous == "E")
+mfac.plot.9.0.int.evg <- mfac.plot.9.0.int.base %+% subset(mrate.mfac.depth.select,
+                                                      deciduous == "E") +
+  geom_jitter(height = 0, width = 0.5, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE)
+
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.jpeg")),
-       plot = mfac.plot.9.0.int.sub, height = 3, width = 9, units = 'in')
+       plot = mfac.plot.9.0.int.evg, height = 3, width = 9, units = 'in')
+
+# dat1 <- mrate.mfac.depth.select %>% subset(deciduous == "E")
+# dat1$new_value <- ifelse(dat1$mfac.rate<=5,dat1$mfac.rate,ifelse(dat1$mfac.rate<15,NA,dat1$mfac.rate-10))
+# dat1 <- dat1[!is.na(dat1$new_value) ,]
+#
+# p = ggplot(dat1, aes(x=depth, y=new_value)) +   facet_grid(. ~ censusint.m)
+# p + geom_jitter(aes(color = sp), show.legend = FALSE)+
+#   theme(text = element_text(size=20),
+#         axis.text.x = element_text(angle=90, vjust=1)) +
+#   scale_y_continuous(breaks = 1:9, labels = c(1:5,"break",15:25))
 
 #*********************************************
 ## Composite: mrate, droughts and mfac.rate ----
@@ -774,7 +787,7 @@ pg.2 <- ggplot(mrate.depth.mean,
   geom_errorbar(aes(ymin = grate - grate.se, ymax = grate + grate.se), width = 0.15, size = 0.1) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
-  ylab(expression('Mean Growth Rate (cm year'^-1*')')) +
+  ylab(expression('Mean Growth Rate (cm yr'^-1*')')) +
   xlab("Effective Rooting Depth (m)") +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,

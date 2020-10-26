@@ -267,7 +267,7 @@ hypo.table <-
 symbols.table <-
   data.frame(
     Symbol = c(
-      "$\\mathrm{\\Psi}_{\textrm{soil},z}$",
+      "$\\mathrm{\\Psi}_{\\textrm{soil},z}$",
       "$\\mathrm{\\Psi}$~leaf~, $\\mathrm{\\Psi}$~stem~",
       "$\\mathrm{\\Psi}$~tlp~",
       "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~50,leaf~",

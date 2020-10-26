@@ -267,7 +267,7 @@ hypo.table <-
 symbols.table <-
   data.frame(
     Symbol = c(
-      "$\\mathrm{\\Psi}_{\\textrm{soil},z}$",
+      "$\\mathrm{\\Psi}_\\textrm{soil},z$",
       "$\\mathrm{\\Psi}$~leaf~, $\\mathrm{\\Psi}$~stem~",
       "$\\mathrm{\\Psi}$~tlp~",
       "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~50,leaf~",
@@ -281,7 +281,7 @@ symbols.table <-
       "$\\mathrm{\\delta}$^2^H~xylem~"
     ),
     Definition = c(
-      "Soil water potential at depth $\\z$",
+      "Soil water potential at depth $z$",
       "Water potential of leaf, or stem, respectively",
       "Bulk leaf turgor loss point, the $\\mathrm{\\Psi}$~leaf~ where turgor potential = 0",
       "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",

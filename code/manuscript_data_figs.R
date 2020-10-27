@@ -262,7 +262,8 @@ p4 <- ggplot(ml.rsq.combine.chosen,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE,
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3.5) +
@@ -307,7 +308,8 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.05, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
   guides(fill = guide_legend(title = "Species", order = 1),
@@ -399,7 +401,8 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.05, size = 4) +
   theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
         strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
@@ -512,7 +515,8 @@ grate.adult.stem.traits.plot <- ggplot(stem.k.gr, aes(y = grate.adult, x = value
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.87, npcy = 0.8, size = 3) +
   theme(strip.placement = "outside", panel.spacing.y = unit(-0.5, "lines"),
         strip.text.x = element_text(size = 12, vjust = 2.5),
@@ -545,7 +549,8 @@ mrate.plot.15 <- ggplot(mrate.depth.mean,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.84, size = 6) #+ scale_y_sqrt()
 ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr.tiff")),
        plot = mrate.plot.15, height = 3.1, width = 3.1, units='in')
@@ -597,7 +602,8 @@ mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f', stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.tiff")),
        plot = mrate.plot.15.1, height = 2.5, width = 10, units = 'in')
@@ -626,8 +632,9 @@ ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.jpeg")),
 #   stat_fit_glance(method = 'lm',
 #                   method.args = list(formula = formula),
 #                   geom = 'text_npc',
-#                   aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
-#                   npcx = 0.95, npcy = 0.82, size = 4)
+                    # aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                    # sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+                    # npcx = 0.95, npcy = 0.82, size = 4)
 #
 # ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_only_with_stem_traits.tiff")),
 #        plot = mrate.plot.15.1.sub, height = 2.5, width = 10, units = 'in')
@@ -664,7 +671,8 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f', stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
 
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen.tiff")),
@@ -693,7 +701,8 @@ mrate.plot.15.1.evg.flipped <- ggplot(mrate.depth.select.evg, aes(x = mrate, y =
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   npcx = 0.95, npcy = 0.03, size = 4) +
   theme(axis.title.y = element_text(size = 12))
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_flipped.jpeg")),
@@ -821,7 +830,8 @@ pg.2 <- ggplot(mrate.depth.mean,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste("P = ", round(..p.value.., digits = 3), sep = "")),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   npcx = 0.95, npcy = 0.82, size = 6) #+ scale_y_sqrt()
 ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_rdi.gr.jpeg")), plot = pg.2, height = 3, width = 3, units='in')
 ggsave(file.path(paste0(figures.folder, "/adult_Growth_vs_rdi.gr.tiff")), plot = pg.2, height = 3, width = 3, units='in')

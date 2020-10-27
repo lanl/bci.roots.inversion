@@ -1093,8 +1093,8 @@ l.trade <- ggplot(traits,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.3),
                   geom = 'text_npc',
-                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
-                                                 paste0(" = ", round(..p.value.., digits = 4))))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   npcx = 0.95, npcy = 0.75, size = 4)
 
 s.trade <- ggplot(hyd,
@@ -1113,7 +1113,9 @@ s.trade <- ggplot(hyd,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula.3),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+
                   parse = TRUE, npcx = 0.95, npcy = 0.75, size = 4)
 ls.trade <- cowplot::plot_grid(l.trade, s.trade, labels = c('A', 'B'),
                                label_size = 12, ncol = 2, rel_widths = c(1, 1))
@@ -1713,8 +1715,8 @@ plot.B <- ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
-                                                  paste0(" = ", round(..p.value.., digits = 4))))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(plot = plot.B, file.path(figures.folder.kleaf, paste0("B_data_vs_model.tiff")),
       device = "tiff", height = 2.2, width = 2.2, units='in')
@@ -1733,8 +1735,8 @@ plot.A <- ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
-                                                 paste0(" = ", round(..p.value.., digits = 4))))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(plot = plot.A, file.path(figures.folder.kleaf, paste0("A_data_vs_model.tiff")),
        device = "tiff", height = 2.2, width = 2.2, units='in')
@@ -2076,7 +2078,8 @@ ggplot(data.model.AB.stem, aes(x = model.B, y = data.B)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kstem, paste0("B_data_vs_model.jpeg")),
        device = "jpeg", height = 2.2, width = 2.2, units='in')
@@ -2095,7 +2098,8 @@ ggplot(data.model.AB.stem, aes(x = model.A, y = data.A)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(file.path(figures.folder.kstem, paste0("A_data_vs_model.jpeg")),
        device = "jpeg", height = 2.2, width = 2.2, units='in')
@@ -2247,8 +2251,8 @@ ll.lma.plot.canopy <- ll.lma.plot %+%
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = paste0("P", ifelse(p.value < 0.001, " < 0.001",
-                                                 paste0(" = ", round(..p.value.., digits = 4))))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   npcx = 0.95, npcy = 0.18, size = 6)
 ggsave(("lifetime_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
@@ -2305,7 +2309,8 @@ ll.lma.comm <- ggplot(bci.lifetime, aes(x = LMA, y = lifetime.filled)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.9, npcy = 0.85, size = 6)
 ggsave(("lifetime_by_lma_community.jpeg"),
        plot = ll.lma.comm, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
@@ -2921,7 +2926,8 @@ coh.plot5 <- ggplot(coh.sp.summ,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.8, npcy = 0.7, size = 6) +
   facet_wrap(site ~ .)
 ggsave(("leaf_longevity_vs_leaf_born_days_concentration.jpeg"),
@@ -2940,7 +2946,8 @@ coh.plot6 <- ggplot(coh.sp.summ,
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.8, npcy = 0.75, size = 6) +
   facet_wrap(site ~ .)
 ggsave(("leaf_longevity_vs_leaf_death_days_concentration.jpeg"),

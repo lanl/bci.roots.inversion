@@ -155,7 +155,8 @@ g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
-                  aes(label = sprintf('italic(p)~"="~%.2f',stat(p.value))),
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.05, npcy = 0.75, size = 3)
 ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg")),
        height = 3, width = 3.2, units='in')

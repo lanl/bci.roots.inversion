@@ -52,10 +52,18 @@ erd.iso <- erd.data %>%
 erd.sp <- erd.data$sp
 save(erd.sp, file = file.path("results", "erd.sp.Rdata"))
 
+
+
 erd.sp.names <- bci.traits %>%
   subset(sp %in% erd.sp) %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
-  dplyr::select(Code, Genus, Species, Family)
+  dplyr::select(Code, Genus, Species, Family) %>%
+  # correct sp names
+  mutate(Genus = ifelse(Genus == "Tabebuia", "Handroanthus", Genus),
+         Genus = ifelse(Genus == "Beilschmiedi", "Beilschmiedia", Genus),
+         Genus = ifelse(Genus == "Trattinnicki", "Trattinnickia", Genus),
+         Species = ifelse(Species == "costaricensi", "costaricensis", Species))
+
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 
 #****************************
@@ -234,10 +242,9 @@ ggsave("ERD_by_sp_large_canopy.jpeg",
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   mutate(depth = as.numeric(depth)) %>%
   subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
-  left_join(bci.traits %>%
-              dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
-              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
-                     sp = tolower(Code)) %>%
+  left_join(erd.sp.names %>%
+              dplyr::rename(sp = Code) %>%
+              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", Species)) %>%
               dplyr::select(sp, s.names), by = "sp") %>%
   subset(source == "Meinzer et al.1999 Fig. 4") %>%
   droplevels()
@@ -952,9 +959,8 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
               mutate(Source = "Model") %>%
               rename(A = model.A, B = model.B) %>%
               dplyr::select(sp, A, B, Kmax, psi_kl50, Source)) %>%
-  left_join(bci.traits %>% dplyr::select(sp, GENUS., SPECIES., FAMILY.), by = "sp") %>%
-  dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.,
-                Kmax_leaf = Kmax, Psi_50_leaf = psi_kl50) %>%
+  left_join(erd.sp.names %>% dplyr::rename(sp = Code), by = c("sp")) %>%
+  dplyr::rename(Kmax_leaf = Kmax, Psi_50_leaf = psi_kl50) %>%
   mutate(Species = tolower(Species)) %>%
   dplyr::select(Genus, Species, Family, A, B, Kmax_leaf, Psi_50_leaf, Source) %>%
   mutate(Family = as.character(Family))

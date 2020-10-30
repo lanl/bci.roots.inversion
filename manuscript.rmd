@@ -454,7 +454,7 @@ The $K_\textrm{leaf}$ was measured under steady state and high irradiance follow
 Brett to edit.
 
 \
-Methods for Stem Maximum hydraulic conductivity and vulnerability to cavitation closely followed [Christman.2012] and [Wolfe.2016]. Values for some of the species reported here were previously reported by @Dickman.2019 and @Wu.2020. The entire dataset and *R* script for the analyses are archived in the NGEE-Tropics archive (Wolfe 2020, To be done).
+Methods for Stem Maximum hydraulic conductivity and vulnerability to cavitation closely followed [@Christman.2012] and [@Wolfe.2016]. Values for some of the species reported here were previously reported by @Dickman.2019 and @Wu.2020. The entire dataset and *R* script for the analyses are archived in the NGEE-Tropics archive (Wolfe 2020, To be done).
 
 \
 Canopy branches were cut from 4–10 trees of 26 species across three sites (Table SXX). The branch segments were enclosed in opaque plastic bags, and brought to the laboratory for measurements. Stem segments used for hydraulic conductivity ($K_h$) measurements were located at least 1 m from the cut end of the branch to minimize the number of open vessels that extended into the segment. Maximum vessel length was measured on a subset of samples from each species. Among species, maximum vessel length ranged XXX and length of stem between the cut that was made in the air to collect the branch and the section of stem used for $K_h$ measurement was XXX (Table SXX).

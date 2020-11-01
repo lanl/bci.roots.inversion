@@ -905,8 +905,9 @@ save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.
 save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 
-##______________________________________________________________________
-
+###____________________________
+## Compare with stem hydraulics data----
+###____________________________
 
 hyd.mod <- hyd %>% left_join(depth.rsq.isotopes %>% ungroup() %>%
                                subset(corr.func == chosen.model) %>%

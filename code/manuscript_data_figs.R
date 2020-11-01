@@ -369,7 +369,7 @@ hyd.table <-  erd.stem.traits %>%
   left_join(erd.sp.names %>% dplyr::rename(sp = Code), by = c("sp")) %>%
   subset(sp %in% erd.sp) %>%
   select(-sp) %>%
-  relocate(Genus, Species, Family, TLP, lwp.min_Predawn) %>%
+  relocate(Genus, Species, Family, lwp.min_Predawn, TLP) %>%
   mutate(TLP = round(TLP, 2))
 
 erd.stem.traits.only <- erd.stem.traits %>%

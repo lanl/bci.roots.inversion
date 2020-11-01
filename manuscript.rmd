@@ -47,11 +47,11 @@ T: +1(505) 665 1647
 Section  | Word Count
 ------------- | -------------
 Summary | 195
-Main Text  | 6637
-Introduction | 873
-Methods | 3313
-Results | 859
-Discussion | 1578
+Main Text  | 6659
+Introduction | 860
+Methods | 3370
+Results | 855
+Discussion | 1574
 Keywords | 6  
 
 
@@ -87,10 +87,10 @@ Plants rely on a variety of structural and functional mechanisms to avoid or tol
 
 # Materials and Methods
 
-To obtain the daily dynamics of soil water potential in the whole-soil column we locally parameterized and calibrated a 1-D hydrological water balance model. We then developed a novel, empirical inverse model to estimate species effective rooting depths (ERD) for large trees of `r length(erd.sp)` species (Fig. \@ref(fig:schematic)). We define ERD as the depth at which soil water potential best explained species-specific growth dynamics. The ERD model incorporated the impact of atmospheric and soil drought on growth, and was constrained with species-specific leaf vulnerability curves by using existing data for eight species, while developing trait-based proxies for the rest (based on data for a total of 21 species). We evaluated ERD against existing stable hydrogen isotope ratios ($\mathrm{\delta}$^2^H~xylem~) for a subset of six tree species as an independent observation of ERD. For a subset of eight species with existing data for above-ground hydraulic traits, we tested the relationship of ERD with xylem vulnerability to embolism, branch hydraulic safety margins, leaf turgor loss point and maximum stem-specific hydraulic conductivity. Finally, we analysed species-specific large tree mortality dynamics over 35 years and estimated time a species’ spent below its critical hydraulic threshold to test whether ERD explained risk of drought-induced mortality.  
+To obtain the daily dynamics of soil water potential in the whole-soil column we locally parameterized and calibrated a 1-D hydrological water balance model. We then developed a novel, empirical inverse model to estimate species effective rooting depths (ERD) for large trees of `r length(erd.sp)` species (Fig. \@ref(fig:schematic)). We define ERD as the depth at which soil water potential best explained species-specific growth dynamics. The ERD model incorporated the impact of atmospheric and soil drought on growth, and was constrained with species-specific leaf vulnerability curves by using existing data for eight species, while developing trait-based proxies for the rest (based on data for a total of 21 species). We evaluated ERD against existing stable hydrogen isotope ratios ($\mathrm{\delta}$^2^H~xylem~) for a subset of six tree species as an independent observation of ERD. We evaluated whether ERD was associated with above-ground hydraulic traits sourcing the latter from a set of rare datasets for six to eight species that overlapped with our assessment of ERD. We tested the relationship of ERD with xylem vulnerability to embolism, branch hydraulic safety margins, leaf turgor loss point and maximum stem-specific hydraulic conductivity. Finally, we analysed species-specific large tree mortality dynamics over 35 years and estimated the time a species’ spent below its critical hydraulic threshold to test whether ERD explained risk of drought-induced mortality.  
 
 \
-In the following sections we describe the study site, the models and data used to estimate and evaluate (1) soil water potential dynamics by depth in the whole-soil column and (2) species-specific effective rooting depths. These are followed by analyses to address the proposed hypotheses. Details of all datasets used are described in the Supplementary Information.
+In the following sections, we describe the study site, and the models used to estimate and evaluate soil matric potential by depth in the whole soil column and the species-specific ERD. Then we describe the analyses of ERD as related to above-ground hydraulic traits and mortality. Details of all datasets used are described in the Supplementary Information.
 
 ## Study site description
 
@@ -196,7 +196,7 @@ For growth estimates, to minimize the effect of light variation among trees, we 
 
 #### Leaf hydraulic vulnerability curves 
 
-We obtained leaf hydraulic vulnerability curves ($K_\textrm{leaf}$ vs. $\mathrm{\Psi}$~leaf~) for adult trees of 21 common species from Zailaa et al. (to be submitted; see SI for brief description of methods) described as:
+We obtained leaf hydraulic vulnerability curves ($K_\textrm{leaf}$ vs. $\mathrm{\Psi}$~leaf~) for adult trees of 21 common species from Zailaa *et* *al.* (to be submitted; see SI for brief description of methods) described as:
 
 \begin{equation}
 K_{\textrm{leaf},s} = A_{s}e^{-B_{s}{\mathrm{\Psi}}_{\textrm{leaf}_{s}}} + \epsilon_{s}
@@ -237,7 +237,7 @@ We removed those species that would be leafless in March 1997 because xylem sap 
 
 ## Relationships between ERD and above-ground hydraulic traits
 
-To evaluate whether ERD was associated with above-ground hydraulic traits (eight species with both datasets), we regressed species ERD against maximum stem hydraulic conductivity ($K_\textrm{max,stem}$), leaf turgor loss point ($\mathrm{\Psi}$~tlp~), vulnerability to embolism from cavitation measured in terms of pressure at which 88% of $K_\textrm{max,stem}$ is lost ($\mathrm{\Psi}$~88,stem~), and hydraulic safety margins ($\mathrm{\Psi}$~min~ - $\mathrm{\Psi}$~88,stem~). See @Wolfe.2019, @Wolfe.2020 and [SI](#SIData.brett) for data collection and estimation of these variables.
+We evaluated whether ERD was associated with above-ground hydraulic traits sourcing the latter from a set of rare datasets [@Wolfe.2019, @Wolfe.2020] for six to seven species that overlapped with our assessment of ERD. We regressed species ERD against maximum stem hydraulic conductivity $K_\textrm{max,stem}$ (*n*=7), leaf turgor loss point $\mathrm{\Psi}$~tlp~ (*n*=7), vulnerability to embolism from cavitation $\mathrm{\Psi}$~88,stem~ measured in terms of pressure at which 88% of $K_\textrm{max,stem}$ is lost (*n*=7), and hydraulic safety margins ($\mathrm{\Psi}$~min~ - $\mathrm{\Psi}$~88,stem~ (*n*=6). See [SI](#SIData.brett) and Table S\@ref(tab:hyd-table) for data collection and estimation of these variables.
 
 ## Mortality analyses and species-specific drought experience
 
@@ -354,7 +354,7 @@ Figure \@ref(fig:erd-iso): Modeled Effective Rooting Depth (ERD; mean $\pm$ 1SE;
 Figure \@ref(fig:sp-erd): Modeled Effective Rooting Depth (ERD; mean $\pm$ 1SE in m) for `r  length(erd.sp)` large, canopy species of Barro Colorado Island. Species ERD is a median of the species' ERDs (depths) obtained from the 100 best-fit hydrological realizations, which are vertically resolved into exponentially increasing depths. Hence, the non-continuous nature of the ERD axis. 
 
 \
-Figure \@ref(fig:erd-hyd): Matrix for pairwise correlations (circles) among Effective Rooting Depth (ERD) and hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Each circle is color coded by the Spearman's $r$ with red shades for positive $r$ values and blue shades for negative values. $p$-values are shown inside the circles. Units are as follows: ERD in m, K~max,stem~ in mmol m^-1^ s^-1^ MPa^-1^) and variables with $\mathrm{\Psi}$ in MPa.
+Figure \@ref(fig:erd-hyd): Matrix for pairwise correlations (circles) among Effective Rooting Depth (ERD) and hydraulic properties for six to seven canopy species found on Barro Colorado Island (Panama) (see Table S\@ref(tab:hyd-table) for data). Each circle is color coded by the Spearman's $r$ with red shades for positive $r$ values and blue shades for negative values. $p$-values are shown inside the circles. Units are as follows: ERD in m, K~max,stem~ in mmol m^-1^ s^-1^ MPa^-1^) and variables with $\mathrm{\Psi}$ in MPa.
 
 \
 Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE in % yr^-1^) versus Modeled Effective Rooting Depth (ERD; mean $\pm$ 1SE in m) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen, canopy species found on Barro Colorado Island over seven census intervals (1981-2015). $R$^2^ and $p$-values for linear model fits are given in panel insets. Model fits (blue lines) with SE (gray area) are shown for significant fits at $\alpha$ = 0.1.
@@ -468,7 +468,7 @@ To assess vulnerability to cavitation, the branches were allowed to dry in the l
 
 ### Stem hydraulic safety margins
 
-Stem hydraulic safety margin was calculated as the difference between minimum leaf water potentials and $\mathrm{\Psi}$~88,stem~. Values for minimum leaf water potentials were obtained from the dataset of @Wolfe.2019, which was collected as part of the 2016 ENSO campaign. Pre-dawn and diurnal leaf water potentials were measured on a monthly basis from Feb to May 2016 at San Lorenzo and Parque Natural Metropolitano, Panama, for which leaves were sampled using a canopy crane. Measurements in BCI were available only for March 2016, for which leaves were sampled with a pole pruner, as there is no canopy crane on BCI. In total 34 species were sampled, with no species re-sampled on another site. The raw data and data summaries are archived in the NGEE-Tropics archive [@Wolfe.2019]. Here, the six species that overlapped with our assessment of ERD and $\mathrm{\Psi}$~88,stem~ were included in analyses. We defined species minimum leaf water potential as the minimum of all the diurnal measurements for a species, after taking an average value of measurements on two leaf samples for a given day (Table S\@ref(tab:hyd-table)). 
+Stem hydraulic safety margin was calculated as the difference between minimum leaf water potentials, $\mathrm{\Psi}$~min~, and $\mathrm{\Psi}$~88,stem~. Values for $\mathrm{\Psi}$~min~ were obtained from the dataset of @Wolfe.2019, which was collected as part of the 2016 ENSO campaign. Pre-dawn and diurnal leaf water potentials were measured on a monthly basis from Feb to May 2016 at San Lorenzo and Parque Natural Metropolitano, Panama, for which leaves were sampled using a canopy crane. Measurements in BCI were available only for March 2016, for which leaves were sampled with a pole pruner, as there is no canopy crane on BCI. In total 34 species were sampled, with no species re-sampled on another site. The raw data and data summaries are archived in the NGEE-Tropics archive [@Wolfe.2019]. Here, the six species that overlapped with our assessment of ERD and $\mathrm{\Psi}$~88,stem~ were included in analyses. We defined species $\mathrm{\Psi}$~min~ as the minimum of all the diurnal measurements for a species, after taking an average value of measurements on two leaf samples for a given day (Table S\@ref(tab:hyd-table)). 
 
 
 ### WSG and LMA {#SIData.rutuja}
@@ -586,7 +586,7 @@ knitr::kable(ab.table, caption = paste0("\\label{lab-ab-param}Leaf vulnerability
 ```
 #
 ```{r hyd-table, results = 'asis', echo = FALSE}
-knitr::kable(hyd.table, caption = paste0("\\label{lab-hyd-table} Leaf turgor loss point $\\mathrm{\\Psi}$~tlp~, leaf minimum water potential $\\mathrm{\\Psi}$~min~, stem maximum hydraulic conductivity $K_\\textrm{max,stem}$ and stem vulnerability to cavitation $\\mathrm{\\Psi}$~88,stem~ for ", nrow(hyd.table), " species with ERD estimates. $\\mathrm{\\Psi}$~tlp~ is sourced from Zailaa et al (to be submitted), $\\mathrm{\\Psi}$~min~ from @Wolfe.2019, $K_\\textrm{max,stem}$ and $\\mathrm{\\Psi}$~88,stem~ from @Wolfe.2020."), booktabs = TRUE, escape = FALSE)
+knitr::kable(hyd.table, caption = paste0("\\label{lab-hyd-table} Minimum leaf water potential $\\mathrm{\\Psi}$~min~, leaf turgor loss point $\\mathrm{\\Psi}$~tlp~, stem maximum hydraulic conductivity $K_\\textrm{max,stem}$ and stem vulnerability to cavitation $\\mathrm{\\Psi}$~88,stem~ for seven species with ERD estimates. $\\mathrm{\\Psi}$~min~ is sourced from @Wolfe.2019, while $\\mathrm{\\Psi}$~tlp~, $K_\\textrm{max,stem}$ and $\\mathrm{\\Psi}$~88,stem~ are sourced from from @Wolfe.2020."), booktabs = TRUE, escape = FALSE)
 ```
 
 

@@ -52,17 +52,15 @@ erd.iso <- erd.data %>%
 erd.sp <- erd.data$sp
 save(erd.sp, file = file.path("results", "erd.sp.Rdata"))
 
-
-
 erd.sp.names <- bci.traits %>%
   subset(sp %in% erd.sp) %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
   dplyr::select(Code, Genus, Species, Family) %>%
   # correct sp names
-  mutate(Genus = ifelse(Genus == "Tabebuia", "Handroanthus", Genus),
-         Genus = ifelse(Genus == "Beilschmiedi", "Beilschmiedia", Genus),
-         Genus = ifelse(Genus == "Trattinnicki", "Trattinnickia", Genus),
-         Species = ifelse(Species == "costaricensi", "costaricensis", Species))
+  mutate(Genus = ifelse(Genus == "Tabebuia", "Handroanthus", as.character(Genus)),
+         Genus = ifelse(Genus == "Beilschmiedi", "Beilschmiedia", as.character(Genus)),
+         Genus = ifelse(Genus == "Trattinnicki", "Trattinnickia", as.character(Genus)),
+         Species = ifelse(Species == "costaricensi", "costaricensis", as.character(Species)))
 
 rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
 
@@ -363,6 +361,18 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 #****************************
 ### Hydraulic traits vs. ERD---
 #****************************
+
+hyd.table <-  erd.stem.traits %>%
+  subset(!trait %in% c("lwp.min_Diurnal")) %>%
+  dplyr::select(sp, trait, value) %>%
+  pivot_wider(names_from = trait, values_from = value) %>%
+  left_join(erd.sp.names %>% dplyr::rename(sp = Code), by = c("sp")) %>%
+  subset(sp %in% erd.sp) %>%
+  select(-sp) %>%
+  relocate(Genus, Species, Family, TLP, lwp.min_Predawn) %>%
+  mutate(TLP = round(TLP, 2),
+         HSM88S = round(HSM88S, 2))
+
 erd.stem.traits.only <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%

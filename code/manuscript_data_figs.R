@@ -363,15 +363,14 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 #****************************
 
 hyd.table <-  erd.stem.traits %>%
-  subset(!trait %in% c("lwp.min_Diurnal")) %>%
+  subset(!trait %in% c("lwp.min_Diurnal", "HSM88S")) %>%
   dplyr::select(sp, trait, value) %>%
   pivot_wider(names_from = trait, values_from = value) %>%
   left_join(erd.sp.names %>% dplyr::rename(sp = Code), by = c("sp")) %>%
   subset(sp %in% erd.sp) %>%
   select(-sp) %>%
   relocate(Genus, Species, Family, TLP, lwp.min_Predawn) %>%
-  mutate(TLP = round(TLP, 2),
-         HSM88S = round(HSM88S, 2))
+  mutate(TLP = round(TLP, 2))
 
 erd.stem.traits.only <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%

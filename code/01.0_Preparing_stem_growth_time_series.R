@@ -366,6 +366,32 @@ View(gro.long.mod.med.allsp)
 
 lm.model <- lm(log(growth.mean.allsp) ~ log(dbh.mean.allsp) , data = gro.long.mod.med.allsp %>% subset(growth.mean.allsp != 0))
 glm.model <- glm(growth.mean.allsp ~ splines::bs(dbh.mean.allsp, 5), data = gro.long.mod.med.allsp)
+# Call:
+#   glm(formula = growth.mean.allsp ~ splines::bs(dbh.mean.allsp,
+#                                                 5), data = gro.long.mod.med.allsp)
+#
+# Deviance Residuals:
+#   Min       1Q   Median       3Q      Max
+# -1.3968  -0.1374  -0.0169   0.1150   3.1867
+#
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)
+# (Intercept)                      0.74826    0.08408   8.899  < 2e-16 ***
+#   splines::bs(dbh.mean.allsp, 5)1  0.18948    0.12911   1.468  0.14319
+#   splines::bs(dbh.mean.allsp, 5)2 -0.11721    0.10447  -1.122  0.26268
+#   splines::bs(dbh.mean.allsp, 5)3  2.34282    0.24441   9.586  < 2e-16 ***
+#   splines::bs(dbh.mean.allsp, 5)4 -0.83232    0.29359  -2.835  0.00487 **
+#   splines::bs(dbh.mean.allsp, 5)5  1.53714    0.25768   5.965 6.31e-09 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+# (Dispersion parameter for gaussian family taken to be 0.165665)
+#
+# Null deviance: 90.606  on 334  degrees of freedom
+# Residual deviance: 54.504  on 329  degrees of freedom
+# AIC: 356.38
+#
+# Number of Fisher Scoring iterations: 2
 summary(lm.model)
 ### using log(growth.mean.allsp)
 lm.model$coefficients

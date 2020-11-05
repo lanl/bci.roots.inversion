@@ -329,6 +329,8 @@ Conceptualization: RCT. Data curation: BF, SP for climate drivers. SP for stream
 
 ELM-FATES source code, simulation outputs for best-fit parameter ensemble membersm and all the R scripts to reproduce the manuscript are available [@Chitra-Tarak.2020]. Data sources for all other datasets used are provided throughout the manuscript.
 
+# References
+
 # Figure Captions 
 \
 Figure \@ref(fig:schematic): A schematic for the methods workflow.
@@ -356,17 +358,6 @@ Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE in % yr^-1
 
 \
 Figure \@ref(fig:erd-time): Modeled species Effective Rooting Depth (ERD; mean $\pm$ 1SE in m) versus time spent below critical hydraulic threshold--% days for which $\mathrm{\Psi}_{\textrm{soil},z}$ was below $\mathrm{\Psi}$~crit~, defined as $\mathrm{\Psi}$~50,leaf~, over each of the five census intervals (1990-2015), where $z$ is the soil depth matching species ERD--for `r length(erd.mrate.sp)` canopy tree species on Barro Colorado Island. Each circle represents a species. Circles are colored and slightly jittered horizontally for clarity.
-
-# Tables
-
-```{r hypo, results = 'asis', echo = FALSE}
-knitr::kable(hypo.table, caption = 'Hypotheses for association between Effective Rooting Depth (ERD) and hydraulic traits.', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(hypo.table))))
-```
-
-#
-```{r symbols, results = 'asis', echo = FALSE}
-knitr::kable(symbols.table, caption = 'The symbol, definition and units of key traits used in the simulations and analyses.', booktabs = TRUE, escape = FALSE)
-```
 
 # Figures
 
@@ -406,7 +397,13 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.g
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mfac vs. rdi.gr.jpeg"))
 ```
 
+# Tables
 
-\newpage
+```{r hypo, results = 'asis', echo = FALSE}
+knitr::kable(hypo.table, caption = 'Hypotheses for association between Effective Rooting Depth (ERD) and hydraulic traits.', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(hypo.table))))
+```
 
-# References
+#
+```{r symbols, results = 'asis', echo = FALSE}
+knitr::kable(symbols.table, caption = 'The symbol, definition and units of key traits used in the simulations and analyses.', booktabs = TRUE, escape = FALSE)
+```

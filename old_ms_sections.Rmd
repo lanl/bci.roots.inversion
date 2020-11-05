@@ -78,8 +78,23 @@ This would also open the possibility of testing, whether deciduous species are m
 
 
 \
+In forests such as BCI where understory tree growth is more limited by availability of light rather than water, inversely estimating ERD for smaller tree size classes may need accounting for temporal variation in trees' light environment, an issue we minimized by limiting ERD estimates to canopy trees. In sites where growth is not water-limited, ERD models may explore parameterization on sap-flux or leaf water-potential dynamics [@Brum.2017].
+
+\
 \ Finally, rooting depths may be parametarized within DGVMs such as ELM-FATES using plant hydrodynamic schemes [@Christoffersen:2016kd2d; @Koven.2020], simultaneously modeling plant water-availability with plant water-extraction. In general, including differences in tree rooting depths in ELM-FATES would improve understanding of plant competition for water (and other resources) and more accurately represent plant's drought strategies, leading to better predictions of existing and future forest function and composition.
-
+\
 The model in @Chitra-Tarak.2018 estimated six species-specific phenomenological parameters: three as root fraction for corresponding lumped vadose zone layers, and three as shape parameters for water uptake vs availability curves. For each species, they calculated daily water uptake successively from three layers, that is, the supply, to satisfy the demand of the daily maximum evapotranspiration, a function of PET and LAI. They regressed total supply to total demand ratio over census intervals as a growth coefficient against growth (five data points), and chose values for six parameters that best-fit (highest *R*^2^, that is, two additional parameters). Our inverse ERD model fits only two parameters by way of regressing depth-specific model against five growth data points. Our model was constrained on VPD and species leaf vulnerability curves, variables that are shown to be physiologically meaningful.
-
+\
 The model in CT2018 were not corroborated with such data as existing methods were inadequate to extract water bound to the saprolite found in their dry forest study site (Jean Riotte, pers. comm.). The model of below-ground water-availability in this study (ELM-FATES) differs from the conceptual water balance model used by CT2018 and was calibrated with data on long-term soil moisture dynamics at a point location (0-0.15m) and plot-wide measurements by depth (0.15, 0.4 and 1 m), as well as, evapotranspiration and stream discharge. The model in CT2018 was calibrated only on stream discharge and water table levels.
+
+\
+Figure \@ref(fig:erd-hyd): Matrix for pairwise correlations (circles) among Effective Rooting Depth (ERD) and hydraulic properties for six to seven canopy species found on Barro Colorado Island (Panama) (see Table S\@ref(tab:hyd-table) for data). Each circle is color coded by the Spearman's $r$ with red shades for positive $r$ values and blue shades for negative values. $p$-values are shown inside the circles. Units are as follows: ERD in m, K~max,stem~ in mmol m^-1^ s^-1^ MPa^-1^) and variables with $\mathrm{\Psi}$ in MPa.
+
+```{r erd-hyd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd}")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits_cor.matrix_all_p-val.jpeg"))
+```
+
+```{r dbh-model, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-dbh-model}A scatterplot of tree growth rates (circles) from all census intervals versus dbh at the beginning of the census interval is overlaid with a dbh model of growth (spline). Growth rates are color coded by census interval. The model equation is shown in inset along with goodness-of-fit (Adj. $R$^2^).")}
+knitr::include_graphics(file.path("figures/dbh/growthrate_dbh_predicted_growth_with_spline_degree_5_dbh_cutoff_100_model_no_color.jpeg"))
+```
+

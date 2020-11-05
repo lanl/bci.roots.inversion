@@ -31,7 +31,7 @@ library(knitr)
 opts_knit$set(eval.after = "fig.cap")
 ```
 
-#Supplementary Information
+#Supporting Information
 
 ## Data Descriptions 
 ### Growth Data 

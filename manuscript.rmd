@@ -37,7 +37,7 @@ Chitra-Tarak, Rutuja*^1,2^, Chonggang Xu^1^, Salomón Aguilar^3^, Kristina Ander
 *__Corresponding author__: Rutuja Chitra-Tarak  
 E: arutuj@gmail.com ;  T: +1 (443) 758 1257  
 
-\  
+
 1. Los Alamos National Laboratory, Earth and Environmental Sciences Division (EES-14) 
 MS J495, Los Alamos, NM, USA 87545-1663 
 2. Smithsonian Environmental Research Center, 647 Contees Wharf Road, Edgewater, MD, USA 21037-0028 
@@ -71,14 +71,14 @@ Introduction | 828
 Methods | 3278  
 Results | 855  
 Discussion | 1571  
-Keywords | 6  
+Keywords | 6   
 
-\  
+\
 Item | Count  
 ------------- | -------------  
 Figures in color | 9  
 Tables | 2  
-Supplementary Material |  1 file  
+Supplementary Material |  1 file   
 
 
 # Summary  

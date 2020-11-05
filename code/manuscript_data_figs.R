@@ -337,7 +337,7 @@ mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) &
   dplyr::select(censusint.m, sp, depth, depth.se, avg.abund, trees, mfac, days, mfac.rate, mrate,
                 mean.mrate, diff.mrate, mean.grate, grate.se, size, deciduous)
 
-# summarising acros interval
+# summarising across interval
 mrate.depth.mean <- mrate.depth.select %>%
   group_by(sp, deciduous) %>% summarise(rdi.gr = mean(rdi.gr, na.rm = TRUE),
                                         depth.se = mean(depth.se, na.rm = TRUE),
@@ -382,7 +382,7 @@ erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
 
 traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
                                                   levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE),
-                                   panel = factor(c("A", "B", "C", "D"), levels = c("A", "B", "C", "D"), ordered = TRUE),
+                                   panel = factor(c("a", "b", "c", "d"), levels = c("a", "b", "c", "d"), ordered = TRUE),
                                    x = c(0, 0, 0, 0),
                                    y = c(7, 0, 0.5, 2.4)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, stem']~(kg*~m^-1*~s^-1*~MPa^-1)),
@@ -425,7 +425,8 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
         plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
        plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
-
+ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
+       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
 #****************************
 ## Correlation chart: ERD vs. hydraulic traits----
 #****************************
@@ -587,7 +588,7 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_evergreen.jpe
 #****************************
 ## Mortality vs. ERD by interval----
 #****************************
-
+# https://rpkgs.datanovia.com/ggpubr/reference/stat_cor.html
 mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ])))[2,4]
 })
@@ -603,6 +604,10 @@ m.p.10 <- round(mrate.p.vals["2005-10"], 1)
 
 m.r2 <- c(mrate.r2.vals["1985-90"], mrate.r2.vals["2000-05"], mrate.r2.vals["2005-10"])
 
+mrate.depth.select <- mrate.depth.select %>%
+  transform(censusint.m.plot = factor(censusint.m,
+                                      labels = c("1982-85", "*1985-90", "1990-95", "1995-00", "*2000-05", "*2005-10", "2010-15")))
+
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
@@ -611,7 +616,7 @@ mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  +
   ylab(expression('Mortality Rate (%'*'yr'^-1*')')) +
-  facet_grid(. ~ censusint.m) +
+  facet_grid(. ~ censusint.m.plot) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -680,7 +685,7 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  +
   ylab(expression('Mortality Rate (%'*'year'^-1*')')) +
-  facet_grid(. ~ censusint.m) +
+  facet_grid(. ~ censusint.m.plot) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.95, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -710,7 +715,7 @@ mrate.plot.15.1.evg.flipped <- ggplot(mrate.depth.select.evg, aes(x = mrate, y =
   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
   ylab("Effective Rooting Depth (m)")  +
   xlab(expression('Mortality Rate (% '*'year'^-1*')')) +
-  facet_grid(. ~ censusint.m) +
+  facet_grid(. ~ censusint.m.plot) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.16, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +

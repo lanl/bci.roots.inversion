@@ -34,11 +34,10 @@ opts_knit$set(eval.after = "fig.cap")
 Chitra-Tarak, Rutuja*^1,2^, Chonggang Xu^1^, Salomón Aguilar^3^, Kristina Anderson-Teixeira^3,4^, Jeff Chambers^5^, Matteo Detto^3,6^, Boris Faybishenko^5^, Rosie A. Fisher^7^, Ryan Knox^5^, Charlie Koven^5^, Lara Kueppers^5,8^, Nobert Kunert^3,4,9^, Stefan J. Kupers^10^, Nathan G. McDowell^11,12^, Brent D. Newman^1^, Steven R. Paton^3^, Rolando Pérez^3^, Laurent Ruiz^13,14,15^, Lawren Sack^16^, Jeffrey M. Warren^17^, Brett T. Wolfe^3,18^, Cynthia Wright^17^, S. Joseph Wright^3^, Joseph Zailaa^4,16,19^, Sean M. McMahon^2,3^  
 
 \
-*__Corresponding author__:  
-Rutuja Chitra-Tarak  
-E: arutuj@gmail.com  
-T: +1 (443) 758 1257  
+*__Corresponding author__: Rutuja Chitra-Tarak  
+E: arutuj@gmail.com ;  T: +1 (443) 758 1257  
 
+\  
 1. Los Alamos National Laboratory, Earth and Environmental Sciences Division (EES-14) 
 MS J495, Los Alamos, NM, USA 87545-1663 
 2. Smithsonian Environmental Research Center, 647 Contees Wharf Road, Edgewater, MD, USA 21037-0028 
@@ -62,6 +61,7 @@ Berkeley, CA, USA 94720
 18. School of Renewable Natural Resources, Louisiana State University Agricultural Center, Baton Rouge, LA 70803, USA 
 19. California State University Los Angeles, Biological Sciences Department, Los Angeles, CA, USA  
 
+\  
 
 Section  | Word Count  
 ------------- | -------------  
@@ -73,10 +73,10 @@ Results | 855
 Discussion | 1571  
 Keywords | 6  
 
-
+\  
 Item | Count  
 ------------- | -------------  
-Figures in color | 8  
+Figures in color | 9  
 Tables | 2  
 Supplementary Material |  1 file  
 

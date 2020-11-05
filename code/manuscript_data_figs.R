@@ -222,7 +222,9 @@ df.erd.to.plot <- df.erd.to.plot %>%
 erd.sp.plot <- ggplot(df.erd.to.plot,
                       aes(x = s.names, y = depth)) +
   # geom_point(aes(color = s.names), show.legend = FALSE, size = 3) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 3) +
+  # geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 3) +
+  geom_point(aes(color = depth), alpha = 1, size = 3, show.legend = FALSE) +
+  scale_color_continuous(trans = 'reverse') +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.2, size = 0.2) +
   ylab("Effective Rooting Depth (m)") + xlab("Species") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"),
@@ -334,7 +336,7 @@ mrate.depth.select <- subset(mrate.depth, !is.na(rdi.gr) & avg.abund >= 20) %>%
 mrate.mfac.depth.select <- subset(mrate.mfac.depth, !is.na(rdi.gr) &
                                     avg.abund >= 20 & depth == rdi.gr) %>%
   subset(sp %in% erd.sp) %>% droplevels() %>%
-  dplyr::select(censusint.m, sp, depth, depth.se, avg.abund, trees, mfac, days, mfac.rate, mrate,
+  dplyr::select(interval.num, censusint.m, sp, depth, depth.se, avg.abund, trees, mfac, days, mfac.rate, mrate,
                 mean.mrate, diff.mrate, mean.grate, grate.se, size, deciduous)
 
 # summarising across interval
@@ -775,32 +777,48 @@ ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_evergreen_flipped
 #****************************
 ## mfac.rate vs. ERD by interval ----
 #****************************
-mfac.plot.9.0.int.base <- ggplot(mrate.mfac.depth.select,
-                            aes(y = mfac.rate, x = depth)) +
+mrate.mfac.depth.select <- mrate.mfac.depth.select %>%
+  arrange(sp, interval.num) %>%
+  group_by(sp) %>%
+  mutate(mfac.rate.prior = lag(mfac.rate, n = 1, default = NA)) %>%
+  ungroup(sp)
+
+mrate.mfac.depth.select.sp.mean <- mrate.mfac.depth.select %>%
+  group_by(depth, censusint.m) %>%
+  summarise(mean.mfac.rate = mean(mfac.rate, na.rm = TRUE),
+            se = sd(mfac.rate, na.rm = TRUE)/n(), .groups = "drop")
+
+mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select.sp.mean,
+                                 aes(x = depth, y = mean.mfac.rate,
+                                 ymax = mean.mfac.rate + se,
+                                 ymin = mean.mfac.rate - se,
+                                 fill = censusint.m)) +
   xlab("Effective Rooting Depth (m)") +
-  ylab(expression('Time below '*Psi['crit']*' (% yr'^-1*')')) +
-  facet_grid(. ~ censusint.m)
-
-mfac.plot.9.0.int <- mfac.plot.9.0.int.base +
-  geom_jitter(height = 0, width = 0.2, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE)
-
+  ylab(expression('Time beyond '*Psi['crit']*' (% yr'^-1*')')) +
+  geom_bar(position = position_dodge2(), stat="identity") +
+  geom_errorbar(position = position_dodge2(.9, padding = .6)) +
+  theme(legend.position = c(0.75, 0.65),
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent")) +
+  scale_x_continuous(breaks = c(sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+  # scale_fill_brewer(palette = "Greens") + #palette = "Spectral"
+  guides(fill = guide_legend(title = "Census Interval"), override.aes = list(size = 1))
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.tiff")),
-       plot = mfac.plot.9.0.int, height = 3, width = 9, units = 'in')
+       plot = mfac.plot.9.0.int,  height = 3.1, width = 3.5, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.jpeg")),
-       plot = mfac.plot.9.0.int, height = 3, width = 9, units = 'in')
+       plot = mfac.plot.9.0.int,  height = 3.1, width = 3.5, units = 'in')
 
-mfac.plot.9.0.int.sub <- mfac.plot.9.0.int.base %+% subset(mrate.mfac.depth.select,
-                                                      sp %in% erd.stem.traits.sp) +
-  geom_jitter(height = 0, width = 0.5, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE)
-ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_only_with_stem_traits.jpeg")),
-       plot = mfac.plot.9.0.int.sub, height = 3, width = 9, units = 'in')
+mrate.mfac.depth.select.evg <- subset(mrate.mfac.depth.select,
+                                      deciduous == "E") %>%
+  group_by(depth, censusint.m) %>%
+  summarise(mean.mfac.rate = mean(mfac.rate, na.rm = TRUE),
+            se = sd(mfac.rate, na.rm = TRUE)/n(), .groups = "drop")
 
-mfac.plot.9.0.int.evg <- mfac.plot.9.0.int.base %+% subset(mrate.mfac.depth.select,
-                                                      deciduous == "E") +
-  geom_jitter(height = 0, width = 0.5, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE)
+mfac.plot.9.0.int.evg <- mfac.plot.9.0.int %+% mrate.mfac.depth.select.evg
 
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.jpeg")),
-       plot = mfac.plot.9.0.int.evg, height = 3, width = 9, units = 'in')
+       plot = mfac.plot.9.0.int.evg,  height = 3.1, width = 3.5, units = 'in')
 
 # dat1 <- mrate.mfac.depth.select %>% subset(deciduous == "E")
 # dat1$new_value <- ifelse(dat1$mfac.rate<=5,dat1$mfac.rate,ifelse(dat1$mfac.rate<15,NA,dat1$mfac.rate-10))

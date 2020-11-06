@@ -31,7 +31,77 @@ library(knitr)
 opts_knit$set(eval.after = "fig.cap")
 ```
 
-#Supporting Information
+# Supporting Information
+
+## Supplementary Figures
+
+```{r ksat-profiles, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-ksat-profiles}Generated 5000 curves of soil hydraulic conductivity variation by depth based on Latin Hypercube Sampling within 95% CI of observed data at depths of 12.5 cm and 60 cm [@Kinner:2004], assuming a linear decline between those depths, and values before 12.5 and after 60 cm as that of 12.5 cm and 60 cm, respectively. Only 100 curves are shown for clarity. Note the log scale on horizontal axis.")}
+knitr::include_graphics(file.path("figures/Bootstrapped Ksat profiles within observed 95CI_random_two_hundred.jpeg"))
+```
+
+
+```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "35%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd}Scatterplot of mean midday (11:00 am to 15:00 pm) gross primary productivity (GPP) and mean midday vapor pressure deficit (VPD) measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows the fit from a polynomial model described in inset."}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/gpp_by_env_variables/monthly_gpp.vpd.jpeg"))
+```
+
+
+```{r iso-data, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-iso-data}Stable isotopic ratio ($\\mathrm{\\delta}^2H$) of soil water by depth measured at Barro Colorado Island in March 1997. Data from @Meinzer:1999."}
+knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg"))
+```
+
+
+```{r sens-sm-et, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-sens-sm-et}Parameter sensitivity of ELM-FATES soil water content (that is, VWC, **a**-**b**) and ET (**c**-**d**) is shown for two representative sample months, as sensitivity for a particular parameter varies depending on the chosen month. Horizontal axes show global ranges for a given parameter. Parameters are color coded and are consistent across panels. Each point represents a simulation among the 5000 ensemble-member runs. See S\\@ref(tab:param) for description, global ranges and chosen ranges for parameters."}
+knitr::include_graphics(file.path("figures/ELM_FATES_parameter_sensitivity/sens.sm.et.jpeg"))
+```
+
+
+```{r sens-run, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-sens-run}Parameter sensitivity of ELM-FATES stream discharge (QRUNOFF) is shown for four sample months (**a**-**d**), as sensitivity for a particular parameter varies depending on the chosen month. Horizontal axes show global ranges for a given parameter. Parameters are color coded and are consistent across panels. Each point represents a simulation among the 5000 ensemble-member runs. See S\\@ref(tab:param) for description, global ranges and chosen ranges for parameters."}
+knitr::include_graphics(file.path("figures/ELM_FATES_parameter_sensitivity/sens.run.jpeg"))
+```
+
+
+```{r swp-all-depths, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-all-depths}Daily mean soil water potential ($\\Psi_{\\textrm{soil},z}$) by depth $z$ (m; panels) over 1990-2018 predicted from each of the the 100 best-fit ensembles (colored lines). Vertical gray lines demarcate median dates of the demographic censuses at the BCI 50 ha plot."}
+knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_daily_all_depths_params.top.few_full.jpeg"))
+```
+
+
+```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-plc-curves}Vulnerability curves fitted to observed $K_\\textrm{leaf}$ vs. $\\mathrm{\\Psi}$~leaf~ data for ", length(sp.exp.param$sp)," tree species from BCI--in absolute terms (**a**, **b**), as well as, in terms of loss of conductivity (%) (**c**, **d**). Each line represents a species, color coded by WSG (**a**, **c**), or LMA (**b**, **d**), with blue tones indicating smaller values of WSG or LMA and red tones indicating larger values.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.obs.plc.jpeg"))
+```
+
+```{r obs-comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-comm-plc-curves}Percent loss of vulnerability curves for species with ERD estimates. Each line represents a species, color coded by source of the curve: fitted to observed data for $K_\\textrm{leaf}$ vs. $\\mathrm{\\Psi}$~leaf~ are in yellow and those based on the scaling relationship with WSG and LMA are in gray.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/obs.mod_plccurves_fits_ggplot_no_col.jpeg"))
+```
+
+
+```{r other-erd-mods, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-other-erd-mods}Effective Rooting Depth versus $\\mathrm{\\delta}^2H$ for each of the ERD models tested (panels). For each ERD model only those species have an estimate of ERD that have passed the test of Pearson's $r$ > 0.71 during ERD parameterisation. The number of species with an ERD estimate as well as $\\mathrm{\\delta}^2H$ for each model are shown in inset, along with the goodness-of-fit ($R$^2^) and $p$-values for a linear relationship between ERD and $\\mathrm{\\delta}^2H$. ERD models in panels **a**-**e** correspond to Eq. \\@ref(eq:M1)-\\@ref(eq:M6), respectively.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
+```
+
+
+```{r erd-hyd-full, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd-full}. Pairwise correlations (upper triangle) and corresponding linear regressions (lower triangle) among modelled Effective Rooting Depth (ERD) and hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's correlation coefficients and significance levels are shown (upper-half; '*' $p$ < 0.05; '.' $p$ < 0.1; ' ' $p$ < 1)")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits_cor.chart.jpeg"))
+```
+
+```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Linear model fits (blue lines) with confidance bands (gray area) are shown for significant fits at $\\alpha$ = 0.1."}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
+```
+
+
+## Supplementary Tables
+
+```{r param, results = 'asis', echo = FALSE}
+knitr::kable(param.table, caption = 'ELM-FATES parameters used to generate ensembles, with description, prescribed global ranges, rationale for the choice of ranges and references. Ranges for best-fit chosen ensembles are also given. Note that no. 1-6 are parameters specific to FATES.', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(param.table))))
+```
+#
+```{r hyd-table, results = 'asis', echo = FALSE}
+knitr::kable(hyd.table, caption = paste0("\\label{lab-hyd-table} Minimum leaf water potential $\\mathrm{\\Psi}$~min~, leaf turgor loss point $\\mathrm{\\Psi}$~tlp~, stem maximum hydraulic conductivity $K_\\textrm{max,stem}$ and stem vulnerability to cavitation $\\mathrm{\\Psi}$~88,stem~ for seven species with ERD estimates. $\\mathrm{\\Psi}$~min~ is sourced from @Wolfe.2019, while $\\mathrm{\\Psi}$~tlp~, $K_\\textrm{max,stem}$ and $\\mathrm{\\Psi}$~88,stem~ are sourced from @Wolfe.2020. $\\mathrm{\\Psi}$~min~, $\\mathrm{\\Psi}$~tlp~ and $\\mathrm{\\Psi}$~88,stem~ are in MPa, while $K_\\textrm{max,stem}$ in kg m^-1^ s^-1^ MPa^-1^."), booktabs = TRUE, escape = FALSE)
+```
+
+#
+```{r ab-param, results = 'asis', echo = FALSE}
+knitr::kable(ab.table, caption = paste0("\\label{lab-ab-param}Leaf vulnerability curves parameters *A* & *B*, $K_\\textrm{max,leaf}$ and $\\mathrm{\\Psi}$ for the ", length(erd.sp), " species with ERD estimates. Species for which curves were fitted to observed data for $K_\\textrm{leaf}$ vs. $\\mathrm{\\Psi}$~leaf~ are identified with Source as Data, while species for which curves were obtained based on trait-proxies are identified with Source as Model."), booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(ab.table))))
+```
 
 ## Data Descriptions 
 ### Growth Data 
@@ -49,6 +119,12 @@ The ANN was implemented using the Neural Network Toolbox in Matlab 2014a.
 \
 Data can be requested from https://ameriflux.lbl.gov.
 
+#
+```{r eddy, results = 'asis', echo = FALSE}
+knitr::kable(eddy.table, caption = 'QA/QC procedure applied to eddy covariance fluxes. w: vertical wind speed; t: air temperature; q: water vapor density; c: CO~2~ density; u: horizontal wind speed. The bar indicates 30-min averaging and the carat indicates fluctuation ($\\overline{\\hat{x} = x - \\bar{x}}$)', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(eddy.table))))
+```
+
+
 ### Stream discharge from the Conrad catchment {#SIData.steveP} 
 \
 The Conrad weir is located on the gently sloping western side of Barro Colorado Island. The weir consists of a 90 degree ‘V’ notch with a rectangular upper section. The weir was constructed in several stages between 1993 and 1996. Stream stage is recorded at 5-minute intervals. The weir drains a catchment of approximately 40 ha of which at least 90% consists of the central plateau area of the island. Peak flow usually follows peak rain by approximately 2-3 hours. Large storms are sometimes preceded by small, initial peaks generated by the rain falling on the steeper slopes close to the weir. Streamflow data are analyzed by software custom-built by author SP. The program is used to correct for blockages of the weir ‘V’ by fallen vegetation (a common occurrence), sensor drift, small gaps and other problems. Discharge is then calculated using an empirically derived rating curve calculated for each 1mm stream stage.
@@ -61,12 +137,22 @@ We collected volumetric water content (VWC) data (2012-2018) from three location
 \
 We also leveraged existing GWC measurements by @Kupers:2019 at the depths of 0.15, 0.4 and 1 m in summer 2015 (February, March and April) and 0.15, 0.4 in summer 2016 (March), with 1299 samples in total that covered all soil types and habitats in the 50ha plot. The sampling periods were six, five, ten and eight days long, respectively. The 2016 dry season was associated with the 2015–2016 El Niño (see @Kupers:2019 for further details). We converted these GWC measurements to VWC assuming a bulk density of 0.8 g cm^-3^. $\theta_{\textrm{0.15 m}}$, $\theta_{\textrm{0.4 m}}$ and $\theta_{\textrm{1 m}}$ refer to the plot-wide VWC averages by depth over each sampling period. Middle date of a sampling period is used for comparison with model simulations.
 
+```{r TDR-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-TDR-calib}Volumetric Water Content vs. TDR data for a vertical TDR probe (0-15 cm depth) at the base of the eddy flux tower near the 50 ha plot at BCI."}
+knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpeg"))
+```
+
+
 ### Leaf Area Index 
 \
 We generated an estimate of the mean seasonality curve for normalized leaf area index ($\textrm{LAI}^*$, range 0-1, unitless) for individual species as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate [@Wright.1990aeo]. We lead this daily leaf-fall time series by the species-specific average leaf-lifetime (in days) and used it as an estimate of the daily leaf-gain time-series. The difference between leaf-fall and leaf-gain gave an estimate of daily leaf-change time series, which was then scaled to express as a fraction of the total leaf fall in a given year. Beginning with the $\textrm{LAI}^*$ of 1 at the end of the wet season in the first year of the record, we accumulated leaf-change over it to obtain a running estimate of the leaf-cover fraction, averaged it by DOY across years and normalized it to obtain the species-specific seasonality curve in $\textrm{LAI}^*$ (range 0-1, unitless). (Fig. S\@ref(fig:leaf-cover)).  
 
 \
 For five species, an estimate of leaf lifetime was available from direct observations [@Osnas.2018]. For the rest `r erd.sp.wo.ll` species, leaf lifetime was predicted from LMA ($\overline{lifetime} = `r ll.lma.cf[1]` + `r ll.lma.cf[2]`LMA$; $R$^2^ = `r ll.lma.r2`; $p$ `r ll.lma.p`, $n$ = `r ll.lma.n`).
+
+
+```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover}Seasonal variation in standardised LAI (range 0-1) for ", length(erd.sp)," species at Barro Colorado Island (panels). Species are color-coded by deciduousness.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf.cover_BCI_multi_panel.jpeg"))
+```
 
 ### Leaf hydraulic conductivity and vulnerability to cavitation {#SIData.joseph}
 \
@@ -133,81 +219,5 @@ G_{s,t|z} = \beta_{0,s|z,h} + \beta_{1,s|z,h}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} 
 (\#eq:M6)
 \end{equation}
 where n~t~ are the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1, and $\epsilon$ is the model error term. $\hat{\textrm{VPD}}$ is the predicted GPP from a locally derived polynomial relationship between gross primary productivity (GPP) and VPD, so as to account for the non-linear impact of VPD on growth. See the ERD model description in the main text for other details.
-
-# Supplementary Figures
-
-```{r ksat-profiles, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-ksat-profiles}Generated 5000 curves of soil hydraulic conductivity variation by depth based on Latin Hypercube Sampling within 95% CI of observed data at depths of 12.5 cm and 60 cm [@Kinner:2004], assuming a linear decline between those depths, and values before 12.5 and after 60 cm as that of 12.5 cm and 60 cm, respectively. Only 100 curves are shown for clarity. Note the log scale on horizontal axis.")}
-knitr::include_graphics(file.path("figures/Bootstrapped Ksat profiles within observed 95CI_random_two_hundred.jpeg"))
-```
-
-```{r TDR-calib, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-TDR-calib}Volumetric Water Content vs. TDR data for a vertical TDR probe (0-15 cm depth) at the base of the eddy flux tower near the 50 ha plot at BCI."}
-knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpeg"))
-```
-
-```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "35%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd}Scatterplot of mean midday (11:00 am to 15:00 pm) gross primary productivity (GPP) and mean midday vapor pressure deficit (VPD) measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows the fit from a polynomial model described in inset. GPP predicted from this equation is used as \\hat{\\textrm{VPD}} in equations \\@ref(eq:M2), \\@ref(eq:M3), \\@ref(eq:M5) and \\@ref(eq:M6)."}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/gpp_by_env_variables/monthly_gpp.vpd.jpeg"))
-```
-
-```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover}Seasonal variation in standardised LAI (range 0-1) for ", length(erd.sp)," species at Barro Colorado Island (panels). Species are color-coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf.cover_BCI_multi_panel.jpeg"))
-```
-
-```{r iso-data, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-iso-data}Stable isotopic ratio ($\\mathrm{\\delta}^2H$) of soil water by depth measured at Barro Colorado Island in March 1997. Data from @Meinzer:1999."}
-knitr::include_graphics(file.path("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.jpeg"))
-```
-
-```{r swp-all-depths, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-all-depths}Daily mean soil water potential ($\\Psi_{\\textrm{soil},z}$) by depth $z$ (m; panels) over 1990-2018 predicted from each of the the 100 best-fit ensembles (colored lines). Vertical gray lines demarcate median dates of the demographic censuses at the BCI 50 ha plot."}
-knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_daily_all_depths_params.top.few_full.jpeg"))
-```
-
-```{r sens-sm-et, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-sens-sm-et}Parameter sensitivity of ELM-FATES soil water content (that is, VWC, **a**-**b**) and ET (**c**-**d**) is shown for two representative sample months, as sensitivity for a particular parameter varies depending on the chosen month. Horizontal axes show global ranges for a given parameter. Parameters are color coded and are consistent across panels. Each point represents a simulation among the 5000 ensemble-member runs. See S\\@ref(tab:param) for description, global ranges and chosen ranges for parameters."}
-knitr::include_graphics(file.path("figures/ELM_FATES_parameter_sensitivity/sens.sm.et.jpeg"))
-```
-
-```{r sens-run, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-sens-run}Parameter sensitivity of ELM-FATES stream discharge (QRUNOFF) is shown for four sample months (**a**-**d**), as sensitivity for a particular parameter varies depending on the chosen month. Horizontal axes show global ranges for a given parameter. Parameters are color coded and are consistent across panels. Each point represents a simulation among the 5000 ensemble-member runs. See S\\@ref(tab:param) for description, global ranges and chosen ranges for parameters."}
-knitr::include_graphics(file.path("figures/ELM_FATES_parameter_sensitivity/sens.run.jpeg"))
-```
-
-```{r obs-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-plc-curves}Vulnerability curves fitted to observed $K_\\textrm{leaf}$ vs. $\\mathrm{\\Psi}$~leaf~ data for ", length(sp.exp.param$sp)," tree species from BCI--in absolute terms (**a**, **b**), as well as, in terms of loss of conductivity (%) (**c**, **d**). Each line represents a species, color coded by WSG (**a**, **c**), or LMA (**b**, **d**), with blue tones indicating smaller values of WSG or LMA and red tones indicating larger values.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/plot.obs.plc.jpeg"))
-```
-
-```{r obs-comm-plc-curves, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-obs-comm-plc-curves}Percent loss of vulnerability curves for species with ERD estimates. Each line represents a species, color coded by source of the curve: fitted to observed data for $K_\\textrm{leaf}$ vs. $\\mathrm{\\Psi}$~leaf~ are in yellow and those based on the scaling relationship with WSG and LMA are in gray.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/kmax_by_psi/Leaf/obs.mod_plccurves_fits_ggplot_no_col.jpeg"))
-```
-
-```{r other-erd-mods, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "80%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-other-erd-mods}Effective Rooting Depth versus $\\mathrm{\\delta}^2H$ for each of the ERD models tested (panels). For each ERD model only those species have an estimate of ERD that have passed the test of Pearson's $r$ > 0.71 during ERD parameterisation. The number of species with an ERD estimate as well as $\\mathrm{\\delta}^2H$ for each model are shown in inset, along with the goodness-of-fit ($R$^2^) and $p$-values for a linear relationship between ERD and $\\mathrm{\\delta}^2H$. ERD models in panels **a**-**e** correspond to Eq. \\@ref(eq:M1)-\\@ref(eq:M6), respectively.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg"))
-```
-
-```{r erd-hyd-full, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd-full}. Pairwise correlations (upper triangle) and corresponding linear regressions (lower triangle) among modelled Effective Rooting Depth (ERD) and hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's correlation coefficients and significance levels are shown (upper-half; '*' $p$ < 0.05; '.' $p$ < 0.1; ' ' $p$ < 1)")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits_cor.chart.jpeg"))
-```
-
-```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Linear model fits (blue lines) with confidance bands (gray area) are shown for significant fits at $\\alpha$ = 0.1."}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
-```
-
-```{r erd-time-evg, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time-evg}Modelled species Effective Rooting Depth (ERD; mean $\\pm$ 1SE in m) versus time spent below critical hydraulic threshold--the number of days for which $\\mathrm{\\Psi}_{\\textrm{soil},z}$ was below $\\mathrm{\\Psi}$~crit~, defined as $\\mathrm{\\Psi}$~80,leaf~, over five census intervals (1990-2015), where $z$ is the soil depth matching species ERD--for ", nrow(mrate.depth.mean %>% subset(deciduous == "E")), " canopy species found on Barro Colorado Island. Each circle represents a species. Circles are colored and slightly jittered horizontally for clarity.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mfac vs. rdi.gr_evergreen.jpeg"))
-```
-
-#Supplementary Tables
-
-```{r param, results = 'asis', echo = FALSE}
-knitr::kable(param.table, caption = 'ELM-FATES parameters used to generate ensembles, with description, prescribed global ranges, rationale for the choice of ranges and references. Ranges for best-fit chosen ensembles are also given. Note that no. 1-6 are parameters specific to FATES.', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(param.table))))
-```
-#
-```{r eddy, results = 'asis', echo = FALSE}
-knitr::kable(eddy.table, caption = 'QA/QC procedure applied to eddy covariance fluxes. w: vertical wind speed; t: air temperature; q: water vapor density; c: CO~2~ density; u: horizontal wind speed. The bar indicates 30-min averaging and the carat indicates fluctuation ($\\overline{\\hat{x} = x - \\bar{x}}$)', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(eddy.table))))
-```
-#
-```{r ab-param, results = 'asis', echo = FALSE}
-knitr::kable(ab.table, caption = paste0("\\label{lab-ab-param}Leaf vulnerability curves parameters *A* & *B*, $K_\\textrm{max,leaf}$ and $\\mathrm{\\Psi}$ for the ", length(erd.sp), " species with ERD estimates. Species for which curves were fitted to observed data for $K_\\textrm{leaf}$ vs. $\\mathrm{\\Psi}$~leaf~ are identified with Source as Data, while species for which curves were obtained based on trait-proxies are identified with Source as Model."), booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(ab.table))))
-```
-#
-```{r hyd-table, results = 'asis', echo = FALSE}
-knitr::kable(hyd.table, caption = paste0("\\label{lab-hyd-table} Minimum leaf water potential $\\mathrm{\\Psi}$~min~, leaf turgor loss point $\\mathrm{\\Psi}$~tlp~, stem maximum hydraulic conductivity $K_\\textrm{max,stem}$ and stem vulnerability to cavitation $\\mathrm{\\Psi}$~88,stem~ for seven species with ERD estimates. $\\mathrm{\\Psi}$~min~ is sourced from @Wolfe.2019, while $\\mathrm{\\Psi}$~tlp~, $K_\\textrm{max,stem}$ and $\\mathrm{\\Psi}$~88,stem~ are sourced from @Wolfe.2020. $\\mathrm{\\Psi}$~min~, $\\mathrm{\\Psi}$~tlp~ and $\\mathrm{\\Psi}$~88,stem~ are in MPa, while $K_\\textrm{max,stem}$ in kg m^-1^ s^-1^ MPa^-1^."), booktabs = TRUE, escape = FALSE)
-```
 
 # References

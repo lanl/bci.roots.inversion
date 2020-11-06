@@ -3,14 +3,14 @@ title: "Hydraulically-vulnerable trees survive on deep-water access during droug
 author: ''
 date: ''
 output:
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
-  bookdown::pdf_document2: default
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
+  bookdown::pdf_document2: default
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
 bibliography: references.bib
 csl: new-phytologist.csl
 ---
@@ -160,7 +160,7 @@ We calibrated ELM-FATES over 2012-2018 against three key fluxes and states in Eq
 based on monthly sums for both ET and $q$~run~ and daily averages for $\mathrm{\theta}$s. $W_{\textrm{liq,}\overline{z}}$ is the average of daily $W_{\textrm{liq,} z}$, where $z$ $\in$ $Z$; $Z$ = (`r paste(soil.depths[1:4], collapse=", ")`) m. Superscript * indicates that RMSE is standardized between 0 and 1 across the 5000 simulations. 
 
 \
-Preliminary analyses showed that simultaneously fitting the model to all states and fluxes did not capture the soil moisture dynamics at 1 m depth well, our key priority for model calibration. To ensure model fit at 1 m depth, we first chose 300 parameter ensemble members that minimized $\textrm{RMSE}^{*}({\mathrm{\theta}_{\textrm{1 m}}}, W_{\textrm{liq,`r soil.depths[8]` m}})$ (< 0.2), and among those 300 ensemble members we chose 100 with the lowest values for the objective function $\overline{O}$. See Table \@ref(tab:param) for the ranges of best-fit values for different parameters. 
+Preliminary analyses showed that simultaneously fitting the model to all states and fluxes did not capture the soil moisture dynamics at 1 m depth well, our key priority for model calibration. To ensure model fit at 1 m depth, we first chose 300 parameter ensemble members that minimized $\textrm{RMSE}^{*}({\mathrm{\theta}_{\textrm{1 m}}}, W_{\textrm{liq,`r soil.depths[8]` m}})$ (< 0.2), and among those 300 ensemble members we chose 100 with the lowest values for the objective function $\overline{O}$. See Table S1 for the ranges of best-fit values for different parameters. 
 
 ### Model evaluation
 
@@ -353,7 +353,7 @@ Figure \@ref(fig:erd-iso): Modeled effective rooting depth (ERD; mean $\pm$ 1SE;
 Figure \@ref(fig:sp-erd): Modeled effective rooting depth (ERD; mean $\pm$ 1SE in m) for `r  length(erd.sp)` large, canopy species of Barro Colorado Island. A species ERD is defined as the median, across 100 hydrological realizations, of soil layer depth $z$ at which soil water dynamics ($\mathrm{\Psi}_{\textrm{soil,} z}$) best explained observed dynamics of species growth for each realization. As soil layers in the hydrological model are discretely resolved into exponentially increasing depths, so is the ERD axis. Deeper depths are shown with darker blue colors.  
 
 \
-Figure \@ref(fig:erd-hyd): Modeled effective rooting depth (ERD) versus hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's $r$ and significance levels. Linear model fits (blue lines) with confidence bands (gray area) are shown for significant fits at $\alpha$ = 0.05. See Fig. S\@ref(fig:erd-hyd-full) for the full correlation matrix.
+Figure \@ref(fig:erd-hyd): Modeled effective rooting depth (ERD) versus hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's $r$ and significance levels. Linear model fits (blue lines) with confidence bands (gray area) are shown for significant fits at $\alpha$ = 0.05. See Fig. S10 for the full correlation matrix.
 
 \
 Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE in % yr^-1^) versus modeled effective rooting depth (ERD; mean $\pm$ 1SE in m) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen, canopy species found on Barro Colorado Island over seven census intervals (1981-2015). $R$^2^ and significance levels for linear model fits are given in panel insets. Model fits (blue lines) with confidence bands (gray area) are only shown for periods with significant fits at $\alpha$ = 0.1, identified by census-intervals with a superscript *. 

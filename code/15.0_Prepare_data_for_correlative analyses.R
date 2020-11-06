@@ -1095,7 +1095,7 @@ l.trade <- ggplot(traits,
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  npcx = 0.95, npcy = 0.75, size = 4)
+                  parse = TRUE, npcx = 0.95, npcy = 0.75, size = 4)
 
 s.trade <- ggplot(hyd,
                   aes(y = KmaxS, x = -p88S)) +
@@ -1717,7 +1717,7 @@ plot.B <- ggplot(data.model.AB.onlyboth, aes(x = model.B, y = data.B)) +
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  npcx = 0.05, npcy = 0.8, size = 4)
+                  parse = TRUE, npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(plot = plot.B, file.path(figures.folder.kleaf, paste0("B_data_vs_model.tiff")),
       device = "tiff", height = 2.2, width = 2.2, units='in')
 
@@ -1737,11 +1737,11 @@ plot.A <- ggplot(data.model.AB.onlyboth, aes(x = model.A, y = data.A)) +
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  npcx = 0.05, npcy = 0.8, size = 4)
+                  parse = TRUE, npcx = 0.05, npcy = 0.8, size = 4)
 ggsave(plot = plot.A, file.path(figures.folder.kleaf, paste0("A_data_vs_model.tiff")),
        device = "tiff", height = 2.2, width = 2.2, units='in')
 
-plot.AB <- cowplot::plot_grid(plot.A, plot.B, labels = c('A', 'B'),
+plot.AB <- cowplot::plot_grid(plot.A, plot.B, labels = c('a', 'b'),
                                   label_size = 14, ncol = 2, rel_widths = c(1.1, 1))
 ggsave("A_B_data_vs_model.tiff", plot = plot.AB, path =
          file.path(figures.folder.kleaf), device = "tiff", height = 2.2, width = 4.6, units ='in')
@@ -2253,7 +2253,7 @@ ll.lma.plot.canopy <- ll.lma.plot %+%
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  npcx = 0.95, npcy = 0.18, size = 6)
+                  parse = TRUE, npcx = 0.95, npcy = 0.18, size = 6)
 ggsave(("lifetime_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 

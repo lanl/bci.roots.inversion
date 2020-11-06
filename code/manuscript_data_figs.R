@@ -752,7 +752,7 @@ mfac.plot.9.1 <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0, width = 0.2, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   xlab("Effective Rooting Depth (m)") +
-  ylab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
+  ylab(expression('Time below '*Psi['crit']*' (% yr'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr.jpeg")),
        plot = mfac.plot.9.1, height = 3.1, width = 3.5, units = 'in')
 
@@ -772,7 +772,7 @@ mfac.plot.9.1.flipped <- ggplot(mrate.mfac.depth.gr.mean.mfac,
   # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_jitter(height = 0.2, width = 0, size = 2, shape = 21, alpha = 0.6, color = "black", aes(fill = sp), show.legend = FALSE) +
   ylab("Effective Rooting Depth (m)") +
-  xlab(expression('Time below '*Psi['crit']*' (% year'^-1*')'))
+  xlab(expression('Time below '*Psi['crit']*' (% yr'^-1*')'))
 ggsave(file.path(paste0(figures.folder, "/mean_mfac vs. rdi.gr_flipped.jpeg")),
        plot = mfac.plot.9.1.flipped, height = 3.1, width = 3.5, units = 'in')
 

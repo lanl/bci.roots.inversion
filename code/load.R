@@ -267,7 +267,7 @@ hypo.table <-
 symbols.table <-
   data.frame(
     Symbol = c(
-      "$\\mathrm{\\Psi}_\\textrm{soil},z$",
+      "$\\mathrm{\\Psi}_{\\textrm{soil},z}$",
       "$\\mathrm{\\Psi}$~leaf~, $\\mathrm{\\Psi}$~stem~",
       "$\\mathrm{\\Psi}$~tlp~",
       "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~50,leaf~",
@@ -286,7 +286,7 @@ symbols.table <-
       "Bulk leaf turgor loss point, the $\\mathrm{\\Psi}$~leaf~ where turgor potential = 0",
       "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",
-      "Seasonal minimum water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday",
+      "Seasonal minimum water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday in the dry season",
       "Leaf-area specific hydraulic conductance of leaf",
       "Maximum leaf area-specific hydraulic conductance of leaf",
       "Maximum stem area-specific hydraulic conductivity of stem",

@@ -3,14 +3,14 @@ title: "Hydraulically-vulnerable trees survive on deep-water access during droug
 author: ''
 date: ''
 output:
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
-  bookdown::pdf_document2: default
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
+  bookdown::pdf_document2: default
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
 bibliography: references.bib
 csl: new-phytologist.csl
 ---
@@ -102,7 +102,7 @@ Plants rely on a variety of structural and functional mechanisms to avoid or tol
   Characterizing the essential constraints to model species-rich communities [@Koven:2020; @Christoffersen:2016kd2d; @Wright:2010; @Bartlett.2019; @Lu.2020] entails identifying the topography of plant trait trade-offs in different environments, and how these relate to demographic rates (growth, recruitment and mortality). Significant efforts have been invested into identifying and linking universal drought indices, above-ground traits, and demographic rates. Such efforts have found correlations between vulnerability to embolism and hydraulic safety margins and mortality [@Anderegg:2016], although numerous counter examples also exist [@Hoffmann.2011; @Johnson:2018fad; @Nardini:2015; @Paddock:2013, @Venturas.2016]. Even though deep roots may mitigate hydraulic vulnerability and mortality-risk, hydraulic risk realized through hydrological (rather than meteorological) droughts--the outcome of the interaction between rooting depths, critical hydraulic thresholds and the actual vertical distribution of plant-available water--are not studied, especially in tropical regions.  
 
 \
-  Here, we estimate plant-available water in the whole-soil column in a tropical forest, and inversely estimate rooting depths of co-occurring tree species from their growth responses, with a series of model calibrations and validation. We evaluate how rooting depth is linked to above-ground hydraulic traits and mortality rates over a 35 year period that experienced droughts of a variety of intensity, frequency and duration. Our hypotheses are that (i) deep-rooted trees have hydraulic traits associated with rapid water transport but cavitation-vulnerable xylem due to greater and more reliable water availability at depth, whereas shallow-rooted species are associated with less efficient but safer hydraulic traits due to more variable availability of shallow soil-water (see Table \@ref(tab:hypo)); and that, (ii) deep-rooted species have lower mortality rates during droughts due to a lower realized risk of hydraulic failure compared to shallow-rooted species. To our knowledge this is the first study to test for a mechanistic link between plant available water in the whole-soil column, trees' above- and below-ground hydraulic architecture and long-term mortality outcomes for a species-rich tropical forest.
+  Here, we estimate plant-available water in the whole-soil column in a tropical forest, and inversely estimate rooting depths of co-occurring tree species from their growth responses, with a series of model calibrations and validation. We evaluate how rooting depth is linked to above-ground hydraulic traits and mortality rates over a 35 year period that experienced droughts of a variety of intensity, frequency and duration. Our hypotheses are that (i) deep-rooted trees have hydraulic traits associated with rapid water transport but cavitation-vulnerable xylem due to greater and more reliable water availability at depth, whereas shallow-rooted species are associated with less efficient but safer hydraulic traits due to more variable availability of shallow soil-water (see Tables \@ref(tab:symbols) and \@ref(tab:hypo)); and that, (ii) deep-rooted species have lower mortality rates during droughts due to a lower realized risk of hydraulic failure compared to shallow-rooted species. To our knowledge this is the first study to test for a mechanistic link between plant available water in the whole-soil column, trees' above- and below-ground hydraulic architecture and long-term mortality outcomes for a species-rich tropical forest.
 
 # Materials and Methods
 
@@ -131,7 +131,7 @@ where, $q_{\textrm{rain}}$ is rainfall, $E_{v}$ is transpiration of the forest, 
 
 ### Model parameterization
 
-To parameterize ELM-FATES, we identified eleven parameters relevant for Eq. \@ref(eq:water-balance), determined their ranges based on literature for the study site, else for the tropics (Table \@ref(tab:param)), and ran 5000 simulations using Latin Hypercube Sampling [LHS; @Stein.1987] from this global parameter space. In the Conrad catchment soil hydraulic conductivity decreases with depth from 12.5 and 60 cm (@Godsey:2004; Table \@ref(tab:param)). We generated 5000 LHS samples within the 95% CI for the two depths and assumed a linear decline between each paired sample, while for depths <12.5 cm and >60 cm, we assumed the same value as that for depths 12.5 and 60 cm, respectively (Fig. S\@ref(fig:ksat-profiles)). For greater accuracy, instead of the ELM default pedo-transfer functions, we estimated parameters of soil retention curves using existing data for gravimetric water content (GWC) vs. $\mathrm{\Psi}$~soil~ for depths of 0.15, 0.4 and 1 m [@Kupers:2019]. We converted GWC to volumetric (VWC, $\theta$) using a measured bulk density value of 0.8 g cm^-3^ (see below). A @Campbell.1974 empirical equation was fitted for all depths pooled together, as exploratory analyses indicated differences in water retention among depths were nominal,
+To parameterize ELM-FATES, we identified eleven parameters relevant for Eq. \@ref(eq:water-balance), determined their ranges based on literature for the study site, else for the tropics (Table \@ref(tab:param)), and ran 5000 simulations using Latin Hypercube Sampling [LHS; @Stein.1987] from this global parameter space. In the Conrad catchment, in which the 50 ha plot is situated, soil hydraulic conductivity decreases with depth from 12.5 and 60 cm (@Godsey:2004; Table \@ref(tab:param)). We generated 5000 LHS samples within the 95% CI for the two depths and assumed a linear decline between each paired sample, while for depths <12.5 cm and >60 cm, we assumed the same value as that for depths 12.5 and 60 cm, respectively (Fig. S\@ref(fig:ksat-profiles)). For greater accuracy, instead of the ELM default pedo-transfer functions, we estimated parameters of soil retention curves using existing data for gravimetric water content (GWC) vs. $\mathrm{\Psi}$~soil~ for depths of 0.15, 0.4 and 1 m [@Kupers:2019]. We converted GWC to volumetric (VWC, $\theta$) using a measured bulk density value of 0.8 g cm^-3^ (see below). A @Campbell.1974 empirical equation was fitted for all depths pooled together, as exploratory analyses indicated differences in water retention among depths were nominal,
 
 \begin{equation}
 \mathrm{\theta}_{\textrm{soil}} = \mathrm{\Psi}_e\left(\frac{\mathrm{\theta}}{\mathrm{\theta}_{s}}\right)^{-b}
@@ -144,7 +144,7 @@ We ran ELM-FATES for the 5000-member parameter ensemble with hourly climate driv
 
 ### Model calibration
 
-We calibrated ELM-FATES over 2012-2018 against three key fluxes and states in Eq. \@ref(eq:water-balance), namely, (1) evapotranspiration ET from the eddy flux tower by the 50 ha plot ($\backsimeq$ $E_{v} + E_{g}$ in Eq. \@ref(eq:water-balance); 2012-2017; see [SI](#SIData.matteo))), (2) local stream discharge $q_\textrm{run}$ ($\backsimeq$ $q_\textrm{over} + q_\textrm{drai}$; 2012-2018; see @Paton.2019 and [SI](#SIData.steveP)) and (3) soil volumetric water content (VWC) $\mathrm{\theta}_{z}$ ($\backsimeq$ $W_{\textrm{liq,} z}$) from two sources: (i) a long-term (2012-2018) record of VWC $\mathrm{\theta}_\textrm{0-0.15 m}$ averaged across three vertical time domain reflectometry (TDR) probes over depth 0-15 cm from three locations near the eddy flux tower, and (ii) plot-wide snap-shot measurements of VWC during the dry season of 2015 and 2016 at depths of 0.15, 0.4 and 1 m (1299 samples covering all soil types and habitats; see [SI](#SIData.VWC) and @Kupers:2019 for details; hereafter, $\mathrm{\theta}_{\textrm{0-0.15 m}}$, $\mathrm{\theta}_{\textrm{0.4 m}}$ and $\mathrm{\theta}_{\textrm{1 m}}$ refer to plot-wide averages).
+We calibrated ELM-FATES over 2012-2018 against three key fluxes and states in Eq. \@ref(eq:water-balance), namely, (1) evapotranspiration ET from the flux tower by the 50 ha plot ($\backsimeq$ $E_{v} + E_{g}$ in Eq. \@ref(eq:water-balance); 2012-2017; see [SI](#SIData.matteo))), (2) local stream discharge $q_\textrm{run}$ ($\backsimeq$ $q_\textrm{over} + q_\textrm{drai}$; 2012-2018; see @Paton.2019 and [SI](#SIData.steveP)) and (3) soil volumetric water content (VWC) $\mathrm{\theta}_{z}$ ($\backsimeq$ $W_{\textrm{liq,} z}$) from two sources: (i) a long-term (2012-2018) record of VWC $\mathrm{\theta}_\textrm{0-0.15 m}$ averaged across three vertical time domain reflectometry (TDR) probes over depth 0-15 cm from three locations near the flux tower, and (ii) plot-wide snap-shot measurements of VWC during the dry season of 2015 and 2016 at depths of 0.15, 0.4 and 1 m (1299 samples covering all soil types and habitats; see [SI](#SIData.VWC) and @Kupers:2019 for details; hereafter, $\mathrm{\theta}_{\textrm{0-0.15 m}}$, $\mathrm{\theta}_{\textrm{0.4 m}}$ and $\mathrm{\theta}_{\textrm{1 m}}$ refer to plot-wide averages).
 
 \
  For ELM-FATES calibration we calculated an objective function for each of the 5000-member ensemble by equally weighting standardized RMSE between observations and simulations across all fluxes and states. We describe the objective function $O$ as : 
@@ -338,7 +338,7 @@ ELM-FATES source code, simulation outputs for best-fit parameter ensemble member
 Figure \@ref(fig:schematic): A schematic for the methods workflow.
 
 \
-Figure \@ref(fig:hydro-calib): ELM-FATES calibration and evaluation. Observations (red lines and points) versus simulations (gray lines) from 100 best-fit ensemble-member runs of ELM-FATES are shown for daily Volumetric Water Content (VWC) by depth for horizontal time domain reflectometry (TDR) probes at three depths (0.1, 0.4 and 1 m; **a**) and for an average of three vertical TDR probes (0-0.15 m; **b**); monthly stream discharge (Discharge, **c**) and monthly evapotranspiration from eddy flux tower (ET, **d**). Red points in panel **a** show average, manual plot-wide observations of VWC with 95% CI (error bars). All observations (red lines and points) were in-sample, except for VWC data from the horizontal probes (red lines in **a**) which were out-of-sample. Values in inset are average RMSE across the 100 best-fit simulations. For panel **a**, values at the top are for manual, plot-wide VWC and those at the bottom are for VWC from TDR probes. VWC is in units of cm^3^ cm^-3^, while ET and Discharge are in mm month^-1^.
+Figure \@ref(fig:hydro-calib): ELM-FATES calibration and evaluation. Observations (red lines and points) versus simulations (gray lines) from 100 best-fit ensemble-member runs of ELM-FATES are shown for daily Volumetric Water Content (VWC) by depth for horizontal time domain reflectometry (TDR) probes at three depths (0.1, 0.4 and 1 m; **a**) and for an average of three vertical TDR probes (0-0.15 m; **b**); monthly stream discharge (Discharge, **c**) and monthly evapotranspiration from the flux tower (ET, **d**). Red points in panel **a** show average, manual plot-wide observations of VWC with 95% CI (error bars). All observations (red lines and points) were in-sample, except for VWC data from the horizontal probes (red lines in **a**) which were out-of-sample. Values in inset are average RMSE across the 100 best-fit simulations. For panel **a**, values at the top are for manual, plot-wide VWC and those at the bottom are for VWC from TDR probes. VWC is in units of cm^3^ cm^-3^, while ET and Discharge are in mm month^-1^.
 
 \
 Figure \@ref(fig:swp-droughts): Occurrence of extreme hydrological droughts by census intervals (horizontal panels) at three representative depths: 0.1, 0.6 and 1 m (vertical panels). Mean (black lines) and lower half of 95% distribution (grey areas) of soil water potential $\mathrm{\Psi}_{\textrm{soil},z}$ for a given DOY and depth $z$ are shown (same across all census intervals). $\mathrm{\Psi}_{\textrm{soil},z}$ by DOY for a year (colored line) is only shown if at least one day of the year $\mathrm{\Psi}_{\textrm{soil},z}$ was more negative than the 5^th^ percentile of $\mathrm{\Psi}_{\textrm{soil},z}$ for that day of year (DOY).
@@ -400,12 +400,12 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mfac vs. rdi.gr.jp
 ```
 
 # Tables
+```{r symbols, results = 'asis', echo = FALSE}
+knitr::kable(symbols.table, caption = 'The symbol, definition and units of key traits used in the simulations and analyses.', booktabs = TRUE, escape = FALSE)
+```
 
+#
 ```{r hypo, results = 'asis', echo = FALSE}
 knitr::kable(hypo.table, caption = 'Hypotheses for association between Effective Rooting Depth (ERD) and hydraulic traits.', booktabs = TRUE, escape = FALSE, col.names = gsub("[_]", "-", gsub("[.]", " ", names(hypo.table))))
 ```
 
-#
-```{r symbols, results = 'asis', echo = FALSE}
-knitr::kable(symbols.table, caption = 'The symbol, definition and units of key traits used in the simulations and analyses.', booktabs = TRUE, escape = FALSE)
-```

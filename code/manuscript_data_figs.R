@@ -374,7 +374,8 @@ hyd.table <-  erd.stem.traits %>%
   subset(sp %in% erd.sp) %>%
   select(-sp) %>%
   relocate(Genus, Species, Family, lwp.min_Predawn, TLP) %>%
-  mutate(TLP = round(TLP, 2))
+  mutate(lwp.min_Predawn = round(lwp.min_Predawn, 2),
+         TLP = round(TLP, 2))
 
 erd.stem.traits.only <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
@@ -1003,7 +1004,9 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
   dplyr::rename(Kmax_leaf = Kmax, Psi_50_leaf = psi_kl50) %>%
   mutate(Species = tolower(Species)) %>%
   dplyr::select(Genus, Species, Family, A, B, Kmax_leaf, Psi_50_leaf, Source) %>%
-  mutate(Family = as.character(Family))
+  mutate(Family = as.character(Family)) %>%
+  mutate(A = round(A, 4), B = round(B, 4),
+         Kmax_leaf = round(Kmax_leaf, 2), Psi_50_leaf = round(Psi_50_leaf, 2))
 
 # Some familynames do not end in ceae. Correcting that
 correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),

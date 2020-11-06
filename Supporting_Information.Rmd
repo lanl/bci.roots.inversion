@@ -111,12 +111,12 @@ G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{leaf,i|z}^{*}) + \e
 \end{equation}
 
 \begin{equation}
-G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^{*} + \textrm{VPD}_{i}^{*}) + \epsilon_{t|z}
+G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^{*} + \hat{\textrm{VPD}}_{i}^{*}) + \epsilon_{t|z}
 (\#eq:M2)
 \end{equation}
 
 \begin{equation}
-G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^{*} \textrm{VPD}_{i}^{*}) + \epsilon_{t|z}
+G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^{*} \hat{\textrm{VPD}}_{i}^{*}) + \epsilon_{t|z}
 (\#eq:M3)
 \end{equation}
 
@@ -126,15 +126,15 @@ G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^
 \end{equation}
 
 \begin{equation}
-G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} (K^{*}_{\textrm{leaf},i|z} + \textrm{VPD}^{*}_{i}) \textrm{LAI}^{*}_{doy|i}) + \epsilon_{t|z}
+G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} (K^{*}_{\textrm{leaf},i|z} + \hat{\textrm{VPD}}^{*}_{i}) \textrm{LAI}^{*}_{doy|i}) + \epsilon_{t|z}
 (\#eq:M5)
 \end{equation}
 
 \begin{equation}
-G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^{*}\textrm{VPD}_{i}^{*}\textrm{LAI}_{doy|i}^{*}) + \epsilon_{t|z}
+G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z}^{*}\hat{\textrm{VPD}}_{i}^{*}\textrm{LAI}_{doy|i}^{*}) + \epsilon_{t|z}
 (\#eq:M6)
 \end{equation}
-where n~t~ are the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1, and $\epsilon$ is the model error term. 
+where n~t~ are the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1, and $\epsilon$ is the model error term. $\hat{\textrm{VPD}}$ is the predicted GPP from a locally derived polynomial relationship between gross primary productivity (GPP) and VPD so as to account for the non-linear impact of VPD on growth. See the ERD model description in the main text for more details.
 
 # Supplementary Figures
 
@@ -146,7 +146,7 @@ knitr::include_graphics(file.path("figures/Bootstrapped Ksat profiles within obs
 knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpeg"))
 ```
 
-```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "35%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd}Scatterplot of mean midday (11:00 am to 15:00 pm) gross primary productivity (GPP) and mean midday vapor pressure deficit (VPD) measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows a fit from a polynomial model described in inset, and used to standardize VPD employed in equations \\@ref(eq:M2) and \\@ref(eq:M4)."}
+```{r gpp-vpd, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', dpi = 96, out.width = "35%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-gpp-vpd}Scatterplot of mean midday (11:00 am to 15:00 pm) gross primary productivity (GPP) and mean midday vapor pressure deficit (VPD) measured at the eddy flux tower in Barro Colorado Island over 2012-2017. Red line shows the fit from a polynomial model described in inset. GPP predicted from this equation is used as \\hat{\\textrm{VPD}} in equations \\@ref(eq:M2), \\@ref(eq:M3), \\@ref(eq:M5) and \\@ref(eq:M6)."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/gpp_by_env_variables/monthly_gpp.vpd.jpeg"))
 ```
 

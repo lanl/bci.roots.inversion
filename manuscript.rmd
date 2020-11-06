@@ -3,14 +3,14 @@ title: "Hydraulically-vulnerable trees survive on deep-water access during droug
 author: ''
 date: ''
 output:
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
+  bookdown::pdf_document2: default
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
-  bookdown::pdf_document2: default
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
 bibliography: references.bib
 csl: new-phytologist.csl
 ---

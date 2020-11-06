@@ -287,7 +287,7 @@ df.pval <- bind_rows(erd.model.p) %>% pivot_longer(cols = everything(), names_to
 ml.rsq.combine.sub <- ml.rsq.combine.sub %>%
   transform(models.plot1 = factor(corr.func, levels = c("gr.Psi", "gr.Psi.VPD.add", "gr.Psi.VPD.multi",
                                                         "gr.Psi.leaf", "gr.Psi.VPD.leaf.add", "gr.Psi.VPD.leaf.multi"),
-                                  labels = c("A", "B", "C", "D", "E", "F"))) %>%
+                                  labels = c("a", "b", "c", "d", "e", "f"))) %>%
   left_join(df.pval, by = "corr.func") %>%
   mutate(significant = ifelse(pval < 0.05 | pval == 0, TRUE, FALSE))
 erd.iso_sp_N_by_model <- ml.rsq.combine.sub %>%
@@ -321,7 +321,8 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
   guides(fill = guide_legend(title = "Species", order = 1),
          color = FALSE) +
-  theme(legend.text = element_text(face = "italic"))
+  theme(legend.text = element_text(face = "italic"),
+        strip.text.x = element_text(face = "bold"))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
        plot = p3.2, file.path(figures.folder), device = "jpeg", height = 5, width = 7, units = 'in')
 
@@ -386,7 +387,7 @@ traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM
                                                   levels = c("KmaxS", "TLP", "p88S", "HSM88S"), ordered = TRUE),
                                    panel = factor(c("a", "b", "c", "d"), levels = c("a", "b", "c", "d"), ordered = TRUE),
                                    x = c(0, 0, 0, 0),
-                                   y = c(7, 0, 0.5, 2.4)) %>%
+                                   y = c(7.8, 0, 0.5, 2.4)) %>%
   transform(trait.plot = factor(trait, labels = c(expression(italic('K')['max, stem']~(kg*~m^-1*~s^-1*~MPa^-1)),
                                                   expression(Psi[tlp]~(MPa)),
                                                   expression(Psi['88, stem']~(MPa)),
@@ -401,34 +402,6 @@ erd.stem.traits.only.lab <- erd.stem.traits.only %>%
               dplyr::select(trait, trait.plot, trait.plot.chart), by = "trait") %>%
   droplevels()
 
-depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
-                                   aes(x = depth, y = value)) +
-  geom_smooth(method = "lm", formula = formula) +
-  geom_text(data = traits.labels.select, aes(x = x, y = y,
-                                             label = panel, group = trait.plot), vjust = "inward", hjust = "inward") +
-  geom_errorbarh(aes(xmax = depth + depth.se, xmin = depth - depth.se), size = 0.2) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
-  # geom_point(shape = 21, color = "white", aes(fill = sp), alpha = 0.8, size = 2.5) +
-  coord_cartesian(xlim = c(0, max(erd.stem.traits.only.lab$depth) + 0.5)) +
-  xlab("Effective Rooting Depth (m)") + ylab("") +
-  facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed,
-             strip.position = 'left') +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 0.15, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 4) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
-                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.95, npcy = 0.05, size = 4) +
-  theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
-        strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
-        plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
-ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
-       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
-ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
-       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
 #****************************
 ## Correlation chart: ERD vs. hydraulic traits----
 #****************************
@@ -516,6 +489,39 @@ chart.erd.pairs <- ggpairs(
   ))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits_cor.chart.jpeg")),
        plot = chart.erd.pairs, height = 5.5, width = 5.5, units ='in')
+
+#****************************
+traits.labels.cor.p <- traits.labels.select %>%
+  mutate(r = c(cor.k, cor.tlp, cor.stem.88, cor.hsm),
+                                   p = c(p.k, p.tlp, p.stem.88, p.hsm),
+                                   x.rp = c(7.8, 7.8, 7.8, 0.4),
+                                   y.r = c(1, -2.0, -3.7, -0.7),
+                                   y.p = c(0, -2.3, -4.3, -1.2))
+depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
+                                   aes(x = depth, y = value)) +
+  geom_smooth(method = "lm", formula = formula) +
+  geom_text(data = traits.labels.select, aes(x = x, y = y,
+                                             label = panel, group = trait.plot),
+            fontface = "bold", vjust = "inward", hjust = "inward") +
+  geom_text(data = traits.labels.cor.p, aes(x = x.rp, y = y.r,
+                                             label = sprintf('italic("r")~"="~%.2f', r),
+            group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
+  geom_text(data = traits.labels.cor.p, aes(x = x.rp, y = y.p,
+                                            label = sprintf('italic(p)~"="~%.2f', p),
+                                            group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
+  geom_errorbarh(aes(xmax = depth + depth.se, xmin = depth - depth.se), size = 0.2) +
+  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  coord_cartesian(xlim = c(0, max(erd.stem.traits.only.lab$depth) + 0.5)) +
+  xlab("Effective Rooting Depth (m)") + ylab("") +
+  facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed,
+             strip.position = 'left') +
+  theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
+        strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
+        plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
+ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
+       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
+ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
+       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
 #****************************
 ### Kmax vs. growth----
 #****************************
@@ -794,20 +800,21 @@ mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select.sp.mean,
                                  ymin = mean.mfac.rate - se,
                                  fill = censusint.m)) +
   xlab("Effective Rooting Depth (m)") +
-  ylab(expression('Time beyond '*Psi['crit']*' (% yr'^-1*')')) +
+  ylab(expression('Time spent beyond '*Psi['crit']*' (%yr'^-1*')')) +
   geom_bar(position = position_dodge2(), stat="identity") +
   geom_errorbar(position = position_dodge2(.9, padding = .6)) +
   theme(legend.position = c(0.75, 0.65),
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
+        axis.text.y = element_text(size = 12),
         legend.background = element_rect(fill = "transparent")) +
   scale_x_continuous(breaks = c(sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   # scale_fill_brewer(palette = "Greens") + #palette = "Spectral"
   guides(fill = guide_legend(title = "Census Interval"), override.aes = list(size = 1))
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.tiff")),
-       plot = mfac.plot.9.0.int,  height = 3.1, width = 3.5, units = 'in')
+       plot = mfac.plot.9.0.int,  height = 3.2, width = 3.5, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.jpeg")),
-       plot = mfac.plot.9.0.int,  height = 3.1, width = 3.5, units = 'in')
+       plot = mfac.plot.9.0.int,  height = 3.2, width = 3.5, units = 'in')
 
 mrate.mfac.depth.select.evg <- subset(mrate.mfac.depth.select,
                                       deciduous == "E") %>%

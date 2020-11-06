@@ -857,6 +857,7 @@ depth.rsq.isotopes <- ml.rsq.combine.best %>%
   ungroup(corr.func, sp, size)
 
 save(depth.rsq.isotopes, file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
+# load(file = file.path(results.folder, "depth.rsq.isotopes.Rdata"))
 
 erd.model.n.sp <- erd.model.iso.n.sp <- erd.model.p <- erd.model.r2 <- vector("numeric", length(names.gfac))
 names(erd.model.n.sp) <- names(erd.model.iso.n.sp) <- names(erd.model.p) <- names(erd.model.r2) <- names.gfac
@@ -1078,7 +1079,7 @@ mrate.mfac.depth <- mrate.depth %>%
   mutate(sp_size = paste(sp, size, sep = "_")) %>%
   group_by(sp, size, censusint.m) %>%
   mutate(mfac.soil.column = sum(mfac, na.rm = TRUE)) %>%
-  ungroup(sp, censusint.m)
+  ungroup(sp, size, censusint.m)
 
 save(mrate.depth, file = file.path(results.folder, "mrate.depth.Rdata"))
 save(mrate.mfac.depth, file = file.path(results.folder, "mrate.mfac.depth.Rdata"))

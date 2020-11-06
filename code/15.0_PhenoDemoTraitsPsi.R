@@ -346,7 +346,8 @@ get.ts.lk <- function(df) {
   k <- length(demo.ts)
   psi.dat <- df[, grep("[0-9]", names(df))]
   psi.dat <- psi.dat[, colSums(!is.na(psi.dat)) > 0]
-  loglk <- apply(psi.dat, 2, function(x) sum(dnorm(demo.ts, mean = scale(x), 1, log = TRUE)))
+  # https://towardsdatascience.com/a-gentle-introduction-to-maximum-likelihood-estimation-9fbff27ea12f
+  loglk <- apply(psi.dat, 2, function(x) sum(dnorm(demo.ts, mean = scale(x), sd = 1, log = TRUE)))
   R2 <- apply(psi.dat, 2,
               function(x)  summary(lm(demo.ts ~ x))$r.squared)
   corr <- apply(psi.dat, 2,
@@ -710,6 +711,9 @@ leaf_cover.sp.ls <- leaf_cover.sp.ls[sp.ab.leaf_cover]
 # }
 
 ## for species with traits data
+#*******************************
+# Model runs----
+#*******************************
 # growth.sub <- growth[names(growth) %in% paste0(unique(c(hyd$sp, traits$sp)), "_large")]
 names.gfac <- names(psi.corr.fun.ls.2) #c("g.Psi", "g.Psi.Rad.VPD", "g.Psi.Rad.PET")
 ## Preparing PSI matrices to compare against
@@ -739,13 +743,16 @@ for (i in names(gfac.interval)) {
     subset(!is.na(demo.rate) & is.finite(demo.rate)) %>% droplevels()
   demo.psi.ls <- split(demo.psi,
                        f = list(demo.psi$sp, demo.psi$par.sam), drop = TRUE)
-  ## Get for each sp-par.sam get AIC scores <= min(AIC) + 2 and corresponding depths, ml, R2 and corr
+  ## Get for each sp-par.sam get AIC scores
+  ## Retain those with \deltaAIC <= 2, where \deltaAIC = AIC - min(AIC)
+  ## and retian corresponding depths, ml, R2 and corr
   ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
-  ## Retain the one with maximum likelihood
-  ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
   ## Get corresponding R, corr and depth
   ml.corr.ls[[i]] <- do.call(rbind.data.frame, ml.ls[[i]])
-  ml.rsq.ls[[i]] <- do.call(rbind, lapply(ml.ls[[i]], get.ml.depth.rsq))
+  # retain the ones with positive correlation
+  # ml.rsq.ls[[i]] <- do.call(rbind, lapply(ml.ls[[i]], get.ml.depth.rsq))
+  # ## Get the one with the maximum likelihood for each sp-par.sam
+  # ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
 }
 
 # for(n in 4:length(ml.dens)) {

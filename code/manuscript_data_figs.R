@@ -42,7 +42,8 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
   ## ERD only for canopy species, so no need to subset
   mutate(depth = as.numeric(depth))
 erd.data <- ml.rsq.combine.best %>%
-  subset(corr.func == chosen.model)
+  subset(corr.func == chosen.model) %>%
+  distinct(sp, .keep_all = TRUE) # removes the dplicate jac1co due to Jackson dataset
 erd.iso <- erd.data %>%
   subset(sp != "guapst" & source == "Meinzer et al.1999 Fig. 4")
 
@@ -1031,3 +1032,4 @@ ab.table$Family[rows.to.replace.2] <-
 #****************************
 erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
 erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
+

@@ -256,13 +256,13 @@ ll.lma.p <- ifelse(broom::glance(gap.models.ll$LMA.lifetime)$p.value < 0.001,
 hypo.table <-
   data.frame(
     Variable = c(
-      "Maximum Stem Hydraulic Conductivity",
-      "Embolism Vulnerability",
-      "Turgor Loss Point",
-      "Hydraulic Safety Margins"
+      "*K*~max,stem~",
+      "$\\mathrm{\\Psi}$~88,stem~",
+      "$\\mathrm{\\Psi}$~tlp~",
+      "$\\mathrm{\\Psi}$~min~ - $\\mathrm{\\Psi}$~88,stem~"
     ),
-    Deeper.ERD = c("Higher", "Higher", "Higher, or less negative", "Narrower"),
-    Shallower.ERD = c("Lower", "Lower", "Lower, or more negative", "Larger")
+    Deeper.ERD = c("Higher", "Less negative", "Less negative", "More negative"),
+    Shallower.ERD = c("Lower", "More negative", "More negative", "Positive, or less negative")
   )
 symbols.table <-
   data.frame(
@@ -273,6 +273,7 @@ symbols.table <-
       "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~50,leaf~",
       "$\\mathrm{\\Psi}$~88,stem~",
       "$\\mathrm{\\Psi}$~min~",
+      "$\\mathrm{\\Psi}$~min~ - $\\mathrm{\\Psi}$~88,stem~",
       "*K*~leaf~",
       "*K*~max,leaf~",
       "*K*~max,stem~",
@@ -287,6 +288,7 @@ symbols.table <-
       "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",
       "Seasonal minimum water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday in the dry season",
+      "Above-ground Hydraulic Safety Margin",
       "Leaf-area specific hydraulic conductance of leaf",
       "Maximum leaf area-specific hydraulic conductance of leaf",
       "Maximum stem area-specific hydraulic conductivity of stem",
@@ -295,6 +297,7 @@ symbols.table <-
       "$\\mathrm{\\delta}$^2^H of tree xylem sap"
     ),
     Units = c(
+      "MPa",
       "MPa",
       "MPa",
       "MPa",

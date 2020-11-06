@@ -66,11 +66,11 @@ Berkeley, CA, USA 94720
 Section  | Word Count  
 ------------- | -------------  
 Summary | 197  
-Main Text  | 6498  
-Introduction | 828  
-Methods | 3283  
-Results | 883  
-Discussion | 1504  
+Main Text  | 6460  
+Introduction | 827  
+Methods | 3246  
+Results | 885  
+Discussion | 1502  
 Keywords | 6   
 
 \  
@@ -127,7 +127,7 @@ To estimate dynamics of water availability by depth over the forest’s rooting 
 \end{split}
 (\#eq:water-balance)
 \end{equation}
-where, $q_{\textrm{rain}}$ is rainfall, $E_{v}$ is transpiration of the forest, $E_{g}$ is ground evaporation, $q_{\textrm{over}}$ is surface runoff, $q_{\textrm{h2osfc}}$ is runoff from surface water storage, $q$~drai~ is subsurface drainage (all in mm H~2~O) and $\mathrm{\Delta}t$ is the time-step (here, 1 hr). The soil profile is discretized into maximum 15 exponentially distributed soil layers with layer node depth $z$. Here, $z$ $\in$ $Z$; $Z$ = {0.01, 0.03, 0.06, 0.12, 0.21, 0.37, 0.62, 1, 1.7, 2.9, 4.7, 7.8, 13} m.
+where, $q_{\textrm{rain}}$ is rainfall, $E_{v}$ is transpiration of the forest, $E_{g}$ is ground evaporation, $q_{\textrm{over}}$ is surface runoff, $q_{\textrm{h2osfc}}$ is runoff from surface water storage, $q$~drai~ is subsurface drainage (all in mm H~2~O) and $\mathrm{\Delta}t$ is the time-step (here, 1 hr). The soil profile is discretized into maximum 15 exponentially distributed soil layers with layer node depth $z$. Here, $z$ $\in$ $Z$; $Z$ = (0.01, 0.03, 0.06, 0.12, 0.21, 0.37, 0.62, 1, 1.7, 2.9, 4.7, 7.8, 13) m.
 
 ### Model parameterization
 
@@ -144,7 +144,7 @@ We ran ELM-FATES for the 5000-member parameter ensemble with hourly climate driv
 
 ### Model calibration
 
-We calibrated ELM-FATES over 2012-2018 against three key fluxes and states in Eq. \@ref(eq:water-balance), namely, (1) evapotranspiration ET from the eddy flux tower by the 50 ha plot ($\cong$ $E_{v} + E_{g}$; 2012-2017; see [SI](#SIData.matteo))), (2) local stream discharge $q_\textrm{run}$ ($\cong$ $q_\textrm{over} + q_\textrm{drai}$; 2012-2018; see @Paton.2019 and [SI](#SIData.steveP)) and (3) soil volumetric water content (VWC) $\mathrm{\theta}_{z}$ ($\cong$ $W_{\textrm{liq,} z}$) from two sources: (i) a long-term (2012-2018) record of VWC $\mathrm{\theta}_\textrm{0-0.15 m}$ averaged across vertical (0-15 cm depth) time domain reflectometry (TDR) probes from three locations near the eddy flux tower, and (ii) plot-wide snap-shot measurements of VWC during the dry season of 2015 and 2016 at depths of 0.15, 0.4 and 1 m (1299 samples covering all soil types and habitats; see [SI](#SIData.VWC) and @Kupers:2019 for details; hereafter, $\mathrm{\theta}_{\textrm{0-0.15 m}}$, $\mathrm{\theta}_{\textrm{0.4 m}}$ and $\mathrm{\theta}_{\textrm{1 m}}$ refer to plot-wide averages).
+We calibrated ELM-FATES over 2012-2018 against three key fluxes and states in Eq. \@ref(eq:water-balance), namely, (1) evapotranspiration ET from the eddy flux tower by the 50 ha plot ($\backsimeq$ $E_{v} + E_{g}$ in Eq. \@ref(eq:water-balance); 2012-2017; see [SI](#SIData.matteo))), (2) local stream discharge $q_\textrm{run}$ ($\backsimeq$ $q_\textrm{over} + q_\textrm{drai}$; 2012-2018; see @Paton.2019 and [SI](#SIData.steveP)) and (3) soil volumetric water content (VWC) $\mathrm{\theta}_{z}$ ($\backsimeq$ $W_{\textrm{liq,} z}$) from two sources: (i) a long-term (2012-2018) record of VWC $\mathrm{\theta}_\textrm{0-0.15 m}$ averaged across three vertical time domain reflectometry (TDR) probes over depth 0-15 cm from three locations near the eddy flux tower, and (ii) plot-wide snap-shot measurements of VWC during the dry season of 2015 and 2016 at depths of 0.15, 0.4 and 1 m (1299 samples covering all soil types and habitats; see [SI](#SIData.VWC) and @Kupers:2019 for details; hereafter, $\mathrm{\theta}_{\textrm{0-0.15 m}}$, $\mathrm{\theta}_{\textrm{0.4 m}}$ and $\mathrm{\theta}_{\textrm{1 m}}$ refer to plot-wide averages).
 
 \
  For ELM-FATES calibration we calculated an objective function for each of the 5000-member ensemble by equally weighting standardized RMSE between observations and simulations across all fluxes and states. We describe the objective function $O$ as : 
@@ -157,7 +157,7 @@ We calibrated ELM-FATES over 2012-2018 against three key fluxes and states in Eq
 \end{split}
 \end{equation}
 
-based on monthly sums for both ET and $q$~run~ and daily averages for $\mathrm{\theta}$s. $W_{\textrm{liq,}\overline{z}}$ is the average of daily $W_{\textrm{liq,} z}$, where $z$ $\in$ $Z$; $Z$ = {`r paste(soil.depths[1:4], collapse=", ")`} m. Superscript * indicates that RMSE is standardized between 0 and 1 across the 5000 simulations. 
+based on monthly sums for both ET and $q$~run~ and daily averages for $\mathrm{\theta}$s. $W_{\textrm{liq,}\overline{z}}$ is the average of daily $W_{\textrm{liq,} z}$, where $z$ $\in$ $Z$; $Z$ = (`r paste(soil.depths[1:4], collapse=", ")`) m. Superscript * indicates that RMSE is standardized between 0 and 1 across the 5000 simulations. 
 
 \
 Preliminary analyses showed that simultaneously fitting the model to all states and fluxes did not capture the soil moisture dynamics at 1 m depth well, our key priority for model calibration. To ensure model fit at 1 m depth, we first chose 300 parameter ensemble members that minimized $\textrm{RMSE}^{*}({\mathrm{\theta}_{\textrm{1 m}}}, W_{\textrm{liq,`r soil.depths[8]` m}})$ (< 0.2), and among those 300 ensemble members we chose 100 with the lowest values for the objective function $\overline{O}$. See Table \@ref(tab:param) for the ranges of best-fit values for different parameters. 
@@ -180,29 +180,31 @@ To inversely estimate effective rooting depth, we tested alternate empirical mod
  For the best model (see model validation and selection below), daily average growth for species $s$, $G_{s,t|z}$, in the census interval $t$ for depth $z$ and for a given hydrological realization $h$ is described as follows:
 
 \begin{equation}
-G_{t|z} = a_{0} + a_{1}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},i|z,h}^{*} \hat{\textrm{VPD}}_{i}^{*}) + \epsilon_{t|z,h}
+G_{s,t|z} = \beta_{0,s|z,h} + \beta_{1,s|z,h}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},s,i|z,h}^{*} \hat{\textrm{VPD}}_{i}^{*}) + \epsilon_{s,t|z,h}
 (\#eq:M-chosen)
 \end{equation}
-where n~t~ is the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1 ( $K_{\textrm{leaf},s,i|z,h}$ standardised within species), and $\epsilon$ is the model error term. See SI for equations for all the alternate models tested.
+where n~t~ is the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1 (within species for $K_{\textrm{leaf}}$), $\beta_{0}$ and $\beta_{1}$ are model coefficients and $\epsilon$ is the model error term. See SI for all the alternate models tested.
 
 \
- For each species, we estimated diurnal maximum value of $K_{\textrm{leaf},s,i|z,h}$ for a species $s$ by substituting $\mathrm{\Psi}_{\textrm{soil},s,i|z,h}$in the leaf vulnerability curves defined below in Eq. \@ref(eq:vc-exp) using species-specific parameters $A_{s}$ and $B_{s}$ as:
+ For each species, we estimated diurnal maximum value of $K_{\textrm{leaf},s,i|z,h}$ for a species $s$ by substituting $\mathrm{\Psi}_{\textrm{soil},s,i|z,h}$ in the leaf hydraulic vulnerability curves defined below in Eq. \@ref(eq:vc-exp) using species-specific parameters $A_{s}$ and $B_{s}$ as:
 
 \begin{equation}
 K_{\textrm{leaf},s,i|z,h} = A_{s}e^{-B_{s}{\mathrm{\Psi}}_{\textrm{soil},i|z,h}}
 (\#eq:k-soil)
 \end{equation}
- Checking through each $z$, we estimated species effective rooting depths (ERD), defined as the depth $z$ at which soil water dynamics ($\mathrm{\Psi}_{\textrm{soil,} z}$) best explained observed dynamics of species growth. Using Eq. \@ref(eq:M-chosen), for a species $s$, we obtained likelihood based on Akaike's Information Criterion (AIC) and Pearson's correlation coefficient $r$ for each soil depth $z$ for each of the 100 best-fit hydrological realizations. For each hydrological realization *h* we retained only one depth that had the maximum likelihood, and within those depths retained the ones that had Pearson's $r$ >= 0.71 as a valid set. For a species $s$, we defined effective rooting depth (ERD) as the median of this valid set of depths, which can be described as :
+ Checking through each $z$, we estimated species effective rooting depths (ERD), defined as the depth $z$ at which soil water dynamics ($\mathrm{\Psi}_{\textrm{soil,} z}$) best explained observed dynamics of species growth. Using Eq. \@ref(eq:M-chosen), for a species $s$ and hydrological realization *h*, we obtained Akaike's Information Criterion (AIC) and Pearson's correlation coefficient $r$ for each soil depth $z$. For each *h*, we retained depths with the maximum likelihood (similar AIC based support, see below), and amongst them selected the best-fit depth as the one with the maximum Pearson's $r$, if $r$ >= 0.71. For a species $s$, we defined effective rooting depth (ERD) as the median of the best-fit depth over all *h*, which can be described as :
+
 
 \begin{equation}
-\textrm{ERD}_{s} = \underset{\forall \, h \, \in \, H}{\textrm{median}} \Big(z\,\Big|\, \textrm{L}_{s|z,h} = \underset{\forall \, z \,\in\,Z}{\textrm{maximum}}(\textrm{L}_{s|z,h}| r_{s|z,h} \ge 0.71\Big)\Big)
+\textrm{ERD}_{s} = \underset{\forall \, h \, \in \, H}{\textrm{med}} \Big(z\,\Big|\, \Big(r_{s|z,h} = \underset{\forall \, z \,\in\,Z}{\textrm{max}}(r_{s|z,h}| \mathrm{\Delta}_{s|z,h} \le 2\Big)\Big) \, \bigcap \, r_{s|z,h} \ge 0.71\Big)
 (\#eq:erd)
 \end{equation}
-where $L$ is the likelihood of $z$ given the observed growth time series $G_{t}$, $H$ = {1, .., 100}, refer to the 100 hydrological realizations and $Z$ = {0.4, `r paste(soil.depths[8:length(soil.depths)], collapse=", ")`} m. We removed finely resolved soil layers <0.21 m and averaged $\mathrm{\Psi}_{\textrm{soil},z}$ for depths 0.21, 0.37 and 0.62 (=0.4) m as sufficient resolution for model validation. 
+
+where $\mathrm{\Delta}_{s|z,h} = \textrm{AIC}_{s|z,h} - \underset{\forall \, z \,\in\,Z}{\textrm{min}}(\textrm{AIC}_{s|z,h})$,  $\textrm{AIC}_{s|z,h} = -2\textrm{log}(\mathcal{L}(\hat{\beta}_{s|z,h}|{G_{s}})) - 2k$, $\mathcal{L}$ is the likelihood function, $G$ the observed growth time series with $k$ observations (or, census intervals $t$). $H$ = (1, .., 100), the 100 best-fit hydrological realizations and $Z$ = (0.4, `r paste(soil.depths[8:length(soil.depths)], collapse=", ")`) m. We removed finely resolved soil layers <0.21 m and averaged $\mathrm{\Psi}_{\textrm{soil},z}$ for depths 0.21, 0.37 and 0.62 (=0.4) m as sufficient resolution for model validation. 
 
 #### Growth data 
 
-For diameter growth estimates, to minimize the effect of light variation among trees, we selected only large trees ($\ge$ 30 cm dbh) in the 50 ha plot and also species whose maximum height was $\ge$ 30 m (hereafter, canopy species) and thus are likely to be fully exposed to the sun. Calculating individual tree growth rates across six 5-yearly censuses (1990-2015), removing outliers, accounting for temporal changes in growth rates due to increasing tree size (see @Condit.2019a; @Condit.2019b and SI), we obtained species-level median time series of growth rates ($G_{t}$, cm yr^-1^) used in the ERD model, for only those species ($n$ = `r length(erd.sp)`) with complete records for at least three trees (median $n$ = `r median(g.n$n)`, max $n$ = `r max(g.n$n)` trees per species).
+For diameter growth estimates, to minimize the effect of light variation among trees, we selected only large trees ($\ge$ 30 cm dbh) in the 50 ha plot and also species whose maximum height was $\ge$ 30 m (hereafter, canopy species) and thus are likely to be fully exposed to the sun. Calculating individual tree growth rates across six 5-yearly censuses (1990-2015; @Condit.2019a; @Condit.2019b), removing outliers, accounting for the effect of increasing size on growth by obtaining residuals from a dbh model of growth (see SI), we estimated the growth time series $G_{s}$ (cm yr^-1^) for species $s$ as the median of the standardized (centered and scaled) dbh model residuals to use in the ERD model. $G_{s}$ was determined for only those species ($n$ = `r length(erd.sp)`) with complete records for at least three trees (median $n$ = `r median(g.n$n)`, max $n$ = `r max(g.n$n)` trees per species).
 
 #### Leaf hydraulic vulnerability curves 
 

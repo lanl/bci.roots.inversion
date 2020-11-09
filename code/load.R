@@ -288,7 +288,7 @@ symbols.table <-
       "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",
       "Seasonal minimum water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday in the dry season",
-      "Above-ground Hydraulic Safety Margin",
+      "Above-ground hydraulic safety margin",
       "Leaf-area specific hydraulic conductance of leaf",
       "Maximum leaf area-specific hydraulic conductance of leaf",
       "Maximum stem area-specific hydraulic conductivity of stem",

@@ -3,14 +3,14 @@ title: "Hydraulically-vulnerable trees survive on deep-water access during droug
 author: ''
 date: ''
 output:
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
+  bookdown::pdf_document2: default
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
-  bookdown::pdf_document2: default
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
 bibliography: references.bib
 csl: new-phytologist.csl
 ---
@@ -173,9 +173,9 @@ To assess vulnerability to cavitation, the branches were allowed to dry in the l
 
 For each tree species measured for $K_\textrm{stem}$ and $\mathrm{\Psi}$~88,stem~, two to six leaves were measured for $\mathrm{\Psi}$~tlp~ with pressure-volume analysis following @Koide.1989. Leaf water potential was measured on leaf discs with psychrometers (J.R.D. Merrill Specialty Equipment, Logan, Utah, USA). This method has been shown to give results similar to those of the pressure chamber method [@Nardini.2008]. To construct the pressure-volume curves, leaf discs were repeatedly measured for water potential and mass. Between measurements the discs were bench dried for 5-30 minutes. Dry mass was determined after oven drying the discs at 70°C. 
 
-### Stem hydraulic safety margins
+### Above-ground hydraulic safety margins
 
-Stem hydraulic safety margin was calculated as the difference between minimum leaf water potential $\mathrm{\Psi}$~min~ and $\mathrm{\Psi}$~88,stem~. Values for $\mathrm{\Psi}$~min~ were obtained from the dataset of @Wolfe.2019, which was collected as part of the 2016 ENSO campaign. Pre-dawn and diurnal leaf water potentials were measured on a monthly basis from Feb to May 2016 at San Lorenzo and Parque Natural Metropolitano, Panama, for which leaves were sampled using a canopy crane. Measurements in BCI were available only for March 2016, for which leaves were sampled with a pole pruner, as there is no canopy crane on BCI. In total 25 species were sampled, with no species re-sampled on another site. The raw data and data summaries are archived in the NGEE-Tropics archive [@Wolfe.2019]. Here, the six species that overlapped with our assessment of ERD and $\mathrm{\Psi}$~88,stem~ were included in analyses. We defined species $\mathrm{\Psi}$~min~ as the minimum of all the diurnal measurements for a species after taking an average value of measurements on two leaf samples for a given diurnal measurement (Table S\@ref(tab:hyd-table)). 
+Above-ground hydraulic safety margin was calculated as the difference between minimum leaf water potential $\mathrm{\Psi}$~min~ and $\mathrm{\Psi}$~88,stem~. Values for $\mathrm{\Psi}$~min~ were obtained from the dataset of @Wolfe.2019, which was collected as part of the 2016 ENSO campaign. Pre-dawn and diurnal leaf water potentials were measured on a monthly basis from Feb to May 2016 at San Lorenzo and Parque Natural Metropolitano, Panama, for which leaves were sampled using a canopy crane. Measurements in BCI were available only for March 2016, for which leaves were sampled with a pole pruner, as there is no canopy crane on BCI. In total 25 species were sampled, with no species re-sampled on another site. The raw data and data summaries are archived in the NGEE-Tropics archive [@Wolfe.2019]. Here, the six species that overlapped with our assessment of ERD and $\mathrm{\Psi}$~88,stem~ were included in analyses. We defined species $\mathrm{\Psi}$~min~ as the minimum of all the diurnal measurements for a species after taking an average value of measurements on two leaf samples for a given diurnal measurement (Table S\@ref(tab:hyd-table)). 
 
 
 ### WSG and LMA {#SIData.rutuja}

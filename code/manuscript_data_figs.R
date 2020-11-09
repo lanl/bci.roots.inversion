@@ -232,7 +232,7 @@ erd.sp.plot <- ggplot(df.erd.to.plot,
         axis.text.y = element_text(face = "plain")) +
   scale_y_continuous(trans = "reverse", breaks = unique(ml.rsq.combine$depth))
 ggsave("ERD_by_sp_large_canopy.tiff",
-       plot = erd.sp.plot, file.path(figures.folder), device = "tiff", height = 3.5, width = 5, units='in')
+       plot = erd.sp.plot, file.path(figures.folder), device = "tiff", height = 4.5, width = 5, units='in')
 ggsave("ERD_by_sp_large_canopy.jpeg",
        plot = erd.sp.plot, file.path(figures.folder), device = "jpeg", height = 4.5, width = 5, units='in')
 
@@ -281,6 +281,8 @@ p4 <- ggplot(ml.rsq.combine.chosen,
   theme(legend.text = element_text(face = "italic", size = 8))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
        plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4.3, units = 'in')
+ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.tiff",
+       plot = p4, file.path(figures.folder), device = "tiff", height = 3, width = 4.3, units = 'in')
 
 
 ## as "gr.Psi.VPD.add" is not present

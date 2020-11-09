@@ -1037,4 +1037,3 @@ ab.table$Family[rows.to.replace.2] <-
 #****************************
 erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
 erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
-

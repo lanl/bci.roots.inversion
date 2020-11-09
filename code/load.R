@@ -133,6 +133,7 @@ load(file = file.path(results.folder, "sp.leaf_cover.Rdata"))
 # load(file = file.path(results.folder, "sp.leaf_cover.mean.Rdata")) # without leaf gain
 load(file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
 load(file = file.path(results.folder, "gap.models.ll.Rdata"))
+
 soil.depths <- unique(psi$depth)
 
 #******************************************************

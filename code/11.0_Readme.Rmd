@@ -1,10 +1,14 @@
 ---
 title: "Workflow"
-subtitle: "Hydraulically-vulnerable trees survive on deep-water access during droughts in a tropical forest"
 author: "Rutuja Chitra-Tarak"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: 
-  pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+subtitle: Hydraulically-vulnerable trees survive on deep-water access during droughts
+  in a tropical forest
 ---
 
 ```{r setup, include = FALSE}
@@ -15,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, include = TRUE, eval = FALSE)
 
 **Growth data**
 
-Calculate species-size wise growth time series from forest inventory data. Calculate growth residuals after removing effect of size.
+Calculate species-specific growth time series from forest inventory data. 
 
 ```{r Chunk 01.0, eval = FALSE}
 source("code/01.0_Preparing_stem_growth_time_series.R")
@@ -31,6 +35,7 @@ source("code/02.0_demographic_data_BCI.R")
 
 Gather all pre-requisites for rooting depth inverse model (effective rooting depth ) in a place and traits data for post-processing
 
+- Soil Water Potentials
 - VPD-GPP relationship
 - Leaf vulnerability curves
 - LAI seasonality

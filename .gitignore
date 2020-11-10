@@ -10,9 +10,6 @@
 !/code/*.rmd
 # You can be specific with these rules
 !.gitignore
-!*.md
-!*.Rmd
-!*.rmd
 .Rproj.user
 .Rhistory
 .RData

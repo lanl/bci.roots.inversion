@@ -1,5 +1,5 @@
 #______________________________
-# Title: Phenology, demography, water availability
+# Title: Inverse model and post-processing
 # Author : Rutuja Chitra-Tarak
 # Original date: April 25, 2020
 #_______________________________

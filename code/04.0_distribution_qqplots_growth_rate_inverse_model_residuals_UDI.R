@@ -1,7 +1,7 @@
 
 ###-------------------------------
 ### Find out distribution of growth rates, residuals of inverse model, UDI
-### Author: Rutuja
+### Author: Rutuja Chitra-Tarak
 ### Original Date: April 16, 2020
 ###-------------------------------
 

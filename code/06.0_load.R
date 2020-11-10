@@ -1,3 +1,10 @@
+#-----------------------------------------------------
+# Title: Loading data generated from
+# script 05.0_Prepare_data_for_correlative analyses.R
+# This data is used by 0.7.0_PhenoDemoTraitsPsi.R and 08.0_manuscript.rmd
+# Author : Rutuja Chitra-Tarak
+# Original date: Summer, 2020
+#-----------------------------------------------------
 
 rm(list=ls())
 

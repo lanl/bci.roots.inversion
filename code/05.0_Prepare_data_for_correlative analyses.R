@@ -1,4 +1,11 @@
 
+###-------------------------------
+### All prerequisite data for ERD model and post-processing
+### Author: Rutuja Chitra-Tarak
+### Date: Summer 2020
+###-------------------------------
+
+
 rm(list=ls())
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)

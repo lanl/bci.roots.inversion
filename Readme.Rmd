@@ -1,5 +1,5 @@
 ---
-title: "Workflow"
+title: "Workflow Part II: Inverse root modeling and post-processing"
 author: "Rutuja Chitra-Tarak"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -35,7 +35,7 @@ source("code/02.0_demographic_data_BCI.R")
 
 Gather all pre-requisites for rooting depth inverse model (effective rooting depth ) in a place and traits data for post-processing
 
-- Soil Water Potentials
+- Soil Water Potentials (outputs from ELM-FATES)
 - VPD-GPP relationship
 - Leaf vulnerability curves
 - LAI seasonality

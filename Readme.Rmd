@@ -1,5 +1,9 @@
 ---
+<<<<<<< HEAD
 title: "Workflow Part II: Inverse root modeling and post-processing"
+=======
+title: "Workflow Part II: for inverse root modeling and post-processing"
+>>>>>>> 606bf1604d07aaf5420a54968087cbfc76b416c9
 author: "Rutuja Chitra-Tarak"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:

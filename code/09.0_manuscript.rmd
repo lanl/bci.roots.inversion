@@ -20,7 +20,7 @@ if(!require("pacman", quietly=TRUE)) install.packages("pacman")
 suppressPackageStartupMessages(
   pacman::p_load(bookdown, knitr, pander, citr, broom))
 options(tinytex.verbose = TRUE)
-source("code/07.0_load.R")
+source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")
 # load("results/manuWorkSpace.RData")
 # install.packages(c("vctrs", "rlang"))

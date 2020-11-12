@@ -16,7 +16,7 @@ rm(list=ls())
 #******************************************************
 ### Load data -------
 #******************************************************
-source("code/07.0_load.R")
+source("code/06.0_load.R")
 
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ##
@@ -147,193 +147,15 @@ psi.corr.fun.ls.2 <- list(
             # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
-  }#,
-  ###---not used----
-  # "gr.Psi.Rad.leaf.multi" =
-  #   function(df, dflc) {
-  #     dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
-  #     result.df <-
-  #       as.data.table(psi.study)[dflc.dt, on = 'doy'][,
-  #                                                     psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-  #                                                       , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod*std.Rs*leaf_cover), na.rm = TRUE))]#[
-  #     # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-  #     result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-  #     return(list(result.df = result.df))
-  #   },
-  # "gr.Psi.VPD.Rad.leaf.multi" =
-  #   function(df, dflc) {
-  #     dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
-  #     result.df <-
-  #       as.data.table(psi.study)[dflc.dt, on = 'doy'][,
-  #                                                     psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-  #                                                       , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod*std.VPD*std.Rs*leaf_cover), na.rm = TRUE))]#[
-  #     # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-  #     result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-  #     return(list(result.df = result.df))
-  #   }
-  ###---not used----
-)
-
-###************************************************************
-### Functions explored earlier but not used anymore : psi.corr.fun.ls
-###************************************************************
-
-psi.corr.fun.ls <- list(
-  "gr.Psi" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod, na.rm = TRUE))][
-              , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    },
-  "gr.Psi.Rad" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod + std.Rs, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "gr.Psi.VPD" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod + std.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "gr.Psi.Rad.VPD" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod + std.Rs.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "gr.Psi.Rad.PET" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := Exponential(A = df$A, B = df$B, psi = -psi)][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod + std.Rs.pet.PM, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "mr.Psi" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := psi - df$psi_kl80][
-          psi.mod > 0, psi.mod := 0][
-            , keyby = .(depth, interval, par.sam), .(gfac = sum(psi.mod, na.rm = TRUE))][
-              , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "mr.Psi.PET" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := psi - df$psi_kl80][
-          psi.mod > 0, psi.mod := 0][
-            , keyby = .(depth, interval, par.sam), .(gfac = sum(psi.mod*std.pet.PM, na.rm = TRUE))][
-              , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "mr.Psi.VPD" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := psi - df$psi_kl80][
-          psi.mod > 0, psi.mod := 0][
-            , keyby = .(depth, interval, par.sam), .(gfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
-              , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "mr.Psi.I" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl80, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(gfac = sum(psi.mod, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    } ,
-  "mr.Psi.PET.I" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl80, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(gfac = sum(psi.mod*std.pet.PM, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    },
-  "mr.Psi.VPD.I" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl80, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(gfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
-      return(result.df)
-    }
+  }
 )
 
 get.mfac.ls <- list(
-  "mr.kl80.I" =
-  function(df) {
-    result.df <-
-      as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl80, greater.than = FALSE)][
-        , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod, na.rm = TRUE))][
-          , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
-    result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
-    return(result.df)
-  },
   "mr.kl50.I" =
     function(df) {
       result.df <-
         as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl50, greater.than = FALSE)][
           , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
-      return(result.df)
-    },
-  "mr.kl20.I" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl20, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
-      return(result.df)
-    },
-  "mr.kl80.I.VPD" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl80, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
-      return(result.df)
-    },
-  "mr.kl50.I.VPD" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl50, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
-            , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
-      result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
-      return(result.df)
-    },
-  "mr.kl20.I.VPD" =
-    function(df) {
-      result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl20, greater.than = FALSE)][
-          , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod*std.VPD, na.rm = TRUE))][
             , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
       return(result.df)
@@ -749,17 +571,7 @@ for (i in names(gfac.interval)) {
   ml.ls[[i]] <- lapply(demo.psi.ls, get.ts.lk)
   ## Get corresponding R, corr and depth
   ml.corr.ls[[i]] <- do.call(rbind.data.frame, ml.ls[[i]])
-  # retain the ones with positive correlation
-  # ml.rsq.ls[[i]] <- do.call(rbind, lapply(ml.ls[[i]], get.ml.depth.rsq))
-  # ## Get the one with the maximum likelihood for each sp-par.sam
-  # ml.dens[[i]] <- sapply(ml.ls[[i]], get.ml.max)
 }
-
-# for(n in 4:length(ml.dens)) {
-#   if(n == 1) plot(density(ml.dens[[n]][1:length(ml.dens[[n]])]))
-#   lines(density(ml.dens[[n]]), col = terrain.colors(length(ml.dens))[n])
-#   abline(v = median(ml.dens[[n]]))
-# }
 
 ml.corr <- vector("list", length(gfac.interval))
 ml.corr.best <- vector("list", length(gfac.interval))
@@ -782,7 +594,6 @@ for (i in names(gfac.interval)) {
     mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
            deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
 
-  # left_join(traits.long.hyd %>% select(deci_sp, deci_sp.plot, sp, sp.plot,  deciduousness), by = "sp") #%>%
   # Select best corr within each sp and par.sam
   ml.corr.best.parsam[[i]] <- ml.corr[[i]] %>%
     group_by(sp, par.sam) %>%
@@ -804,8 +615,8 @@ ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
   group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp, deci_sp.plot) %>%
-  # subset(corr >= 0.7071068) %>% # that is R2 >= 0.5 and corr >= 0
-  subset(corr >= 0 & R2 >= 0.5) %>%
+  subset(corr >= 0.7071068) %>% # that is R2 >= 0.5 and corr >= 0
+  # subset(corr >= 0 & R2 >= 0.5) %>%
   summarise(depth.se = sd(depth, na.rm = TRUE)/sqrt(n()),
             depth = median(depth, na.rm = TRUE),
             corr.se = sd(corr, na.rm = TRUE)/sqrt(n()),
@@ -892,9 +703,6 @@ erd.model.n.sp
 erd.model.iso.n.sp
 erd.model.p
 erd.model.r2
-## among the models for which p-value =< 0.05, chose the one that has the highest R2
-# erd.model.sig <- which(erd.model.p == 0.05 | erd.model.p < 0.05)
-# chosen.model <- names(erd.model.p)[which(erd.model.r2 == max(erd.model.r2[erd.model.sig], na.rm = TRUE))]
 
 chosen.model <- "gr.Psi.VPD.multi"
 save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
@@ -1017,8 +825,6 @@ erd.stem.traits <- hyd.long %>%
   subset(trait != "depth") %>%
   left_join(hyd.depth %>% dplyr::select(sp, `Depth[italic("Rsq")]`), by = "sp") %>%
   dplyr::select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%
-  # bind_rows(depth.traits.kunert %>% subset(trait == "KmaxL") %>%
-  #             select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value)) %>%
   left_join(hyd.error, by = c("sp", "trait"))
 
 save(erd.stem.traits, file = file.path(results.folder, "erd.stem.traits.Rdata"))
@@ -1071,16 +877,13 @@ mrate.depth <-
   subset(size == "large" & form1 == "T") %>% droplevels()
 mrate.mfac.depth <- mrate.depth %>%
   right_join(mfac.interval.long[[mfac.on]], #%>%
-             # mutate(censusint.m = recode(interval.num, `1` = "1982-85", `2` = "1985-90",
-             #                             `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")),
-             by = c("interval.num", "sp", "size")) %>%
+              by = c("interval.num", "sp", "size")) %>%
   left_join(psi.study %>%
               subset(depth == unique(psi.study$depth)[1] & par.sam == unique(psi.study$par.sam)[1]) %>%
               mutate(censusint.m = recode(interval, `1` = "1981-85", `2` = "1985-90",
                                           `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15")) %>%
               group_by(censusint.m) %>%
-              summarise(days = length(date), .groups = "drop"), #%>%
-            # mutate(interval = as.numeric(interval)),
+              summarise(days = length(date), .groups = "drop"),
             by = c("censusint.m")) %>%
   mutate(mfac.rate = mfac*100/days) %>% # expressed in days per year
   mutate(sp_size = paste(sp, size, sep = "_")) %>%

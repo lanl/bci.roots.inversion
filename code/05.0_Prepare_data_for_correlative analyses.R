@@ -2234,7 +2234,8 @@ ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifetime, group = strata)) +
   # geom_point(aes(size = n_lifetime), show.legend = TRUE) +
   geom_text(aes(label = sp4), nudge_y = 10, size = 3) +
   geom_point(aes(size = n_lifetime), shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
-  xlab(expression('LMA (g '*m^-2*')')) + ylab("Leaf Longevity (Days)") +
+  xlab(expression('LMA (g '*m^-2*')')) +
+  ylab("Leaf Longevity (Days)") +
   geom_smooth(method = "lm", formula = formula, se = FALSE) +
   scale_linetype_manual(name = "Strata") +
   theme(legend.position = c(0.2, 0.9), legend.title = element_blank(),
@@ -2248,7 +2249,7 @@ ggsave(("lifetime_by_lma_canopy_two sites.jpeg"),
        plot = ll.lma.plot, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 ll.lma.plot.canopy <- ll.lma.plot %+%
-  subset(ll.lma, strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA") + #! sp4 %in% c("VIRE", "VIR3")
+  subset(ll.lma, strata == "CANOPY" & lifeform6 != "LIANA") + #! sp4 %in% c("VIRE", "VIR3")
   stat_poly_eq(aes(label = stat(eq.label)),
                npcx = 0.95, npcy = 0.1, rr.digits = 2,
                formula = formula, parse = TRUE, size = 6) +
@@ -2264,9 +2265,15 @@ ll.lma.plot.canopy <- ll.lma.plot %+%
 ggsave(("lifetime_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
+ll.lma.plot.canopy.sitecolored <- ll.lma.plot.canopy +
+  geom_point(aes(size = n_lifetime, fill = site), shape = 21, color = "white", alpha = 1, size = 2.5)
+ggsave(("lifetime_by_lma_canopy.jpeg"),
+       plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
 # LIFETIME – median leaf longevity (days)
 # N_LIFETIME – sample size for LIFETIME (number of leaves)
 
+load(file = file.path(results.folder, "gap.models.Rdata"))
 bci.ll <- bci.traits %>% select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
   mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
                              predict(gap.models$LMA.LAM.DISC, newdata =  bci.traits),
@@ -2289,7 +2296,7 @@ save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
 
 bci.lifetime <- bci.ll %>%
   full_join(ll.lma %>%
-            subset(strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA") %>%
+            subset(strata == "CANOPY" & lifeform6 != "LIANA") %>%
               select(sp, lifetime), by = "sp") %>%
   mutate(lifetime.filled = lifetime,
          lifetime.sub = ifelse(!is.na(lifetime.filled), "original", NA),

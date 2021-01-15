@@ -2432,46 +2432,72 @@ leaf.interp.approx <- function(df) {
 }
 
 
-## Absolute biomass among the two sites on BCI are not comparable.
-## So normalising them.
-## Here we are interested in the seasonal pattern of leaffall
-## So rescaling weekly leaf-fall as a fraction of the total leaf fall of the year--beginning DOY 120
 set.k = 7
 leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
                         as.data.frame) %>%
   bind_rows(.id = "sp_site") %>%
   group_by(sp, date) %>%
-  summarise(leaf_gm.int.raw = sum(leaf_gm.int.raw), .groups = "drop_last") %>%
+  # taking mean between two sites, when available
+  summarise(leaf_fall = mean(leaf_gm.int.raw, na.rm = TRUE), .groups = "drop_last") %>%
+  mutate(leaf_fall = if_else(is.nan(leaf_fall), 0, leaf_fall)) %>%
   ungroup(sp, date) %>%
+  ## adding lifetime by species
+  left_join(bci.lifetime %>%
+              select(sp, LMA, lifetime.filled) %>% rename(lifetime = lifetime.filled), by = "sp") %>%
+  subset(!is.na(lifetime)) %>%
+  subset(sp != "na") %>%
+  mutate(leaf_cover = NA)
+
+leaf.fall.sp <- split(leaf.fall.int, f = list(leaf.fall.int$sp), drop = TRUE)
+
+## For leaf cover, for each sp,
+## Consider leaf_gain(t - lifetime) = leaf_fall(t),
+## leaf_cover(t+1 - lifetime) = leaf_fall(t) + leaf_fall(t+1) and so on
+# Once leaf is gained, it stays there until it falls
+
+leaf.cover_fun <- function(df) {
+  sp.lifetime <- as.integer(df$lifetime[1])
+  previous.dates <- data.frame(sp = df$sp[1],
+                               date = as.Date(c(df$date[1] - sp.lifetime): df$date[1]))
+  df <- df %>% full_join(previous.dates, by = c("date", "sp")) %>% arrange(date)
+  for(t in 1: c(length(df$date) - 1)) {
+    if (t == 1) {
+      df$leaf_cover[t] <- df$leaf_fall[t + sp.lifetime]
+    } else {
+      if (t < sp.lifetime + 1) {
+        # add to the leaf cover of the day before
+        df$leaf_cover[t] <- df$leaf_cover[t-1] +
+          df$leaf_fall[t + sp.lifetime]
+      } else {
+        # add to the leaf cover of the day before
+        # but also remove leaf fall
+        df$leaf_cover[t] <- df$leaf_cover[t-1] +
+          df$leaf_fall[t + sp.lifetime] -
+          df$leaf_fall[t]
+      }
+    }
+  }
+  df <- df[-(1:sp.lifetime),]
+  return(df)
+}
+
+leaf_cover.sp <- lapply(lapply(leaf.fall.sp, leaf.cover_fun), as.data.frame) %>%
+  bind_rows(.id = "sp") %>%
   mutate(doy = as.numeric(format(date, "%j")),
-         year = as.numeric(format(date, "%Y")),
-         sp.leaf.fall.year = ifelse(doy < 150, year-1, year)) %>%
-  group_by(sp) %>%
-  mutate(leaf_gm.int.mov = rollmean(leaf_gm.int.raw, k = set.k, fill = NA)) %>%
-  ungroup(sp) %>%
-  group_by(sp, sp.leaf.fall.year) %>%
-  mutate(annual.leaf.fall = sum(leaf_gm.int.raw, na.rm = TRUE),
-         leaf_gm.int = leaf_gm.int.raw/annual.leaf.fall,
-         # Assuming full leaf cover from June through October
-         leaf_gm.int.mod = ifelse(doy >= 150 & doy < 300, 0, leaf_gm.int),
-         leaf_gm.cum = cumsum(leaf_gm.int.mod),
-         leaf_cover = 1 - leaf_gm.cum) %>%
-  ungroup(sp, sp.leaf.fall.year) %>%
+         year = as.numeric(format(date, "%Y"))) %>%
   group_by(sp, doy) %>%
-  mutate(leaf_gm.int.mean = mean(leaf_gm.int, na.rm = TRUE),
-         leaf_gm.int.sd = sd(leaf_gm.int, na.rm = TRUE),
-         leaf_cover.mean = mean(leaf_cover, na.rm = TRUE),
+  mutate(leaf_cover.mean = mean(leaf_cover, na.rm = TRUE),
          leaf_cover.sd = sd(leaf_cover, na.rm = TRUE)) %>%
   ungroup(sp, doy) %>%
   subset(sp != "na") %>%
   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
   mutate(sp.year = paste(sp, year, sep = "."))
 
-sp.leaf_cover.mean <- leaf.fall.int %>%
+sp.leaf_cover.mean <- leaf_cover.sp %>%
   group_by(sp, doy) %>%
   summarise(leaf_cover.mean = mean(leaf_cover, na.rm = TRUE), .groups = "drop_last") %>%
   ungroup(sp, doy)
-save(sp.leaf_cover.mean,file = file.path(results.folder, "sp.leaf_cover.mean.Rdata"))
+save(sp.leaf_cover.mean, file = file.path(results.folder, "sp.leaf_cover.mean.Rdata"))
 
 f3 <- ggplot(sp.leaf_cover.mean %>%
                left_join(deci %>% select(sp, deciduousness), by = "sp"),

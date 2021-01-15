@@ -2364,16 +2364,27 @@ ggsave(("LAI_by_DOY_BCI.jpeg"),
 #******************************************************
 ### Load Weekly Leaf-fall data ------
 #******************************************************
+# From Joe: To do this calculation,
+# I would use the most recent seven years with data from
+# 59 0.25-m2 traps at the BCI Poacher’s Peninsula site and
+# 62 0.5-m2 traps at the BCI 50-ha plot.
+
 leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv")) %>%
   rename(date = mean_date,
-         sp4 = sp) %>% mutate(date = as.Date(date)) %>%
-  subset(site != "San_Lorenzo") %>%
+         sp4 = sp) %>%
+  mutate(date = as.Date(date)) %>%
+  subset(date >= as.Date("2013-01-01") &
+           date < as.Date("2020-01-01") &
+           site != "San_Lorenzo") %>%
   # subset(site == "BCI50-ha") %>%
   # mutate(site = "BCI") %>%
+  # Need to convert absolute leaf mass to leaf mass per unit area (no of traps in which the species was found* area of each trap)
+  mutate(leaf_gm_per_m2 = if_else(site == "BCI50-ha", leaf_gm/(0.5*n_traps),
+                                  if_else(site == "BCI-Poachers", leaf_gm/(0.25*n_traps),  leaf_gm/(0.5*n_traps)))) %>% # last one is for San Lorenzo
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
   mutate(sp_site = paste(sp, site, sep = "_"))
 
-f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm)) +
+f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm_per_m2)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
 ggsave(("leaf.fall.daily_BCI.jpeg"),
        plot = f1, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
@@ -2396,7 +2407,7 @@ fill.day.gaps <- function(df) {
   df.1 <- df %>% arrange(date) %>%
     mutate(n.days = as.numeric(date - lag(date))) %>%
     #  leaf_fall rate per day, mean for the census interval
-    mutate(leaf_gm_rate = leaf_gm/n.days) %>%# day
+    mutate(leaf_gm_rate = leaf_gm_per_m2/n.days) %>%# day
     full_join(full.date.df, by = "date") %>% arrange(date, site)
   return(df.1)
 }
@@ -2419,7 +2430,9 @@ leaf.interp.approx <- function(df) {
            site = df$site[1])
   return(df.1)
 }
-## Absolute biomass among the two sites on BCI are not comparable
+
+
+## Absolute biomass among the two sites on BCI are not comparable.
 ## So normalising them.
 ## Here we are interested in the seasonal pattern of leaffall
 ## So rescaling weekly leaf-fall as a fraction of the total leaf fall of the year--beginning DOY 120

@@ -2224,16 +2224,16 @@ ll.lma <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits_comp
   rename(site = `site$`, sp4 = `sp4$`, strata = `strata$`, lifeform6 = `lifeform6$`,
          genus = `genus$`, species = `species$`) %>%
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
-  select(site, sp, sp4, genus, species, lifetime, n_lifetime, lma, strata, lifeform6) %>%
-  mutate(log.ll = log(lifetime),
+  select(site, sp, sp4, genus, species, lifespan, n_lifespan, lma, strata, lifeform6) %>%
+  mutate(log.ll = log(lifespan),
          log.lma = log(lma)) %>%
-  subset(n_lifetime > 100) ## those with enough sample sizes
+  subset(n_lifespan > 100) ## those with enough sample sizes
 
 formula <- y ~ x
-ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifetime, group = strata)) +
-  # geom_point(aes(size = n_lifetime), show.legend = TRUE) +
+ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifespan, group = strata)) +
+  # geom_point(aes(size = n_lifespan), show.legend = TRUE) +
   geom_text(aes(label = sp4), nudge_y = 10, size = 3) +
-  geom_point(aes(size = n_lifetime), shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  geom_point(aes(size = n_lifespan), shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
   xlab(expression('LMA (g '*m^-2*')')) +
   ylab("Leaf Longevity (Days)") +
   geom_smooth(method = "lm", formula = formula, se = FALSE) +
@@ -2245,7 +2245,7 @@ ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifetime, group = strata)) +
 # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
 #               labels = trans_format("log10", math_format(10^.x))) +
 # annotation_logticks()
-ggsave(("lifetime_by_lma_canopy_two sites.jpeg"),
+ggsave(("lifespan_by_lma_canopy_two sites.jpeg"),
        plot = ll.lma.plot, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 ll.lma.plot.canopy <- ll.lma.plot %+%
@@ -2262,16 +2262,16 @@ ll.lma.plot.canopy <- ll.lma.plot %+%
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.18, size = 6)
-ggsave(("lifetime_by_lma_canopy.jpeg"),
+ggsave(("lifespan_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 ll.lma.plot.canopy.sitecolored <- ll.lma.plot.canopy +
-  geom_point(aes(size = n_lifetime, fill = site), shape = 21, color = "white", alpha = 1, size = 2.5)
-ggsave(("lifetime_by_lma_canopy.jpeg"),
+  geom_point(aes(size = n_lifespan, fill = site), shape = 21, color = "white", alpha = 1, size = 2.5)
+ggsave(("lifespan_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-# LIFETIME – median leaf longevity (days)
-# N_LIFETIME – sample size for LIFETIME (number of leaves)
+# lifespan – median leaf longevity (days)
+# N_lifespan – sample size for lifespan (number of leaves)
 
 load(file = file.path(results.folder, "gap.models.Rdata"))
 bci.ll <- bci.traits %>% select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
@@ -2289,28 +2289,28 @@ bci.ll <- bci.traits %>% select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD)
   select(sp, LMA, LMALEAF_AVD, form)
 
 gap.models.ll <- vector(mode = "list", length = 1)
-names(gap.models.ll) <- c("LMA.lifetime")
-gap.models.ll$LMA.lifetime <- lm(lifetime ~ LMA, data =
+names(gap.models.ll) <- c("LMA.lifespan")
+gap.models.ll$LMA.lifespan <- lm(lifespan ~ LMA, data =
                                    subset(ll.lma %>% rename(LMA = lma), strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA"))
 save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
 
-bci.lifetime <- bci.ll %>%
+bci.lifespan <- bci.ll %>%
   full_join(ll.lma %>%
             subset(strata == "CANOPY" & lifeform6 != "LIANA") %>%
-              select(sp, lifetime), by = "sp") %>%
-  mutate(lifetime.filled = lifetime,
-         lifetime.sub = ifelse(!is.na(lifetime.filled), "original", NA),
-         lifetime.filled = ifelse(is.na(lifetime),
-                                  predict(gap.models.ll$LMA.lifetime, newdata = bci.ll),
-                                  lifetime),
-         lifetime.sub = ifelse(!is.na(lifetime.filled) & is.na(lifetime.sub), "ll.filled", NA))
+              select(sp, lifespan), by = "sp") %>%
+  mutate(lifespan.filled = lifespan,
+         lifespan.sub = ifelse(!is.na(lifespan.filled), "original", NA),
+         lifespan.filled = ifelse(is.na(lifespan),
+                                  predict(gap.models.ll$LMA.lifespan, newdata = bci.ll),
+                                  lifespan),
+         lifespan.sub = ifelse(!is.na(lifespan.filled) & is.na(lifespan.sub), "ll.filled", NA))
 
 ## there shouldn't be any duplicate records for species
-# bci.lifetime[duplicated(bci.lifetime$sp),]
-save(bci.lifetime, file = file.path(results.folder, "bci.lifetime.Rdata"))
+# bci.lifespan[duplicated(bci.lifespan$sp),]
+save(bci.lifespan, file = file.path(results.folder, "bci.lifespan.Rdata"))
 
 formula <- y ~ x
-ll.lma.comm <- ggplot(bci.lifetime, aes(x = LMA, y = lifetime.filled)) +
+ll.lma.comm <- ggplot(bci.lifespan, aes(x = LMA, y = lifespan.filled)) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
   xlab(expression('LMA (g '*m^-2*')')) + ylab("Leaf Longevity (Days)") +
   geom_smooth(method = "lm", formula = formula) +
@@ -2326,7 +2326,7 @@ ll.lma.comm <- ggplot(bci.lifetime, aes(x = LMA, y = lifetime.filled)) +
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.9, npcy = 0.85, size = 6)
-ggsave(("lifetime_by_lma_community.jpeg"),
+ggsave(("lifespan_by_lma_community.jpeg"),
        plot = ll.lma.comm, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 #******************************************************
@@ -2441,43 +2441,43 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
   summarise(leaf_fall = mean(leaf_gm.int.raw, na.rm = TRUE), .groups = "drop_last") %>%
   mutate(leaf_fall = if_else(is.nan(leaf_fall), 0, leaf_fall)) %>%
   ungroup(sp, date) %>%
-  ## adding lifetime by species
-  left_join(bci.lifetime %>%
-              select(sp, LMA, lifetime.filled) %>% rename(lifetime = lifetime.filled), by = "sp") %>%
-  subset(!is.na(lifetime)) %>%
+  ## adding lifespan by species
+  left_join(bci.lifespan %>%
+              select(sp, LMA, lifespan.filled) %>% rename(lifespan = lifespan.filled), by = "sp") %>%
+  subset(!is.na(lifespan)) %>%
   subset(sp != "na") %>%
   mutate(leaf_cover = NA)
 
 leaf.fall.sp <- split(leaf.fall.int, f = list(leaf.fall.int$sp), drop = TRUE)
 
 ## For leaf cover, for each sp,
-## Consider leaf_gain(t - lifetime) = leaf_fall(t),
-## leaf_cover(t+1 - lifetime) = leaf_fall(t) + leaf_fall(t+1) and so on
+## Consider leaf_gain(t - lifespan) = leaf_fall(t),
+## leaf_cover(t+1 - lifespan) = leaf_fall(t) + leaf_fall(t+1) and so on
 # Once leaf is gained, it stays there until it falls
 
 leaf.cover_fun <- function(df) {
-  sp.lifetime <- as.integer(df$lifetime[1])
+  sp.lifespan <- as.integer(df$lifespan[1])
   previous.dates <- data.frame(sp = df$sp[1],
-                               date = as.Date(c(df$date[1] - sp.lifetime): df$date[1]))
+                               date = as.Date(c(df$date[1] - sp.lifespan): df$date[1]))
   df <- df %>% full_join(previous.dates, by = c("date", "sp")) %>% arrange(date)
   for(t in 1: c(length(df$date) - 1)) {
     if (t == 1) {
-      df$leaf_cover[t] <- df$leaf_fall[t + sp.lifetime]
+      df$leaf_cover[t] <- df$leaf_fall[t + sp.lifespan]
     } else {
-      if (t < sp.lifetime + 1) {
+      if (t < sp.lifespan + 1) {
         # add to the leaf cover of the day before
         df$leaf_cover[t] <- df$leaf_cover[t-1] +
-          df$leaf_fall[t + sp.lifetime]
+          df$leaf_fall[t + sp.lifespan]
       } else {
         # add to the leaf cover of the day before
         # but also remove leaf fall
         df$leaf_cover[t] <- df$leaf_cover[t-1] +
-          df$leaf_fall[t + sp.lifetime] -
+          df$leaf_fall[t + sp.lifespan] -
           df$leaf_fall[t]
       }
     }
   }
-  df <- df[-(1:sp.lifetime),]
+  df <- df[-(1:sp.lifespan),]
   return(df)
 }
 
@@ -2603,14 +2603,14 @@ ggsave(("dead.doy_density_by_sp_deciduousness.jpeg"),
 
 coh.sp.summ <-  cohort %>%
   group_by(sp, site, deciduousness, deci_sp) %>%
-  summarise(lifetime = mean(lifetime, na.rm = TRUE),
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
             born.mean = mean(born, na.rm = TRUE),
             dead.mean = mean(dead, na.rm = TRUE),
             born.sd = sd(born, na.rm = TRUE),
             dead.sd = sd(dead, na.rm = TRUE))
 formula = y~x
 coh.plot4.base <- ggplot(coh.sp.summ,
-       aes(x = lifetime)) +
+       aes(x = lifespan)) +
   guides(color = guide_legend(title = "Deciduousness")) +
   facet_wrap(site ~ .)
 coh.plot4.1 <- ggplot(coh.sp.summ) +
@@ -2630,7 +2630,7 @@ ggsave(("mean_leaf_death_dates.jpeg"),
        plot = coh.plot4.2, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
 
 coh.plot5 <- ggplot(coh.sp.summ,
-                    aes(x = lifetime, y = born.sd)) +
+                    aes(x = lifespan, y = born.sd)) +
   geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
   guides(color = guide_legend(title = "Deciduousness")) +
   ylab("SD of Leaf Born Dates") + xlab("Leaf Longevity (Days)") +
@@ -2650,7 +2650,7 @@ ggsave(("leaf_longevity_vs_leaf_born_days_concentration.jpeg"),
        plot = coh.plot5, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
 
 coh.plot6 <- ggplot(coh.sp.summ,
-                    aes(x = lifetime, y = dead.sd)) +
+                    aes(x = lifespan, y = dead.sd)) +
   geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
   guides(color = guide_legend(title = "Deciduousness")) +
   ylab("SD of Leaf Death Dates") + xlab("Leaf Longevity (Days)") +
@@ -2671,14 +2671,14 @@ ggsave(("leaf_longevity_vs_leaf_death_days_concentration.jpeg"),
 
 coh.summ <-  cohort %>%
   group_by(sp, site, deciduousness, deci_sp) %>%
-  summarise(lifetime = mean(lifetime, na.rm = TRUE),
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
             born.doy.mean = mean(born.doy, na.rm = TRUE),
             dead.doy.mean = mean(dead.doy, na.rm = TRUE),
             born.doy.sd = sd(born.doy, na.rm = TRUE),
             dead.doy.sd = sd(dead.doy, na.rm = TRUE)) %>%
   ungroup(sp, site, deciduousness, deci_sp) %>%
   group_by(site, deciduousness) %>%
-  summarise(lifetime = mean(lifetime, na.rm = TRUE),
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
             born.doy.sd = sd(born.doy.mean, na.rm = TRUE),
             dead.doy.sd = sd(dead.doy.mean, na.rm = TRUE),
             born.doy.mean = mean(born.doy.mean, na.rm = TRUE),

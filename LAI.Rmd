@@ -68,13 +68,3 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts.j
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean.jpeg"))
 ```
 
-9. As step 6.1 starts from zero prior LAI, I thought to modify that and use the expected LAI from step 7 for the DOY of day 1, then recalculated LAI, but that that did not change the pattern observed in some soecies of increasing LAI over the years (Figure \@ref(fig:LAI-ts-mod)) and resulted in a marginally different LAI seasonality curves (Figure \@ref(fig:LAI-ssn-mod)).
-
-```{r LAI-ts-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts-mod}Modified LAI time series, beginning with expected LAI for the DOY of day 1. The absolute values of LAI are way too high and need correction by a factor, and I haven't figure out what that is (let me know if you do), but look at the time series trend for now. LL = species-specific leaf lifespan in days.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts_mod.jpeg"))
-```
-
-```{r LAI-ssn-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-mod}Modified LAI seasonality curves, beginning with expected LAI for the DOY of day 1. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_mod.jpeg"))
-```
-

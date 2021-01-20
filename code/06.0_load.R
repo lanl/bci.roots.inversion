@@ -252,11 +252,11 @@ vpd.cf <- as.numeric(round(gpp.models$eq.gpp.vpd$coefficients, 2))
 ### Leaf lifespan from LMA model
 #************************
 
-ll.lma.cf <- as.numeric(round(gap.models.ll$LMA.lifetime$coefficients, 2))
-ll.lma.r2 <- round(summary(gap.models.ll$LMA.lifetime)$r.squared, 2)
-ll.lma.n <- length(gap.models.ll$LMA.lifetime$residuals)
-ll.lma.p <- ifelse(broom::glance(gap.models.ll$LMA.lifetime)$p.value < 0.001,
-                  paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models.ll$LMA.lifetime)$p.value, 2)))
+ll.lma.cf <- as.numeric(round(gap.models.ll$LMA.lifespan$coefficients, 2))
+ll.lma.r2 <- round(summary(gap.models.ll$LMA.lifespan)$r.squared, 2)
+ll.lma.n <- length(gap.models.ll$LMA.lifespan$residuals)
+ll.lma.p <- ifelse(broom::glance(gap.models.ll$LMA.lifespan)$p.value < 0.001,
+                  paste0("< 0.001"), paste0("= ", signif(broom::glance(gap.models.ll$LMA.lifespan)$p.value, 2)))
 
 #******************************************************
 ### Tables-----

@@ -1,0 +1,80 @@
+---
+title: "LAI workflow"
+author: "Rutuja Chitra-Tarak"
+date: "1/15/2021"
+output:
+      bookdown::html_document2:
+        number_sections: no
+        theme: flatly
+        fig_caption: yes
+      bookdown::pdf_document2: default
+---
+```{r setup, echo = FALSE, include=FALSE}
+library(knitr)
+opts_knit$set(eval.after = "fig.cap")
+knitr::opts_chunk$set(echo = TRUE)
+if(!require("pacman", quietly=TRUE)) install.packages("pacman")
+suppressPackageStartupMessages(
+  pacman::p_load(bookdown, knitr, pander, citr, broom))
+options(tinytex.verbose = TRUE)
+```
+
+1. Built leaf lifespan (LL) to LMA relationship based on both, PNM and San-Lorenzo (FTS) based on canopy leaves of trees (Figure \@ref(fig:ll-lma)), and used that to gap-fill leaf lifespan data. 
+
+```{r ll-lma, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", results = "asis", fig.cap = paste0("\\label{lab-ll-lma}Species-specific Leaf lifespan vs. LMA observed for canopy leaves at two sites at Panama. Each observation (circle) is color coded by site. A linear model fit (line) and equation with R2 and p-value are shown.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_cohort/lifespan_by_lma_canopy_sitecolored.jpeg"))
+```
+
+```{r ll-lma, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", results = "asis", fig.cap = paste0("\\label{lab-ll-lma} Species-specific Leaf lifespan vs. LMA observed for canopy leaves at two sites, shown separately. A linear model fit (line) and equation with coefficient of determination and p-value are shown separately for each site.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_cohort/lifespan_by_lma_canopy_two sites.jpeg"))
+```
+
+2. Restricted leaf-litter data to the last 7 years for BCI-Poachers and BCI-50ha, converted observed leaf fall data column in mass units (leaf_gm) to mass per unit ground area as follows: 
+    Leaf in gm per m2 ground area at a site = Leaf biomass in gm / (Site-specific trap area in m2  x Number of leaves were collected from) --- (Eq 1)  
+    In Joe's the dataframe, column "leaf_gm"" represents leaf~biomass~in~gm and column "n_traps" represents the number of traps the leaf_gm observation came from.  
+
+3. Removed outliers by species as those leaf_gm_per_m2 > 5 standard deviation  
+
+4. Remove a small set of species-site combinations with too few records for that species at that site by visually inspecting data
+
+4. Distributed weekly leaf_gm_per_m2 over the days of the week with interpolation
+
+5. When a species' leaf_gm_per_m2 was recorded at both the sites, obtained an average.
+
+6. Converted leaf_gm_per_m2 to LAI units as   
+    leaf_fall_LAI (in m2/m2) = leaf_gm_per_m2 / LMA (in g/m2)
+    LMA units are from Metadata_Lftraits_VariableDefinitionsOnly.doc for data in BCITRAITS_20101220.csv)
+
+7. For each species, prepended its leaf_gm_per_m2 data-frame by adding days equal to the species leaf lifespan, sp.lifespan
+    Then LAI time series is calculated: For t in 1: total.no.of.days in the data frame, 
+    1. Assuming zero LAI on previous date, leaf fall for a future day sp.lifespan + 1 is considered as leaf gain on day 1. That is,    
+    If t == 1,  
+    LAI[t] = leaf_fall_LAI[t + sp.lifespan]  
+    1. New leaf gain is added to LAI of the previous day, but leaf fall does not begin yet until the day of sp.lifespan + 1:  
+    For t > 1, if t < sp.lifespan + 1,   
+    LAI[t] <- LAI[t-1] + leaf_fall_LAI[t + sp.lifespan]  
+    1. LEaf fall begins on day sp.lifespan + 1, and is removed  
+    For t > 1, if t >= sp.lifespan + 1,  
+    LAI[t] <- LAI[t-1] + leaf_fall_LAI[t + sp.lifespan] - leaf_fall_LAI[t]  
+    1. I then removed the prepended dates, that is, for t in 1: sp.lifespan, and thus obtained the LAI time series (Figure \@ref(fig:LAI-ts)).
+
+```{r LAI-ts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts}LAI time series, beginning with zero prior LAI. Absolute values of LAI are way too high and need correction by a factor, and I haven't figure out what that is (let me know if you do), but look at the time series trend for now. For some species, time series ranges are quite stable over the years, and for others they increase over the years time. LL = species-specific leaf lifespan in days.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts.jpeg"))
+```
+
+8. I then built a species-specific LAI seasonality curve by taking a mean of LAI by DOY. Then normalized this curve by dividing by the max LAI value in the year (Figure \@ref(fig:LAI-ssn)).
+
+```{r LAI-ssn, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn}LAI seasonality curves, beginning with zero prior LAI. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean.jpeg"))
+```
+
+9. As step 6.1 starts from zero prior LAI, I thought to modify that and use the expected LAI from step 7 for the DOY of day 1, then recalculated LAI, but that that did not change the pattern observed in some soecies of increasing LAI over the years (Figure \@ref(fig:LAI-ts-mod)) and resulted in a marginally different LAI seasonality curves (Figure \@ref(fig:LAI-ssn-mod)).
+
+```{r LAI-ts-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts-mod}Modified LAI time series, beginning with expected LAI for the DOY of day 1. The absolute values of LAI are way too high and need correction by a factor, and I haven't figure out what that is (let me know if you do), but look at the time series trend for now. LL = species-specific leaf lifespan in days.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts_mod.jpeg"))
+```
+
+```{r LAI-ssn-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-mod}Modified LAI seasonality curves, beginning with expected LAI for the DOY of day 1. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_mod.jpeg"))
+```
+

@@ -46,25 +46,31 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_cohort/lifesp
     LMA units are from Metadata_Lftraits_VariableDefinitionsOnly.doc for data in BCITRAITS_20101220.csv)
 
 7. For each species, prepended its leaf_gm_per_m2 data-frame by adding days equal to the species leaf lifespan, sp.lifespan  
-    Then LAI time series is calculated: For t in 1: total.no.of.days in the data frame,   
-    1. Assuming zero LAI on previous date, leaf fall for a future day sp.lifespan + 1 is considered as leaf gain on day 1. That is,    
+    Then LAI time series is calculated: For t in 1 to c(total no of days in the data frame - leaf.lifespan) ,   
+    1. Assuming zero LAI to begin with, leaf gain on day 1 is leaf fall for the future day sp.lifespan. That is,    
     If t == 1,  
-    LAI[t] = leaf_fall_LAI[t + sp.lifespan]  
-    1. New leaf gain is added to LAI of the previous day, but leaf fall does not begin yet until the day of sp.lifespan + 1:  
-    For t > 1, if t < sp.lifespan + 1,   
-    LAI[t] <- LAI[t-1] + leaf_fall_LAI[t + sp.lifespan]  
-    1. LEaf fall begins on day sp.lifespan + 1, and is removed  
-    For t > 1, if t >= sp.lifespan + 1,  
-    LAI[t] <- LAI[t-1] + leaf_fall_LAI[t + sp.lifespan] - leaf_fall_LAI[t]  
-    1. I then removed the prepended dates, that is, for t in 1: sp.lifespan, and thus obtained the LAI time series (Figure \@ref(fig:LAI-ts)).
+    LAI[t] = leaf_fall_LAI[sp.lifespan]  
+    1. New leaf gain is added to LAI of the previous day, but leaf fall does not begin yet until the day sp.lifespan:  
+    For t > 1, if t < sp.lifespan,   
+    LAI[t] <- LAI[t-1] + leaf_fall_LAI[sp.lifespan]  
+    1. LEaf fall begins on day sp.lifespan, and is removed  
+    For t > 1, if t >= sp.lifespan,  
+    LAI[t] <- LAI[t-1] + leaf_fall_LAI[sp.lifespan] - leaf_fall_LAI[t]  
+    1. I then removed the prepended dates, that is, for t in 1: sp.lifespan, and thus obtained the LAI time series (Figure \@ref(fig:LAI-ts)).  
 
-```{r LAI-ts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts}LAI time series, beginning with zero prior LAI. Absolute values of LAI are way too high and need correction by a factor, and I haven't figure out what that is (let me know if you do), but look at the time series trend for now. For some species, time series ranges are quite stable over the years, and for others they increase over the years time. LL = species-specific leaf lifespan in days.")}
+```{r LAI-ts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts}LAI time series. LL = species-specific leaf lifespan in days.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts.jpeg"))
 ```
 
-8. I then built a species-specific LAI seasonality curve by taking a mean of LAI by DOY. Then normalized this curve by dividing by the max LAI value in the year (Figure \@ref(fig:LAI-ssn)).
+8. For some species LAI increases/decreases over time likely due to change in population levels. Therefore detrended the time series by removing the slope (Figure \@ref(fig:LAI-ts)).
+    
+```{r LAI-ts-det, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts-det}Detrended LAI time series. LL = species-specific leaf lifespan in days.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts_detrended.jpeg"))
+```
 
-```{r LAI-ssn, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn}LAI seasonality curves, beginning with zero prior LAI. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+9. I then built a species-specific LAI seasonality curve by taking a mean of LAI by DOY. Then normalized this curve by dividing by the max LAI value in the year (Figure \@ref(fig:LAI-ts-det)).
+
+```{r LAI-ssn, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn}Mean LAI seasonality curves. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean.jpeg"))
 ```
 

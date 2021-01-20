@@ -117,33 +117,33 @@ psi.corr.fun.ls.2 <- list(
     },
   "gr.Psi.leaf" =
     function(df, dflc) {
-      # dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
+      # dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm)
       result.df <-
         as.data.table(psi.study)[data.table(dflc), on = 'doy'][,
           psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*leaf_cover, na.rm = TRUE))]#[
+            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*LAI.norm, na.rm = TRUE))]#[
               # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
   "gr.Psi.VPD.leaf.add" =
     function(df, dflc) {
-      dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
+      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm)
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
                                                       psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-                                                        , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod + std.VPD)*leaf_cover, na.rm = TRUE))]#[
+                                                        , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod + std.VPD)*LAI, na.rm = TRUE))]#[
       # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
   "gr.Psi.VPD.leaf.multi" =
     function(df, dflc) {
-      dflc.dt <- data.table(doy = dflc$doy, leaf_cover = dflc$leaf_cover)
+      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm)
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
         psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod*std.VPD*leaf_cover), na.rm = TRUE))]#[
+          , keyby = .(depth, interval, par.sam), .(gfac = mean(c(psi.mod*std.VPD*LAI), na.rm = TRUE))]#[
             # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
@@ -495,36 +495,36 @@ save(data.model.AB.sub, file = file.path(results.folder, "data.model.AB.sub.Rdat
 
 setdiff(unique(growth.sub$sp), unique(data.model.AB.sub$sp))
 
-# sp not present in sp.leaf_cover.mean but in growth data sets
-# sp.growth.not.leaf_cover <- setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.mean$sp))
-# sp.leaf_cover.for.model <- sp.leaf_cover.mean %>%
-#   bind_rows(data.frame(sp = rep(sp.growth.not.leaf_cover, each = max(sp.leaf_cover.mean$doy)),
-#                        doy = rep(unique(sp.leaf_cover.mean$doy), times = length(sp.growth.not.leaf_cover)),
-#                        leaf_cover.mean = NA, leaf_cover.sd = NA)) %>%
+# sp not present in sp.LAI.mean but in growth data sets
+# sp.growth.not.LAI <- setdiff(unique(growth.sub$sp), unique(sp.LAI.mean$sp))
+# sp.LAI.for.model <- sp.LAI.mean %>%
+#   bind_rows(data.frame(sp = rep(sp.growth.not.LAI, each = max(sp.LAI.mean$doy)),
+#                        doy = rep(unique(sp.LAI.mean$doy), times = length(sp.growth.not.LAI)),
+#                        LAI.mean = NA, LAI.sd = NA)) %>%
 #   left_join(deci %>% select(sp, deciduous), by = "sp") %>%
-#   mutate(leaf_cover = ifelse(deciduous == "E", 1, leaf_cover.mean)) %>%
-#   select(-leaf_cover.sd) %>%
+#   mutate(LAI = ifelse(deciduous == "E", 1, LAI.mean)) %>%
+#   select(-LAI.sd) %>%
 #   as.data.frame()
-#   ## But "ficutr", "pri2co", "termob" do not have leaf_cover data and also not Evergreen either but DB,
+#   ## But "ficutr", "pri2co", "termob" do not have LAI data and also not Evergreen either but DB,
 #   ## so taking average DB species' leaf-cover,  "pri2co" 's deciduousness not known, so can't gap-fill
-#   # First joinging average deci leaf_cover then substituing for missing data by species
-# sp.leaf_cover.for.model <- sp.leaf_cover.for.model %>%
-#   left_join(sp.leaf_cover.for.model %>% group_by(deciduous, doy) %>%
-#               summarise(deci.leaf_cover = mean(leaf_cover, na.rm = TRUE), .groups = "drop"),
+#   # First joinging average deci LAI then substituing for missing data by species
+# sp.LAI.for.model <- sp.LAI.for.model %>%
+#   left_join(sp.LAI.for.model %>% group_by(deciduous, doy) %>%
+#               summarise(deci.LAI = mean(LAI, na.rm = TRUE), .groups = "drop"),
 #             by = c("deciduous", "doy")) %>%
-#   mutate(leaf_cover = ifelse(is.na(leaf_cover), deci.leaf_cover, leaf_cover))
+#   mutate(LAI = ifelse(is.na(LAI), deci.LAI, LAI))
 
-setdiff(unique(growth.sub$sp), unique(sp.leaf_cover.for.model$sp))
-# unique(sp.leaf_cover.for.model[is.na()]$sp)
+setdiff(unique(growth.sub$sp), unique(sp.LAI.for.model$sp))
+# unique(sp.LAI.for.model[is.na()]$sp)
 
 AB.sp.ls <- split(data.model.AB.sub, f = list(data.model.AB.sub$sp), drop = TRUE)
-leaf_cover.sp.ls <- split(sp.leaf_cover.for.model, f = list(sp.leaf_cover.for.model$sp), drop = TRUE)
+LAI.sp.ls <- split(sp.LAI.for.model, f = list(sp.LAI.for.model$sp), drop = TRUE)
 
-sp.ab.leaf_cover <- intersect(unique(data.model.AB.sub$sp), unique(sp.leaf_cover.for.model$sp))
+sp.ab.LAI <- intersect(unique(data.model.AB.sub$sp), unique(sp.LAI.for.model$sp))
 
 ## both needs to have the same species (in the same order)
-AB.sp.ls <- AB.sp.ls[sp.ab.leaf_cover]
-leaf_cover.sp.ls <- leaf_cover.sp.ls[sp.ab.leaf_cover]
+AB.sp.ls <- AB.sp.ls[sp.ab.LAI]
+LAI.sp.ls <- LAI.sp.ls[sp.ab.LAI]
 
 # for (i in 1:length(names.gfac)) {
 #   gfac.interval[[i]] <- lapply(lapply(AB.sp.ls, psi.corr.fun.ls[[i]]),
@@ -543,7 +543,7 @@ gfac.interval <- vector(mode = "list", length = length(names.gfac))
 names(gfac.interval) <- names.gfac  # "psi.p50.g1", "psi.p50.g2"
 for (i in 1:length(names.gfac)) {
   gfac.interval[[i]] <-  lapply(mapply(FUN = psi.corr.fun.ls.2[[i]],
-                                      AB.sp.ls, leaf_cover.sp.ls),
+                                      AB.sp.ls, LAI.sp.ls),
                                 as.data.frame) %>%
     bind_rows(.id = "sp") %>% separate(sp, c("sp", NA, NA))
 }

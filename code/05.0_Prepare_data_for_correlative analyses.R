@@ -2675,27 +2675,6 @@ ggsave("LAI.seasonality_mean.jpeg",
 
 save(sp.leaf_cover.for.model, file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
 
-f1.1 <- ggplot(leaf.balance,
-               aes(x = doy, y = leaf.balance)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
-  geom_hline(yintercept = 0) +
-  geom_line(aes(group = sp.leaf.fall.year, color = deciduousness), size = 0.3) +
-  # geom_ribbon(aes(ymin=leaf_gm.int.mean + leaf_gm.int.sd, ymax=leaf_gm.int.mean - leaf_gm.int.sd),
-  #             fill='pink', alpha=0.8) +
-  geom_line(aes(y = leaf.balance.mean), color = "red") +
-  ylab(expression('Leaf Balance')) + xlab("DOY") +
-  # geom_vline(aes(xintercept = 330), color = "red") +
-  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
-                              override.aes = list(size = 3))) +
-  theme(legend.position = "top", legend.title = element_blank()) +
-  scale_color_viridis_d(drop = FALSE) +
-  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
-ggsave("leaf.balance.seasonality_BCI-Poachers.jpeg",
-       plot = f1.1, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
-f1.2 <- f1.1 %+% subset(leaf.balance, site == "BCI50-ha")
-ggsave("leaf.balance.seasonality_BCI50-ha.jpeg",
-       plot = f1.2, file.path(figures.folder.phen), device = "jpeg", height = 6, width = 10, units='in')
-
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------
 #******************************************************

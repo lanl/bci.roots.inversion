@@ -197,11 +197,11 @@ ggsave("Frequency of extreme soil droughts_heatmap.jpeg", plot = droughts.psi.he
 ## LAI seasonality by species----
 #****************************
 
-f4 <- ggplot(sp.leaf_cover.for.model %>% subset(sp %in% erd.sp & doy != 366) %>%
+f4 <- ggplot(sp.LAI.for.model %>% subset(sp %in% erd.sp & doy != 366) %>%
                left_join(erd.sp.names %>%
                            mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
                                   sp = tolower(Code)), by = "sp"),
-             aes(x = doy, y = leaf_cover)) +
+             aes(x = doy, y = LAI.norm)) +
   facet_wrap(s.names ~ ., scales = "free_y", ncol = 4) +
   ylim(c(0, 1)) +
   geom_line(aes(group = sp, color = deciduousness), size = 0.8) +

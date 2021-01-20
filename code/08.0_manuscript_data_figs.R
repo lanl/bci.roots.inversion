@@ -23,7 +23,7 @@ load(file = file.path(results.folder, "obs.data.model.AB.Rdata"))
 load(file = file.path(results.folder, "data.model.AB.sub.Rdata"))
 load(file = file.path(results.folder, "obs.sp.vcurves.1.Rdata"))
 load(file = file.path(results.folder, "comm.sp.vcurves.1.Rdata"))
-load(file = file.path(results.folder, "bci.lifetime.Rdata"))
+load(file = file.path(results.folder, "bci.lifespan.Rdata"))
 
 
 #****************************
@@ -1023,7 +1023,7 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
 
 # Some familynames do not end in ceae. Correcting that
 correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
-                             correct = c("Anacardiaceae", "Euphorbiaceae", "Flacourtiaceae", "Nyctaginaceae")) %>%
+                             correct = c("Anacardiaceae", "Euphorbiaceae", "Nyctaginaceae")) %>%
                              # correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
                              #             "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
                              #             "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
@@ -1046,5 +1046,5 @@ ab.table$Family[rows.to.replace.2] <-
 #****************************
 ## species with lifespan----
 #****************************
-erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
-erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifetime$sp[!is.na(bci.lifetime$lifetime)])])
+erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifetime)])])
+erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifetime)])])

@@ -30,7 +30,7 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_cohort/lifesp
 ```
 
 2. Restricted leaf-litter data to the last 7 years for BCI-Poachers and BCI-50ha, converted observed leaf fall data column in mass units (leaf_gm) to mass per unit ground area as follows:  
-    Leaf in gm per m2 ground area at a site = Leaf biomass in gm / (Site-specific trap area in m2  x Number of leaves were collected from) --- (Eq 1)  
+    Leaf in gm per m2 ground area at a site = Leaf biomass in gm / (Site-specific trap area in m2  x Number of traps leaves were collected from) --- (Eq 1)  
     In Joe's the dataframe, column "leaf_gm"" represents leaf~biomass~in~gm and column "n_traps" represents the number of traps the leaf_gm observation came from.  
 
 3. Removed outliers in leaf_gm_per_m2 as those greater than 5 standard deviation by species  

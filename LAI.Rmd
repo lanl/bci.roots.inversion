@@ -73,4 +73,3 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts_d
 ```{r LAI-ssn, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn}Mean LAI seasonality curves. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean.jpeg"))
 ```
-

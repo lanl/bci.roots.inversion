@@ -2637,21 +2637,21 @@ f0.5 <- f0.1 %+% LAI.doy.2 +
 ggsave("LAI_ts_mod_detrended.jpeg",
        plot = f0.5, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
-sp.leaf_cover.for.model <- LAI.doy.2 %>%
+sp.LAI.for.model <- LAI.doy.2 %>%
   group_by(sp, doy) %>%
-  summarise(LAI.mean.raw = mean(LAI.det, na.rm = TRUE),
-            LAI.mean = mean(LAI.mod.det, na.rm = TRUE),
+  summarise(LAI.mean = mean(LAI.det, na.rm = TRUE),
+            LAI.mean.mod = mean(LAI.mod.det, na.rm = TRUE),
             LMA = mean(LMA, na.rm = TRUE),
             lifespan = mean(lifespan, na.rm = TRUE),
             .groups = "drop_last") %>%
   group_by(sp) %>%
-  mutate(LAI.norm.raw = LAI.mean.raw/quantile(LAI.mean.raw, probs = 0.9999, na.rm = TRUE),
-         LAI.norm = LAI.mean/quantile(LAI.mean, probs = 0.9999, na.rm = TRUE)) %>%
+  mutate(LAI.norm = LAI.mean/quantile(LAI.mean, probs = 0.9999, na.rm = TRUE),
+         LAI.norm.mod = LAI.mean.mod/quantile(LAI.mean.mod, probs = 0.9999, na.rm = TRUE)) %>%
   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
   ungroup(sp) %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduous)]), ordered=TRUE))
 
-f1.3.0 <- ggplot(sp.leaf_cover.for.model,
+f1.3.0 <- ggplot(sp.LAI.for.model,
                aes(x = doy)) +
   facet_wrap(sp ~ ., scales = "free_y") +
   # geom_hline(yintercept = 0) +
@@ -2666,14 +2666,14 @@ f1.3.0 <- ggplot(sp.leaf_cover.for.model,
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 
-f1.3.1 <- f1.3.0 + geom_line(aes(y = LAI.norm, color = deciduousness), size = 1)
+f1.3.1 <- f1.3.0 + geom_line(aes(y = LAI.norm.mod, color = deciduousness), size = 1)
 ggsave("LAI.seasonality_mean_mod.jpeg",
        plot = f1.3.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
-f1.3.2 <- f1.3.0 + geom_line(aes(y = LAI.norm.raw, color = deciduousness), size = 1)
+f1.3.2 <- f1.3.0 + geom_line(aes(y = LAI.norm, color = deciduousness), size = 1)
 ggsave("LAI.seasonality_mean.jpeg",
        plot = f1.3.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
-save(sp.leaf_cover.for.model, file = file.path(results.folder, "sp.leaf_cover.for.model.Rdata"))
+save(sp.LAI.for.model, file = file.path(results.folder, "sp.LAI.for.model.Rdata"))
 
 #******************************************************
 ### Load Leaf Cohort tracking data from the crane sites------

@@ -50,7 +50,8 @@ load(file = file.path(results.folder, "lwp.diff.Rdata"))
 ## Load BCI traits---
 #******************************************************
 bci.traits <- read.csv("data-raw/traits/BCITRAITS_20101220.csv") %>%
-  dplyr::rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>% mutate(sp = tolower(sp))
+  dplyr::rename(form1 = GRWFRM1., sp = SP., SG100C_AVG = SG100C_AVG) %>%
+  mutate(sp = tolower(sp))
 
 #******************************************************
 ### Load hydraulic traits -----

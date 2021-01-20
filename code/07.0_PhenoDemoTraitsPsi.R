@@ -803,7 +803,8 @@ hyd.labels <- hyd.kruskal.labels
 unique(hyd.labels$trait)
 hyd.labels.data <- hyd.labels %>%
   left_join(hyd.long %>% group_by(trait) %>%
-              summarise(value = max(value, na.rm = TRUE)), by = c("trait"), .groups = "drop_last") %>%
+              summarise(value = max(value, na.rm = TRUE), .groups = "drop_last"),
+            by = c("trait")) %>%
   subset(deciduousness != "NA") %>%
   droplevels() %>%
   left_join(traits.labels.table.1 %>% dplyr::select(trait, trait.plot), by = "trait")

@@ -2645,15 +2645,19 @@ sp.LAI.for.model <- LAI.doy.2 %>%
             lifespan = mean(lifespan, na.rm = TRUE),
             .groups = "drop_last") %>%
   group_by(sp) %>%
-  mutate(LAI.norm = LAI.mean/quantile(LAI.mean, probs = 0.9999, na.rm = TRUE),
-         LAI.norm.mod = LAI.mean.mod/quantile(LAI.mean.mod, probs = 0.9999, na.rm = TRUE)) %>%
+  mutate(LAI.norm = LAI.mean/max(LAI.mean, na.rm = TRUE), #quantile(LAI.mean, probs = 0.9999, na.rm = TRUE),
+         LAI.norm.mod = LAI.mean.mod/max(LAI.mean.mod, na.rm = TRUE),
+         ## day 366 mean can be an outlier due to few years with those many days,
+         # so replacing wiht value of day 365
+         LAI.norm = if_else(doy == 366, lag(LAI.norm, n = 1L), LAI.norm),
+         LAI.norm.mod = if_else(doy == 366, lag(LAI.norm.mod, n = 1L), LAI.norm.mod)) %>% #quantile(LAI.mean.mod, probs = 0.9999, na.rm = TRUE)) %>%
   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
   ungroup(sp) %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduous)]), ordered=TRUE))
 
 f1.3.0 <- ggplot(sp.LAI.for.model,
                aes(x = doy)) +
-  facet_wrap(sp ~ ., scales = "free_y") +
+  facet_wrap(sp ~ .) +
   # geom_hline(yintercept = 0) +
   geom_text(data = lma.lifespan.sp,
             aes(x = 50, y = 0.25, label = sprintf('italic(LL)~"="~%1.0f', lifespan),
@@ -2666,10 +2670,10 @@ f1.3.0 <- ggplot(sp.LAI.for.model,
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 
-f1.3.1 <- f1.3.0 + geom_line(aes(y = LAI.norm.mod, color = deciduousness), size = 1)
+f1.3.1 <- f1.3.0 + geom_line(aes(y = LAI.norm.mod, color = deciduousness), size = 1.5)
 ggsave("LAI.seasonality_mean_mod.jpeg",
        plot = f1.3.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
-f1.3.2 <- f1.3.0 + geom_line(aes(y = LAI.norm, color = deciduousness), size = 1)
+f1.3.2 <- f1.3.0 + geom_line(aes(y = LAI.norm, color = deciduousness), size = 1.5)
 ggsave("LAI.seasonality_mean.jpeg",
        plot = f1.3.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 

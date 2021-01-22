@@ -117,18 +117,18 @@ psi.corr.fun.ls.2 <- list(
     },
   "gr.Psi.leaf" =
     function(df, dflc) {
-      # dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm)
+      # dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm.mod)
       result.df <-
         as.data.table(psi.study)[data.table(dflc), on = 'doy'][,
           psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*LAI.norm, na.rm = TRUE))]#[
+            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*LAI.norm.mod, na.rm = TRUE))]#[
               # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
   "gr.Psi.VPD.leaf.add" =
     function(df, dflc) {
-      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm)
+      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm.mod)
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
                                                       psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
@@ -139,7 +139,7 @@ psi.corr.fun.ls.2 <- list(
     },
   "gr.Psi.VPD.leaf.multi" =
     function(df, dflc) {
-      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm)
+      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm.mod)
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
         psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
@@ -584,16 +584,7 @@ for (i in names(gfac.interval)) {
     dplyr::select(-".", -row) %>%
     mutate(size = "large",
            depth = as.numeric(as.character(depth))) %>%
-    arrange(sp, depth) %>%
-    left_join(deci %>% dplyr::select(-sp4), by = "sp") %>%
-    droplevels() %>%
-    transform(deciduousness = factor(deciduousness,
-                                     levels = c("Evergreen", "Brevideciduous",
-                                                "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE)) %>%
-    unite("deci_sp", deciduous, sp, remove = FALSE) %>%
-    mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
-           deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
-
+    arrange(sp, depth)
   # Select best corr within each sp and par.sam
   ml.corr.best.parsam[[i]] <- ml.corr[[i]] %>%
     group_by(sp, par.sam) %>%
@@ -609,10 +600,25 @@ for (i in names(gfac.interval)) {
 }
 ## species by depth by heat rsq
 ml.rsq.combine <- dplyr::bind_rows(ml.corr, .id = "corr.func") %>%
-  transform(corr.func = factor(corr.func, levels = names.gfac))
+  transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
+  left_join(deci %>% dplyr::select(-sp4), by = "sp") %>%
+  transform(deciduousness = factor(deciduousness,
+                                   levels = c("Evergreen", "Brevideciduous",
+                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE)) %>%
+  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
+  mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
+         deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
+
 ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.func") %>%
   transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
-  unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
+  unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE) %>%
+  left_join(deci %>% dplyr::select(-sp4), by = "sp") %>%
+  transform(deciduousness = factor(deciduousness,
+                                   levels = c("Evergreen", "Brevideciduous",
+                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE)) %>%
+  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
+  mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
+         deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
 ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
   group_by(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp, deci_sp.plot) %>%
   subset(corr >= 0.7071068) %>% # that is R2 >= 0.5 and corr >= 0
@@ -704,7 +710,7 @@ erd.model.iso.n.sp
 erd.model.p
 erd.model.r2
 
-chosen.model <- "gr.Psi.VPD.multi"
+chosen.model <- "gr.Psi.VPD.leaf.multi"
 save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
 save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
 save(erd.model.p, file = file.path(results.folder, "erd.model.p.Rdata"))

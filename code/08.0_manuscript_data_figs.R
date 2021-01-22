@@ -60,22 +60,25 @@ erd.iso <- erd.data %>%
 erd.sp <- erd.data$sp
 save(erd.sp, file = file.path("results", "erd.sp.Rdata"))
 
-erd.sp.names <- bci.traits %>%
-  subset(sp %in% erd.sp) %>%
+erd.sp.names.all <- bci.traits %>%
   dplyr::rename(Code = sp, Genus = GENUS., Species = SPECIES., Family = FAMILY.) %>%
   dplyr::select(Code, Genus, Species, Family) %>%
   # correct sp names
   mutate(Genus = ifelse(Genus == "Tabebuia", "Handroanthus", as.character(Genus)),
          Genus = ifelse(Genus == "Beilschmiedi", "Beilschmiedia", as.character(Genus)),
          Genus = ifelse(Genus == "Trattinnicki", "Trattinnickia", as.character(Genus)),
-         Species = ifelse(Species == "costaricensi", "costaricensis", as.character(Species)))
+         Species = ifelse(Species == "costaricensi", "costaricensis", as.character(Species))) %>%
+  dplyr::rename(sp = Code) %>%
+  mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", Species))
 
-rownames(erd.sp.names) <- 1: nrow(erd.sp.names)
+rownames(erd.sp.names.all) <- 1: nrow(erd.sp.names.all)
+
+erd.sp.names <- erd.sp.names.all %>% subset(sp %in% erd.sp)
+
 
 #****************************
 ### ELM-FATES param sensitivity----
 #****************************
-
 
 sm1 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of daily soil water content at 1 m to parameters_2016-04.jpeg", scale = 1)
 sm2 <- cowplot::ggdraw() + cowplot::draw_image("figures/ELM_FATES_parameter_sensitivity/Sensitivity of daily soil water content at 1 m to parameters_2016-07.jpeg", scale = 1)
@@ -197,15 +200,18 @@ ggsave("Frequency of extreme soil droughts_heatmap.jpeg", plot = droughts.psi.he
 ## LAI seasonality by species----
 #****************************
 
-f4 <- ggplot(sp.LAI.for.model %>% subset(sp %in% erd.sp & doy != 366) %>%
-               left_join(erd.sp.names %>%
-                           mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
-                                  sp = tolower(Code)), by = "sp"),
-             aes(x = doy, y = LAI.norm)) +
-  facet_wrap(s.names ~ ., scales = "free_y", ncol = 4) +
+sp.withERD.LAI.to.plot <- sp.LAI.for.model %>%
+  subset(sp %in% erd.sp & doy != 366) %>%
+  left_join(erd.sp.names, by = "sp") %>%
+  mutate(s.names = factor(s.names, levels = unique(s.names[order(deciduous)]), ordered=TRUE),
+         sp = factor(sp, levels = unique(sp[order(deciduous)]), ordered=TRUE))
+
+f4 <- ggplot(sp.withERD.LAI.to.plot,
+             aes(x = doy, y = LAI.norm.mod.deci)) +
+  facet_wrap(. ~ s.names, scales = "free_y", ncol = 4) +
   ylim(c(0, 1)) +
-  geom_line(aes(group = sp, color = deciduousness), size = 0.8) +
-  ylab("Leaf Cover Fraction") + xlab("DOY") +
+  geom_line(aes(group = sp, color = deciduousness), size = 1.5) +
+  ylab("Normalised LAI") + xlab("DOY") +
   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
                               override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
@@ -220,9 +226,7 @@ ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
 #****************************
 
 df.erd.to.plot <- df.erd.to.plot %>%
-  left_join(erd.sp.names %>%
-              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", tolower(Species)),
-                     sp = tolower(Code)), by = "sp") %>%
+  left_join(erd.sp.names, by = "sp") %>%
   dplyr::select(sp, s.names, depth, depth.se) %>%
   transform(s.names = reorder(s.names, depth)) %>%
   droplevels()
@@ -250,9 +254,7 @@ ggsave("ERD_by_sp_large_canopy.jpeg",
 ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   mutate(depth = as.numeric(depth)) %>%
   subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
-  left_join(erd.sp.names %>%
-              dplyr::rename(sp = Code) %>%
-              mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", Species)) %>%
+  left_join(erd.sp.names.all %>%
               dplyr::select(sp, s.names), by = "sp") %>%
   subset(source == "Meinzer et al.1999 Fig. 4") %>%
   droplevels()
@@ -379,7 +381,7 @@ hyd.table <-  erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "HSM88S")) %>%
   dplyr::select(sp, trait, value) %>%
   pivot_wider(names_from = trait, values_from = value) %>%
-  left_join(erd.sp.names %>% dplyr::rename(sp = Code), by = c("sp")) %>%
+  left_join(erd.sp.names, by = c("sp")) %>%
   subset(sp %in% erd.sp) %>%
   select(-sp) %>%
   relocate(Genus, Species, Family, lwp.min_Predawn, TLP) %>%
@@ -1013,7 +1015,7 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
               mutate(Source = "Model") %>%
               rename(A = model.A, B = model.B) %>%
               dplyr::select(sp, A, B, Kmax, psi_kl50, Source)) %>%
-  left_join(erd.sp.names %>% dplyr::rename(sp = Code), by = c("sp")) %>%
+  left_join(erd.sp.names, by = c("sp")) %>%
   dplyr::rename(Kmax_leaf = Kmax, Psi_50_leaf = psi_kl50) %>%
   mutate(Species = tolower(Species)) %>%
   dplyr::select(Genus, Species, Family, A, B, Kmax_leaf, Psi_50_leaf, Source) %>%
@@ -1021,27 +1023,27 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
   mutate(A = round(A, 4), B = round(B, 4),
          Kmax_leaf = round(Kmax_leaf, 2), Psi_50_leaf = round(Psi_50_leaf, 2))
 
-# Some familynames do not end in ceae. Correcting that
-correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
-                             correct = c("Anacardiaceae", "Euphorbiaceae", "Nyctaginaceae")) %>%
-                             # correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
-                             #             "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
-                             #             "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
-  mutate(misspelt = as.character(misspelt),
-         correct = as.character(correct))
-## Which row in Family.sub matches with correct.family$misspelt
-rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
-matched.rows <- match(ab.table$Family, correct.family$misspelt)
-ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
-
-correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
-                               correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
-  mutate(misspelt = as.character(misspelt),
-         correct = as.character(correct))
-rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
-matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
-ab.table$Family[rows.to.replace.2] <-
-  correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
+# # Some familynames do not end in ceae. Correcting that
+# correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),
+#                              correct = c("Anacardiaceae", "Euphorbiaceae", "Nyctaginaceae")) %>%
+#                              # correct = c("Menispermaceae", "Euphorbiaceae", "Anacardiaceae", "Hippocrateaceae", "Malpighiaceae",
+#                              #             "Flacourtiaceae", "Rhizophoraceae", "Melastomataceae", "Erythroxylaceae", "Nyctaginaceae", "Sterculiaceae",
+#                              #             "Lecythidaceae", "Chrysobalanaceae", "Convolvulaceae", "Simaroubaceae", "Elaeocarpaceae", "Staphyleaceae", "Myristicaceae")) %>%
+#   mutate(misspelt = as.character(misspelt),
+#          correct = as.character(correct))
+# ## Which row in Family.sub matches with correct.family$misspelt
+# rows.to.replace <- which(ab.table$Family %in% correct.family$misspelt)
+# matched.rows <- match(ab.table$Family, correct.family$misspelt)
+# ab.table$Family[rows.to.replace] <- correct.family$correct[matched.rows[!is.na(matched.rows)]]
+#
+# correct.family.2 <- data.frame(misspelt = unique(ab.table$Family[grep(":", ab.table$Family)]),
+#                                correct = c("Fabaceae:Papilionaceae", "Fabaceae:Mimosaceae", "Fabaceae:Papilionaceae")) %>%
+#   mutate(misspelt = as.character(misspelt),
+#          correct = as.character(correct))
+# rows.to.replace.2 <- which(ab.table$Family %in% correct.family.2$misspelt)
+# matched.rows.2 <- match(ab.table$Family, correct.family.2$misspelt)
+# ab.table$Family[rows.to.replace.2] <-
+#   correct.family.2$correct[matched.rows.2[!is.na(matched.rows.2)]]
 
 #****************************
 ## species with lifespan----

@@ -29,8 +29,8 @@ if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder)
 #****************************
 ##   Custom Functions  ######
 #****************************
-range01 <- function(x){(x - min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
-range01.p <- function(x){(x - pmin(x, na.rm = TRUE))/(pmax(x, na.rm = TRUE)-pmin(x, na.rm = TRUE))}
+range01 <- function(x){c(x - min(x, na.rm = TRUE))/c(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
+range01.p <- function(x){c(x - pmin(x, na.rm = TRUE))/c(pmax(x, na.rm = TRUE)-pmin(x, na.rm = TRUE))}
 
 indicator <- function(x, I.threshold, greater.than = TRUE) {
   if(greater.than == TRUE) {
@@ -2578,7 +2578,7 @@ LAI_fun.2 <- function(df) {
     left_join(LAI.mean.doy.df %>% select(-sp), by = "doy")
 
   df <- df %>% full_join(previous.dates, by = c("date", "sp", "doy", "LAI.mean")) %>% arrange(date)
-  for(t in 1: c(length(df$date) - 1)) {
+  for(t in 1: c(length(df$date) - sp.lifespan)) {
     if (t == 1) {
       df$LAI.mod[t] <- df$LAI.mean[t] + df$leaf_fall_LAI[t + sp.lifespan]
     } else {
@@ -2589,18 +2589,26 @@ LAI_fun.2 <- function(df) {
       } else {
         # add to the leaf cover of the day before
         # but also remove leaf fall
-        df$LAI.mod[t] <- df$LAI.mod[t-1] +
+        # Do not let lAI become negative (e.g. sponra)
+        newLAI <- df$LAI.mod[t-1] +
           df$leaf_fall_LAI[t + sp.lifespan] -
           df$leaf_fall_LAI[t]
+        if (newLAI < 0) {
+          df$LAI.mod[t] <- 0
+        } else {
+          df$LAI.mod[t] <- newLAI
+        }
+
       }
     }
   }
-  df <- df[-(1:sp.lifespan),]
+  df <- df[-c(1:sp.lifespan, c(length(df$date) - sp.lifespan):length(df$date)),]
   return(df)
 }
 LAI.doy$LAI.mod <- NA
 LAI.doy.sp <- split(LAI.doy, f = list(LAI.doy$sp), drop = TRUE)
 LAI.doy.sp <- lapply(LAI.doy.sp, LAI_fun.2)
+
 ## Detrending
 LAI_detrend.fun <- function(df) {
   trend <- lm(df$LAI ~ c(1:nrow(df)))
@@ -2610,8 +2618,7 @@ LAI_detrend.fun <- function(df) {
   return(df)
 }
 
-LAI.doy.sp <- lapply(LAI.doy.sp, LAI_detrend.fun)
-LAI.doy.2 <- lapply(lapply(LAI.doy.sp, LAI_fun.2), as.data.frame) %>%
+LAI.doy.2 <- lapply(lapply(LAI.doy.sp, LAI_detrend.fun), as.data.frame) %>%
   bind_rows(.id = "sp") %>%
   mutate(doy = as.numeric(format(date, "%j")),
          year = as.numeric(format(date, "%Y"))) %>%
@@ -2619,7 +2626,12 @@ LAI.doy.2 <- lapply(lapply(LAI.doy.sp, LAI_fun.2), as.data.frame) %>%
   mutate(LAI.mean.2 = mean(LAI.mod.det, na.rm = TRUE),
          LAI.sd.2 = sd(LAI.mod.det, na.rm = TRUE)) %>%
   ungroup(sp, doy) %>%
-  mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE))
+  mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE)) %>%
+  arrange(sp, date) %>%
+  group_by(sp) %>%
+  mutate(LAI.det = if_else(doy == 366, lag(LAI.det, n = 1L), LAI.det),
+         LAI.mod.det = if_else(doy == 366, lag(LAI.mod.det, n = 1L), LAI.mod.det)) %>%
+  ungroup(sp)
 
 f0.3 <- f0.1 %+% LAI.doy.2 +
   geom_line(aes(y = LAI.det, group = sp, color = deciduousness), size = 1)
@@ -2644,14 +2656,18 @@ sp.LAI.for.model <- LAI.doy.2 %>%
             LMA = mean(LMA, na.rm = TRUE),
             lifespan = mean(lifespan, na.rm = TRUE),
             .groups = "drop_last") %>%
-  group_by(sp) %>%
-  mutate(LAI.norm = LAI.mean/max(LAI.mean, na.rm = TRUE), #quantile(LAI.mean, probs = 0.9999, na.rm = TRUE),
-         LAI.norm.mod = LAI.mean.mod/max(LAI.mean.mod, na.rm = TRUE),
-         ## day 366 mean can be an outlier due to few years with those many days,
-         # so replacing wiht value of day 365
-         LAI.norm = if_else(doy == 366, lag(LAI.norm, n = 1L), LAI.norm),
-         LAI.norm.mod = if_else(doy == 366, lag(LAI.norm.mod, n = 1L), LAI.norm.mod)) %>% #quantile(LAI.mean.mod, probs = 0.9999, na.rm = TRUE)) %>%
   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
+  arrange(sp, doy) %>%
+  group_by(sp) %>%
+  mutate(# day 366 mean can be an outlier due to few years with those many days,
+         # so replacing wiht value of day 365
+         LAI.mean = if_else(doy == 366, lag(LAI.mean, n = 1L), LAI.mean),
+         LAI.mean.mod = if_else(doy == 366, lag(LAI.mean.mod, n = 1L), LAI.mean.mod),
+         LAI.norm = LAI.mean/max(LAI.mean, na.rm = TRUE), #quantile(LAI.mean, probs = 0.9999, na.rm = TRUE),
+         LAI.norm.mod = LAI.mean.mod/max(LAI.mean.mod, na.rm = TRUE),
+         ## For deciduous species, making the minima 0
+         LAI.norm.deci = if_else(deciduous != "E", range01(LAI.mean), LAI.norm),
+         LAI.norm.mod.deci = if_else(deciduous != "E", range01(LAI.mean.mod), LAI.norm.mod)) %>%
   ungroup(sp) %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduous)]), ordered=TRUE))
 
@@ -2659,8 +2675,9 @@ f1.3.0 <- ggplot(sp.LAI.for.model,
                aes(x = doy)) +
   facet_wrap(sp ~ .) +
   # geom_hline(yintercept = 0) +
+  ylim(c(0, 1)) +
   geom_text(data = lma.lifespan.sp,
-            aes(x = 50, y = 0.25, label = sprintf('italic(LL)~"="~%1.0f', lifespan),
+            aes(x = 150, y = 0.15, label = sprintf('italic(LL)~"="~%1.0f', lifespan),
                 group = sp),
             parse = TRUE, vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
   ylab(expression('Normalised LAI')) + xlab("DOY") +
@@ -2670,10 +2687,16 @@ f1.3.0 <- ggplot(sp.LAI.for.model,
   scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 
-f1.3.1 <- f1.3.0 + geom_line(aes(y = LAI.norm.mod, color = deciduousness), size = 1.5)
+f1.3.1 <- f1.3.0 +
+  geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Max 1")) +
+  geom_line(aes(y = LAI.norm.mod.deci, color = deciduousness, size = "Range 0-1")) +
+  scale_size_manual(name = "Normalisation", values = c(1.5, 0.5))
 ggsave("LAI.seasonality_mean_mod.jpeg",
        plot = f1.3.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
-f1.3.2 <- f1.3.0 + geom_line(aes(y = LAI.norm, color = deciduousness), size = 1.5)
+f1.3.2 <- f1.3.0 +
+  geom_line(aes(y = LAI.norm, color = deciduousness, size = "Max 1")) +
+  geom_line(aes(y = LAI.norm.deci, color = deciduousness, size = "Range 0-1")) +
+  scale_size_manual(name = "Normalisation", values = c(1.5, 0.5))
 ggsave("LAI.seasonality_mean.jpeg",
        plot = f1.3.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 

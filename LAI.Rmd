@@ -27,17 +27,133 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_cohort/lifesp
 
 2. BCI-Poachers data goes back to 1985, while BCI-50ha data begins in 2013. I used this entire record. BCI-Poachers has 59 traps of 0.25 m2 each, while BCI-50ha has 62 traps of 0.5 m2 each. Before sending me the leaf-fall dataset, Joe had removed extra traps at BCI-50ha, which were discontinued after a few weeks of observation. I converted observed leaf fall data column in mass units (leaf_gm) to mass per unit ground area as follows:  
     Leaf in gm per m2 ground area at a site = Leaf biomass in gm / (Site-specific trap area in m2 x Total number of traps used ) --- (Eq 1)  
-    In Joe's dataframe, column "leaf_gm"" represents leaf biomass in gm.  
+    In Joe's dataframe, column "leaf_gm"" represents leaf biomass in gm.
+    Retained only canopy tree species.
 
-3. Distributed weekly leaf_gm_per_m2 over the days of the week with interpolation using approx function.
+3. Distributed weekly leaf_gm_per_m2 over the days of the week with interpolation using base R's approx function.
+```r
+For a single species, the data-frame looks like this: 
+head(df.sp_site[[1]])
+       sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2     sp
+30024 ALCC      1     0.2       1 1985-11-25 BCI-Poachers          14.75     0.01355932 alchco
+30025 ALCC      3    12.0       1 1985-12-09 BCI-Poachers          14.75     0.81355932 alchco
+30026 ALCC      4     0.4       1 1985-12-16 BCI-Poachers          14.75     0.02711864 alchco
+30027 ALCC      5     0.6       3 1985-12-23 BCI-Poachers          14.75     0.04067797 alchco
+30028 ALCC      6     0.2       1 1985-12-30 BCI-Poachers          14.75     0.01355932 alchco
+30029 ALCC      7     0.4       2 1986-01-06 BCI-Poachers          14.75     0.02711864 alchco
+                  sp_site   form
+30024 alchco_BCI-Poachers Canopy
+30025 alchco_BCI-Poachers Canopy
+30026 alchco_BCI-Poachers Canopy
+30027 alchco_BCI-Poachers Canopy
+30028 alchco_BCI-Poachers Canopy
+30029 alchco_BCI-Poachers Canopy
 
-4. When a species' leaf_gm_per_m2 was recorded at both the sites, obtained an average.
+## First I gap-fill dates in the weekly record data-frame with the following function:
+
+fill.day.gaps <- function(df) {
+  df.1 <- df %>% arrange(date) %>%
+    # for the first census assume leaf fall is collected over the past week
+    mutate(n.days = c(7, as.numeric(date - lag(date))[-1])) %>%
+    #  leaf_fall rate per day for the census interval is stored on the day of the census:
+    mutate(leaf_gm_rate = leaf_gm_per_m2/n.days,
+           # approx() will interpolate this forward until the next census,
+           # we want it to interpolate this value backward over the past census interval,
+           # so just for computation purposes, leading this value
+           leaf_gm_rate_lead = lead(leaf_gm_rate, n = 1))
+  # Gap-filling dates
+  full.date.df <- data.frame(date = seq(from = min(df$date, na.rm = TRUE),
+                                        to = max(df$date, na.rm = TRUE), by = 1)) %>%
+    mutate(day_number = as.numeric(difftime(date, min(df$date, na.rm = TRUE) - 1)))
+  df.2 <- df.1 %>%
+    full_join(full.date.df, by = "date") %>% arrange(date, site)
+  return(df.2)
+}
+# To get leaf fall on each day of the interval
+leaf.fall.daygaps <- lapply(df.sp_site, fill.day.gaps)
+
+head(leaf.fall.daygaps[[1]])
+   sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2     sp             sp_site
+1 ALCC      1     0.2       1 1985-11-25 BCI-Poachers          14.75     0.01355932 alchco alchco_BCI-Poachers
+2 <NA>     NA      NA      NA 1985-11-26         <NA>             NA             NA   <NA>                <NA>
+3 <NA>     NA      NA      NA 1985-11-27         <NA>             NA             NA   <NA>                <NA>
+4 <NA>     NA      NA      NA 1985-11-28         <NA>             NA             NA   <NA>                <NA>
+5 <NA>     NA      NA      NA 1985-11-29         <NA>             NA             NA   <NA>                <NA>
+6 <NA>     NA      NA      NA 1985-11-30         <NA>             NA             NA   <NA>                <NA>
+    form n.days leaf_gm_rate leaf_gm_rate_lead day_number
+1 Canopy      7  0.001937046        0.05811138          1
+2   <NA>     NA           NA                NA          2
+3   <NA>     NA           NA                NA          3
+4   <NA>     NA           NA                NA          4
+5   <NA>     NA           NA                NA          5
+6   <NA>     NA           NA                NA          6s    
+
+## Interpolating from weekly sums to daily leaf_gm
+leaf.interp.approx <- function(df) {
+  x <- df$day_number
+  y <- df$leaf_gm_rate_lead
+  xout <- df$day_number[is.na(df$leaf_gm_rate_lead)]
+  # yout <- approx(x, y, xout, method = "linear")
+  ## method = "constant" would be more parsimonious
+  yout <- approx(x, y, xout, method = "constant")
+  df.1 <- df %>%
+    left_join(data.frame(day_number = yout$x, leaf_gm.int.raw = yout$y), by = "day_number") %>%
+    ## filling interpolation gap on the day of the census
+    mutate(leaf_gm.int.raw = ifelse(is.na(leaf_gm_rate), leaf_gm.int.raw, leaf_gm_rate),
+           sp = df$sp[1],
+           site = df$site[1],
+           site.trap.area = df$site.trap.area[1])
+  return(df.1)
+}
+
+leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
+                        as.data.frame) %>%
+  bind_rows(.id = "sp_site") %>%
+  select(-leaf_gm_rate_lead) 
+  
+head(leaf.fall.int)
+sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2     sp             sp_site
+1 ALCC      1     0.2       1 1985-11-25 BCI-Poachers          14.75     0.01355932 alchco alchco_BCI-Poachers
+2 <NA>     NA      NA      NA 1985-11-26 BCI-Poachers          14.75             NA alchco alchco_BCI-Poachers
+3 <NA>     NA      NA      NA 1985-11-27 BCI-Poachers          14.75             NA alchco alchco_BCI-Poachers
+4 <NA>     NA      NA      NA 1985-11-28 BCI-Poachers          14.75             NA alchco alchco_BCI-Poachers
+5 <NA>     NA      NA      NA 1985-11-29 BCI-Poachers          14.75             NA alchco alchco_BCI-Poachers
+6 <NA>     NA      NA      NA 1985-11-30 BCI-Poachers          14.75             NA alchco alchco_BCI-Poachers
+    form n.days leaf_gm_rate day_number leaf_gm.int.raw
+1 Canopy      7  0.001937046          1     0.001937046
+2   <NA>     NA           NA          2     0.058111380
+3   <NA>     NA           NA          3     0.058111380
+4   <NA>     NA           NA          4     0.058111380
+5   <NA>     NA           NA          5     0.058111380
+6   <NA>     NA           NA          6     0.058111380
+  ```
+
+4. When a species' leaf_gm_per_m2 was recorded at both the sites, obtained an average wieghted by the total trap area to accountfor differential sample sizes
 
 5. Converted leaf_gm_per_m2 to LAI units as   
     leaf_fall_LAI (in m2/m2) = leaf_gm_per_m2 / LMA (in g/m2) --- (Eq 2)  
     LMA units are from Metadata_Lftraits_VariableDefinitionsOnly.doc for data in BCITRAITS_20101220.csv)
 
-6. For each species, prepended its leaf_gm_per_m2 data-frame by adding the number of prior dates equivalent to days in the species leaf lifespan, named 'sp.lifespan'  
+6. New: Using Joe's suggestion: Could you estimate living canopy leaf mass per unit ground area present at time t (L[t]) from mean leaf longevity and leaf mass fall per unit ground area at time t (F[t]) as follows:  L[t] = F[t+1] + F[t+2] + … + F[t + mean leaf longevity]
+
+    1. For each species, calculated a day of the year average of leaf_fall_LAI (m2/m2), weighted by total trap area of sites observed, to account for differential sampling intensity over time. This gives more weight to dates after 2013 when BCI-50ha site observations began. 
+    2. LAI, for the changing fraction on the tree is obtained by 
+   looping over days t in 1:365 
+    LAI[t] <- sum(leaf_fall_LAI[c(t: (t+sp.lifespan)) %% 365])
+    where sp.lifespan are the number of days in species leaf lifespan, named 'sp.lifespan'
+
+```{r LAI-ssn-loop, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop}Mean LAI seasonality curves based on Joe's calculation. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.If LL is estimated from LMA it is shown in solid line, if estimated from observations it is in a broken line.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_loop.jpeg"))
+```
+
+## Comparison between LAI seasonality based on Rutuja's calculation (step #9, with Prior) vs. Joe's (Figure \@ref(fig:LAI-ssn-loop-mod))
+
+```{r LAI-ssn-loop-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop-mod}Mean LAI seasonality curves based on Rutuja's calculation (thick lines) vs. Joe's (thin lines). LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_loop_overlaid_mod.jpeg"))
+```
+
+# IGNORE THE REST
+6. Old : For each species, prepended its leaf_gm_per_m2 data-frame by adding the number of prior dates equivalent to days in the species leaf lifespan, named 'sp.lifespan'  
     Then LAI time series is calculated with the following steps: For t in 1 to c(total no of days in the data frame - leaf.lifespan),   
     1. Assuming zero LAI to begin with, leaf gain on date 1 is leaf fall for the future date shifted by sp.lifespan. That is,    
     If t == 1,  

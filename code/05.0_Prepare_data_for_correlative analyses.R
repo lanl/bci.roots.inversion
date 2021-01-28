@@ -258,17 +258,17 @@ save(lwp.min.wide, file = file.path(results.folder, "lwp.min.wide.Rdata"))
 
 moist.pref <- read.csv("data-raw/Condit_et_al_2013/TreeCommunityDrySeasonSpeciesResponse.csv")
 moist.pref <- moist.pref %>% mutate(sp = paste0(tolower(str_sub(species, 1, 4)), str_sub(genus, 1, 2))) %>%
-  rename(moist.pref = Moist, moist.pref.2 = Moist.2) %>% select(sp, moist.pref, moist.pref.2)
-moist.pref <- moist.pref %>%
-  group_by(sp) %>%
-  summarise_all(list(~mean(., na.rm = TRUE)))
+  rename(moist.pref = Moist, moist.pref.2 = Moist.2) %>%
+  select(sp, moist.pref, moist.pref.2) %>% arrange(sp)
+# Positive values indicate moist site preference
+
 hab.swp <- read.csv(file.path("data-raw/sp.plot.hab.swp.csv"))
 sp.hab <- moist.pref %>% full_join(hab.swp, by = "sp") %>%
   rename(Panama.moist.pref = moist.pref, Panama.moist.pref.2 = moist.pref.2) %>%
   mutate(Plot.swp.pref = med.swp.reg - mean(med.swp.reg, na.rm = TRUE),
          Plot.swp.ENSO = med.swp.dry - mean(med.swp.dry, na.rm = TRUE)) %>%
   select(-med.swp.reg, -med.swp.dry, -sd.swp.reg, -sd.swp.dry, -Panama.moist.pref.2, -Plot.swp.ENSO)
-
+save(sp.hab, file = file.path(results.folder, "sp.habitat_preference_Panama_and_BCI50ha.Rdata"))
 #******************************************************
 ## Load Demographic data----
 #******************************************************
@@ -2218,8 +2218,33 @@ dev.off()
 #******************************************************
 figures.folder.cohort <- paste0("figures/PhenoDemoTraitsPsi/leaf_cohort")
 if(!dir.exists(file.path(figures.folder.cohort))) {dir.create(file.path(figures.folder.cohort))}
+# ll.lma <- read.csv(file.path("data-raw/traits/Wright_SJ_Lftraits/Osnas_Wright_PNAS_2018_TableS1.csv"))
+# ggplot(subset(ll.lma, nLL > 100),
+#        aes(x = LMA, y = LL, group = Stratum)) +
+#   # geom_point(aes(size = n_lifespan), show.legend = TRUE) +
+#   facet_wrap(Stratum ~ Site) +
+#   geom_point(aes(size = nLL), shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+#   xlab(expression('LMA (g '*m^-2*')')) +
+#   ylab("Leaf Longevity (Days)") +
+#   geom_smooth(method = "lm", formula = formula, se = FALSE) +
+#   scale_linetype_manual(name = "Strata") +
+#   theme(legend.position = c(0.2, 0.9), legend.title = element_blank(),
+#         legend.background = element_rect(fill = "transparent")) +
+#   stat_poly_eq(aes(label = stat(eq.label)),
+#                npcx = 0.95, npcy = 0.1, rr.digits = 2,
+#                formula = formula, parse = TRUE, size = 5, col = "blue") +
+#   stat_poly_eq(aes(label = paste(..rr.label..)),
+#                npcx = 0.95, npcy = 0.25, rr.digits = 2,
+#                formula = formula, parse = TRUE, size = 5, col = "blue") +
+#   stat_fit_glance(method = 'lm',
+#                   method.args = list(formula = formula),
+#                   geom = 'text_npc',
+#                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+#                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+#                   parse = TRUE, npcx = 0.95, npcy = 0.18, size = 5, col = "blue")
 
-ll.lma <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits_complete.xls")) %>%
+ll.lma.full <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits_complete.xls"),
+                     sheet = 1) %>%
   rename_all(tolower) %>%
   rename(site = `site$`, sp4 = `sp4$`, strata = `strata$`, lifeform6 = `lifeform6$`,
          genus = `genus$`, species = `species$`) %>%
@@ -2228,18 +2253,18 @@ ll.lma <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits_comp
   rename(lifespan = lifetime, n_lifespan = n_lifetime) %>%
   mutate(log.ll = log(lifespan),
          log.lma = log(lma)) %>%
-  subset(n_lifespan > 100) ## those with enough sample sizes
+  subset(n_lifespan > 99) %>% ## those with enough sample sizes
+  left_join(deci %>% dplyr::select(-deciduousness.label, sp4, -sp), by = "sp4") %>%
+  droplevels() %>% rename(LMA = lma)
 
 formula <- y ~ x
-ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifespan, group = strata)) +
-  # geom_point(aes(size = n_lifespan), show.legend = TRUE) +
+ll.lma.plot <- ggplot(ll.lma.full, aes(x = LMA, y = lifespan, group = strata)) +
   geom_text(aes(label = sp4), nudge_y = 10, size = 3) +
-  geom_point(aes(size = n_lifespan), shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
   xlab(expression('LMA (g '*m^-2*')')) +
   ylab("Leaf Longevity (Days)") +
   geom_smooth(method = "lm", formula = formula, se = FALSE) +
   scale_linetype_manual(name = "Strata") +
-  theme(legend.position = c(0.2, 0.9), legend.title = element_blank(),
+  theme(legend.position = "top",
         legend.background = element_rect(fill = "transparent")) +
   stat_poly_eq(aes(label = stat(eq.label)),
                npcx = 0.95, npcy = 0.1, rr.digits = 2,
@@ -2254,31 +2279,42 @@ ll.lma.plot <- ggplot(ll.lma, aes(x = lma, y = lifespan, group = strata)) +
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.18, size = 5, col = "blue")
 # scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-#               labels = trans_format("log10", math_format(10^.x))) +
+#               labels = transaves_format("log10", math_format(10^.x))) +
 # scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
 #               labels = trans_format("log10", math_format(10^.x))) +
 # annotation_logticks()
 ll.lma.plot2by2 <- ll.lma.plot %+%
-  subset(ll.lma, strata == "CANOPY") +
+  subset(ll.lma.full, strata == "CANOPY") +
+  geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5) +
   facet_wrap(site ~ .)
 ggsave(("lifespan_by_lma_canopy_two sites.jpeg"),
        plot = ll.lma.plot2by2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 6, units='in')
 
-ll.lma.plot.canopy <- ll.lma.plot %+%
-  subset(ll.lma, strata == "CANOPY") #! sp4 %in% c("VIRE", "VIR3")
+ll.lma.plot2by2.strata <- ll.lma.plot %+%
+  geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5) +
+  facet_wrap(site ~ strata)
+ggsave(("lifespan_by_lma_both_strata_two sites.jpeg"),
+       plot = ll.lma.plot2by2.strata, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 6, units='in')
+
+ll.lma.plot.canopy.sitecolored <- ll.lma.plot2by2 +
+  geom_point(aes(size = n_lifespan, fill = site), shape = 21, color = "black", alpha = 1, size = 2.5)
+ggsave(("lifespan_by_lma_canopy_sitecolored.jpeg"),
+       plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
+
+ll.lma <- ll.lma.full %>% subset(strata == "CANOPY" & site == "FTS")
+ll.lma.plot.canopy <- ll.lma.plot %+% ll.lma +
+  geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5)
 ggsave(("lifespan_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-ll.lma.plot.canopy.sitecolored <- ll.lma.plot.canopy +
-  geom_point(aes(size = n_lifespan, fill = site), shape = 21, color = "white", alpha = 1, size = 2.5)
-ggsave(("lifespan_by_lma_canopy_sitecolored.jpeg"),
-       plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 # lifespan – median leaf longevity (days)
 # N_lifespan – sample size for lifespan (number of leaves)
 
+# LMA used above is LMADISC which is similar to LMALAM
 load(file = file.path(results.folder, "gap.models.Rdata"))
-bci.ll <- bci.traits %>% select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
+bci.ll <- bci.traits %>%
+  select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
   mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
                              predict(gap.models$LMA.LAM.DISC, newdata =  bci.traits),
                              LMADISC_AVD),
@@ -2293,13 +2329,11 @@ bci.ll <- bci.traits %>% select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD)
 
 gap.models.ll <- vector(mode = "list", length = 1)
 names(gap.models.ll) <- c("LMA.lifespan")
-gap.models.ll$LMA.lifespan <- lm(lifespan ~ LMA, data =
-                                   subset(ll.lma %>% rename(LMA = lma), strata == "CANOPY" & site == "FTS" & lifeform6 != "LIANA"))
+gap.models.ll$LMA.lifespan <- lm(lifespan ~ LMA, data = ll.lma)
 save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
 
 bci.lifespan <- bci.ll %>%
-  full_join(ll.lma %>%
-            subset(strata == "CANOPY" & lifeform6 != "LIANA") %>%
+  full_join(ll.lma %>% subset(lifeform6 != "LIANA") %>%
               select(sp, lifespan), by = "sp") %>%
   mutate(lifespan.filled = lifespan,
          lifespan.sub = ifelse(!is.na(lifespan.filled), "original", NA),
@@ -2370,7 +2404,8 @@ ggsave(("LAI_by_DOY_BCI.jpeg"),
 # From Joe: To do this calculation,
 # I would use the most recent seven years with data from
 # 59 0.25-m2 traps at the BCI Poacher’s Peninsula site and
-# 62 0.5-m2 traps at the BCI 50-ha plot.
+# 64 0.5-m2 traps at the BCI 50-ha plot.
+load(file = file.path(results.folder, "bci.lifespan.Rdata"))
 
 leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv")) %>%
   rename(date = mean_date,
@@ -2379,11 +2414,11 @@ leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-
   subset(date >= as.Date("2013-01-01") &
            date < as.Date("2020-01-01") &
            site != "San_Lorenzo") %>%
-  # subset(site == "BCI50-ha") %>%
-  # mutate(site = "BCI") %>%
-  # Need to convert absolute leaf mass to leaf mass per unit area (no of traps in which the species was found* area of each trap)
-  mutate(leaf_gm_per_m2 = if_else(site == "BCI50-ha", leaf_gm/(0.5*n_traps),
-                                  if_else(site == "BCI-Poachers", leaf_gm/(0.25*n_traps),  leaf_gm/(0.5*n_traps)))) %>% # last one is for San Lorenzo
+  droplevels() %>%
+  # Need to convert absolute leaf mass to leaf mass per unit area (no of traps at a site* area of each trap)
+  # column "n_traps" represents the number of traps leaf_gm observation came from--not used.
+  mutate(leaf_gm_per_m2 = if_else(site == "BCI50-ha", leaf_gm/(0.5*62),
+                                  if_else(site == "BCI-Poachers", leaf_gm/(0.25*59),  leaf_gm/(0.5*40)))) %>% # last one is for San Lorenzo
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
   mutate(sp = if_else(is.na(sp), sp4, sp),
          sp_site = paste(sp, site, sep = "_"))
@@ -2405,7 +2440,7 @@ pdf(file.path(figures.folder.phen,"leaf_gm_by_sp_outliers_in_red.pdf"))
 for (i in 1:length(df.sp_site)) {
   df_i <- df.sp_site[[i]]
   df_i$outlier <- "Black"
-  df_i$outlier[df_i$leaf_gm_per_m2 > 5*sd(df_i$leaf_gm_per_m2, na.rm = TRUE)] <- "Red"
+  df_i$outlier[df_i$leaf_gm_per_m2 > 6*sd(df_i$leaf_gm_per_m2, na.rm = TRUE)] <- "Red"
   plot(df_i$leaf_gm_per_m2 ~ df_i$date,
        xlab = "Year", ylab = "Leaf fall (gm per m2 ground area)",
        main = df_i$sp_site[1], col = df_i$outlier)
@@ -2415,8 +2450,10 @@ dev.off()
 ## Remove outliers and years with too little data
 sp.to.rm <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/species_to_remove.csv"))
 
-df.sp_site.cleaned <- lapply(df.sp_site,
-                             function(x) {x[!x$leaf_gm_per_m2 > 5*sd(x$leaf_gm_per_m2, na.rm = TRUE),]})
+# Not removing sd based outliers
+df.sp_site.cleaned <- df.sp_site
+# df.sp_site.cleaned <- lapply(df.sp_site,
+#                              function(x) {x[!x$leaf_gm_per_m2 > 6*sd(x$leaf_gm_per_m2, na.rm = TRUE),]})
 ## Remove years with too little data
 sp.yr.to.rm <- as.character(sp.to.rm$sp_site[!is.na(sp.to.rm$year)])
 for (i in sp.yr.to.rm) {
@@ -2446,7 +2483,7 @@ fill.day.gaps <- function(df) {
   df.1 <- df %>% arrange(date) %>%
     mutate(n.days = as.numeric(date - lag(date))) %>%
     #  leaf_fall rate per day, mean for the census interval
-    mutate(leaf_gm_rate = leaf_gm_per_m2/n.days) %>%# day
+    mutate(leaf_gm_rate = leaf_gm_per_m2/n.days) %>% # day
     full_join(full.date.df, by = "date") %>% arrange(date, site)
   return(df.1)
 }
@@ -2643,6 +2680,7 @@ f0.4 <- f0.1 %+% LAI.doy.2 +
   ggtitle("Beginning with expected LAI for the DOY")
 ggsave("LAI_ts_mod.jpeg",
        plot = f0.4, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
 f0.5 <- f0.1 %+% LAI.doy.2 +
   geom_line(aes(y = LAI.mod.det, group = sp, color = deciduousness), size = 1) +
   ggtitle("Beginning with expected LAI for the DOY")
@@ -2660,14 +2698,21 @@ sp.LAI.for.model <- LAI.doy.2 %>%
   arrange(sp, doy) %>%
   group_by(sp) %>%
   mutate(# day 366 mean can be an outlier due to few years with those many days,
-         # so replacing wiht value of day 365
+         # so replacing with value of day 365
+         # LAI.mean = rollmean(LAI.mean, 45, na.pad=TRUE),
          LAI.mean = if_else(doy == 366, lag(LAI.mean, n = 1L), LAI.mean),
          LAI.mean.mod = if_else(doy == 366, lag(LAI.mean.mod, n = 1L), LAI.mean.mod),
          LAI.norm = LAI.mean/max(LAI.mean, na.rm = TRUE), #quantile(LAI.mean, probs = 0.9999, na.rm = TRUE),
          LAI.norm.mod = LAI.mean.mod/max(LAI.mean.mod, na.rm = TRUE),
-         ## For deciduous species, making the minima 0
-         LAI.norm.deci = if_else(deciduous != "E", range01(LAI.mean), LAI.norm),
-         LAI.norm.mod.deci = if_else(deciduous != "E", range01(LAI.mean.mod), LAI.norm.mod)) %>%
+         LAI.norm.deci.all = if_else(deciduous != "E", range01(LAI.mean), LAI.norm),
+         LAI.norm.mod.deci.all = if_else(deciduous != "E", range01(LAI.mean.mod), LAI.norm.mod),
+         # Defining deciduous period with lowest xx% LAI
+         period.deci = if_else(deciduous == "DB" & LAI.mean < as.numeric(quantile(LAI.mean, probs = 0.15, na.rm = TRUE)), TRUE,
+                               if_else(deciduous == "DF" & LAI.mean < as.numeric(quantile(LAI.mean, probs = 0.20, na.rm = TRUE)), TRUE,
+                                       if_else(deciduous == "DO" & LAI.mean < as.numeric(quantile(LAI.mean, probs = 0.3, na.rm = TRUE)), TRUE, FALSE))),
+         ## For deciduous species, making the minima 0 for the deciduous period
+         LAI.norm.deci = if_else(deciduous != "E" & period.deci, range01(LAI.mean), LAI.norm),
+         LAI.norm.mod.deci = if_else(deciduous != "E" & period.deci, range01(LAI.mean.mod), LAI.norm.mod)) %>%
   ungroup(sp) %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduous)]), ordered=TRUE))
 
@@ -2688,17 +2733,37 @@ f1.3.0 <- ggplot(sp.LAI.for.model,
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
 
 f1.3.1 <- f1.3.0 +
-  geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Max 1")) +
-  geom_line(aes(y = LAI.norm.mod.deci, color = deciduousness, size = "Range 0-1")) +
+  geom_line(aes(y = LAI.norm, color = deciduousness, size = "Divided by maximum")) +
+  scale_size_manual(name = "Normalisation", values = c(1))
+ggsave("LAI.seasonality_mean.jpeg",
+       plot = f1.3.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+f1.3.2 <- f1.3.0 +
+  geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Divided by maximum")) +
   scale_size_manual(name = "Normalisation", values = c(1.5, 0.5))
 ggsave("LAI.seasonality_mean_mod.jpeg",
-       plot = f1.3.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
-f1.3.2 <- f1.3.0 +
-  geom_line(aes(y = LAI.norm, color = deciduousness, size = "Max 1")) +
-  geom_line(aes(y = LAI.norm.deci, color = deciduousness, size = "Range 0-1")) +
-  scale_size_manual(name = "Normalisation", values = c(1.5, 0.5))
-ggsave("LAI.seasonality_mean.jpeg",
        plot = f1.3.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+f1.3.2.1 <- f1.3.0 +
+  geom_line(aes(y = LAI.norm, color = deciduousness, size = "No Prior")) +
+  geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "With Prior")) +
+  scale_size_manual(name = "Prior", values = c(0.5, 1.5))
+ggsave("LAI.seasonality_mean_overlaid_mod.jpeg",
+       plot = f1.3.2.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+f1.3.3 <- f1.3.0 +
+  # geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Max 1")) +
+  geom_line(aes(y = LAI.norm.mod.deci.all, color = deciduousness), size = 1.5) #+
+  # scale_size_manual(name = "Normalisation", values = c(1.5, 1.5))
+ggsave("LAI.seasonality_mean_mod_deci_unrestricted_range01.jpeg",
+       plot = f1.3.3, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+f1.3.4 <- f1.3.0 +
+  # geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Divided by maximum")) +
+  geom_line(aes(y = LAI.norm.mod.deci, color = deciduousness), size = 1.5) #+
+  # scale_size_manual(name = "Normalisation", values = c(1.5))
+ggsave("LAI.seasonality_mean_mod_deci_restricted.jpeg",
+       plot = f1.3.4, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
 save(sp.LAI.for.model, file = file.path(results.folder, "sp.LAI.for.model.Rdata"))
 
@@ -2718,6 +2783,7 @@ sherman <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_da
 cohort <- rbind(rama95, rama97) %>%
   rbind(sherman) %>%
   rename_all(tolower) %>%
+  rename(lifespan = lifetime) %>%
   rename(sp4 = sp) %>%
   mutate(dead = as.Date(dead), born = as.Date(born),
          born.doy = as.numeric(format(born, "%j")),

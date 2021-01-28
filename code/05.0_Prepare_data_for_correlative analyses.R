@@ -2407,18 +2407,19 @@ ggsave(("LAI_by_DOY_BCI.jpeg"),
 # 64 0.5-m2 traps at the BCI 50-ha plot.
 load(file = file.path(results.folder, "bci.lifespan.Rdata"))
 
+tot.trap.area <- list("BCI50-ha" = 0.5*62, "BCI-Poachers" = 0.25*59, "San_Lorenzo" = 0.5*40)
 leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv")) %>%
   rename(date = mean_date,
          sp4 = sp) %>%
   mutate(date = as.Date(date)) %>%
-  subset(date >= as.Date("2013-01-01") &
-           date < as.Date("2020-01-01") &
-           site != "San_Lorenzo") %>%
+  subset(site != "San_Lorenzo") %>%
   droplevels() %>%
   # Need to convert absolute leaf mass to leaf mass per unit area (no of traps at a site* area of each trap)
-  # column "n_traps" represents the number of traps leaf_gm observation came from--not used.
-  mutate(leaf_gm_per_m2 = if_else(site == "BCI50-ha", leaf_gm/(0.5*62),
-                                  if_else(site == "BCI-Poachers", leaf_gm/(0.25*59),  leaf_gm/(0.5*40)))) %>% # last one is for San Lorenzo
+  # Note for myself : column "n_traps" represents the number of traps leaf_gm observation came from--not used.
+  mutate(site.trap.area = recode(site, "BCI50-ha" = tot.trap.area$`BCI50-ha`,
+                                 "BCI-Poachers" = tot.trap.area$`BCI-Poachers`,
+                                 "San_Lorenzo" = tot.trap.area$`San_Lorenzo`),
+    leaf_gm_per_m2 = leaf_gm/site.trap.area) %>% # last one is for San Lorenzo
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
   mutate(sp = if_else(is.na(sp), sp4, sp),
          sp_site = paste(sp, site, sep = "_"))
@@ -2428,11 +2429,7 @@ f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm_per_m2)) +
 ggsave(("leaf.fall.daily_BCI.jpeg"),
        plot = f1, file.path(figures.folder.phen), device = "jpeg", height = 4.5, width = 9, units='in')
 
-## Need to fill gaps in dates and then get an interpolated estimate of leaf fall for those days
-## So first converting the weekly sums to leaf_fall rate for the past week
-## i.e. leaf_fall rate per day of the census interval = sum of leaf fall durign census interval/no. of days in the census interval
-## to get leaf_fall on each day of the interval, the above rate is actually treated as
-## the rate observed on the census date (even though it is the mean rate of the interval)
+# Visualise data
 
 df.sp_site <- split(leaf.fall, f = list(leaf.fall$sp_site), drop = TRUE)
 
@@ -2447,54 +2444,38 @@ for (i in 1:length(df.sp_site)) {
 }
 dev.off()
 
-## Remove outliers and years with too little data
-sp.to.rm <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/species_to_remove.csv"))
+## Need to fill gaps in dates and then get an interpolated estimate of leaf fall for those days
+## So first converting the weekly sums to leaf_fall rate for the past week
+## i.e. leaf_fall rate per day of the census interval = sum of leaf fall during census interval/no. of days in the census interval
+## It is first stored on the day of the census, then assigned to all the days in the census interval
 
-# Not removing sd based outliers
-df.sp_site.cleaned <- df.sp_site
-# df.sp_site.cleaned <- lapply(df.sp_site,
-#                              function(x) {x[!x$leaf_gm_per_m2 > 6*sd(x$leaf_gm_per_m2, na.rm = TRUE),]})
-## Remove years with too little data
-sp.yr.to.rm <- as.character(sp.to.rm$sp_site[!is.na(sp.to.rm$year)])
-for (i in sp.yr.to.rm) {
-  yr.to.rm <- as.numeric(sp.to.rm$year[sp.to.rm$sp_site == i])
-  rows.with.yr <- as.numeric(format(as.Date(df.sp_site.cleaned[[i]]$date), "%Y")) == yr.to.rm
-  df.sp_site.cleaned[[i]] <- df.sp_site.cleaned[[i]][!rows.with.yr,]
-}
-
-# Remove species with too little data
-df.sp_site.cleaned[as.character(sp.to.rm$sp_site[is.na(sp.to.rm$year)])] <- NULL
-
-pdf(file.path(figures.folder.phen,"leaf_gm_by_sp_cleaned.pdf"))
-for (i in 1:length(df.sp_site.cleaned)) {
-  df_i <- df.sp_site.cleaned[[i]]
-  plot(df_i$leaf_gm_per_m2 ~ df_i$date,
-       xlab = "Year", ylab = "Leaf fall (gm per m2 ground area)",
-       main = df_i$sp_site[1])
-}
-dev.off()
-# leaf.fall.full <- vector(mode = "list", length = length(df.sp_site))
-# names(leaf.fall.full) <- names(df.sp_site) # "psi.p50.g1", "psi.p50.g2"
 
 fill.day.gaps <- function(df) {
+  df.1 <- df %>% arrange(date) %>%
+    # for the first census assume leaf fall is collected over the past week
+    mutate(n.days = c(7, as.numeric(date - lag(date))[-1])) %>%
+    #  leaf_fall rate per day for the census interval is stored on the day of the census
+    mutate(leaf_gm_rate = leaf_gm_per_m2/n.days,
+           # Approx will interpolate this forward until the next census,
+           # we want it to interpolate this value backward over the past census interval,
+           # so just for computation purposes, lagging this value
+           leaf_gm_rate_lead = lead(leaf_gm_rate, n = 1))
+  # Gap-filling dates
   full.date.df <- data.frame(date = seq(from = min(df$date, na.rm = TRUE),
                                         to = max(df$date, na.rm = TRUE), by = 1)) %>%
     mutate(day_number = as.numeric(difftime(date, min(df$date, na.rm = TRUE) - 1)))
-  df.1 <- df %>% arrange(date) %>%
-    mutate(n.days = as.numeric(date - lag(date))) %>%
-    #  leaf_fall rate per day, mean for the census interval
-    mutate(leaf_gm_rate = leaf_gm_per_m2/n.days) %>% # day
+  df.2 <- df.1 %>%
     full_join(full.date.df, by = "date") %>% arrange(date, site)
-  return(df.1)
+  return(df.2)
 }
 # leaf_fall on each day of the interval
-leaf.fall.daygaps <- lapply(df.sp_site.cleaned, fill.day.gaps)
+leaf.fall.daygaps <- lapply(df.sp_site, fill.day.gaps)
 
 ## Interpolating from weekly sums to daily leaf_gm
 leaf.interp.approx <- function(df) {
   x <- df$day_number
-  y <- df$leaf_gm_rate
-  xout <- df$day_number[is.na(df$leaf_gm_rate)]
+  y <- df$leaf_gm_rate_lead
+  xout <- df$day_number[is.na(df$leaf_gm_rate_lead)]
   # yout <- approx(x, y, xout, method = "linear")
   ## method = "constant" would be more parsimonious
   yout <- approx(x, y, xout, method = "constant")
@@ -2503,16 +2484,19 @@ leaf.interp.approx <- function(df) {
     ## filling interpolation gap on the day of the census
     mutate(leaf_gm.int.raw = ifelse(is.na(leaf_gm_rate), leaf_gm.int.raw, leaf_gm_rate),
            sp = df$sp[1],
-           site = df$site[1])
+           site = df$site[1],
+           site.trap.area = df$site.trap.area[1])
   return(df.1)
 }
 
 leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
                         as.data.frame) %>%
   bind_rows(.id = "sp_site") %>%
+  select(-leaf_gm_rate_lead) %>%
   group_by(sp, date) %>%
-  # taking mean between two sites, when available
-  summarise(leaf_fall = mean(leaf_gm.int.raw, na.rm = TRUE), .groups = "drop_last") %>%
+  # Sample size is greater at BCI, so weighing that more
+  # When sp at both sites, taking average of two sites weighted by the site.trap.area
+  summarise(leaf_fall = sum(leaf_gm.int.raw*site.trap.area, na.rm = TRUE)/sum(site.trap.area, na.rm = TRUE), .groups = "drop_last") %>%
   mutate(leaf_fall = if_else(is.nan(leaf_fall), 0, leaf_fall)) %>%
   ungroup(sp, date) %>%
   ## adding lifespan by species

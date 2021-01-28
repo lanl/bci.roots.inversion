@@ -2340,7 +2340,9 @@ bci.lifespan <- bci.ll %>%
          lifespan.filled = ifelse(is.na(lifespan),
                                   predict(gap.models.ll$LMA.lifespan, newdata = bci.ll),
                                   lifespan),
-         lifespan.sub = ifelse(!is.na(lifespan.filled) & is.na(lifespan.sub), "ll.filled", NA))
+         lifespan.sub = ifelse(!is.na(lifespan), "LL.ori",
+                                      ifelse(!is.na(lifespan.filled) & is.na(lifespan.sub), "LL.filled", NA))) %>%
+  droplevels()
 
 ## there shouldn't be any duplicate records for species
 # bci.lifespan[duplicated(bci.lifespan$sp),]
@@ -2348,21 +2350,21 @@ save(bci.lifespan, file = file.path(results.folder, "bci.lifespan.Rdata"))
 
 formula <- y ~ x
 ll.lma.comm <- ggplot(bci.lifespan, aes(x = LMA, y = lifespan.filled)) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2.5) +
+  geom_point(aes(fill = lifespan.sub), shape = 21, color = "black", alpha = 0.7, size = 2.5) +
   xlab(expression('LMA (g '*m^-2*')')) + ylab("Leaf Longevity (Days)") +
   geom_smooth(method = "lm", formula = formula) +
   stat_poly_eq(aes(label = stat(eq.label)),
-               npcx = 0.05, npcy = 0.9, rr.digits = 2,
+               npcx = 0.05, npcy = 0.15, rr.digits = 2,
                formula = formula, parse = TRUE, size = 6, colour = "red") +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.9, npcy = 0.95, rr.digits = 2,
+               npcx = 0.9, npcy = 0.25, rr.digits = 2,
                formula = formula, parse = TRUE, size = 6) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.9, npcy = 0.85, size = 6)
+                  parse = TRUE, npcx = 0.1, npcy = 0.85, size = 6)
 ggsave(("lifespan_by_lma_community.jpeg"),
        plot = ll.lma.comm, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
@@ -2422,7 +2424,9 @@ leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-
     leaf_gm_per_m2 = leaf_gm/site.trap.area) %>% # last one is for San Lorenzo
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
   mutate(sp = if_else(is.na(sp), sp4, sp),
-         sp_site = paste(sp, site, sep = "_"))
+         sp_site = paste(sp, site, sep = "_")) %>%
+  left_join(bci.lifespan %>% dplyr::select(sp, form), by = "sp") %>%
+  subset(form == "Canopy") %>% droplevels()
 
 f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm_per_m2)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
@@ -2454,11 +2458,11 @@ fill.day.gaps <- function(df) {
   df.1 <- df %>% arrange(date) %>%
     # for the first census assume leaf fall is collected over the past week
     mutate(n.days = c(7, as.numeric(date - lag(date))[-1])) %>%
-    #  leaf_fall rate per day for the census interval is stored on the day of the census
+    #  leaf_fall rate per day for the census interval is stored on the day of the census:
     mutate(leaf_gm_rate = leaf_gm_per_m2/n.days,
-           # Approx will interpolate this forward until the next census,
+           # approx() will interpolate this forward until the next census,
            # we want it to interpolate this value backward over the past census interval,
-           # so just for computation purposes, lagging this value
+           # so just for computation purposes, leading this value
            leaf_gm_rate_lead = lead(leaf_gm_rate, n = 1))
   # Gap-filling dates
   full.date.df <- data.frame(date = seq(from = min(df$date, na.rm = TRUE),
@@ -2468,7 +2472,7 @@ fill.day.gaps <- function(df) {
     full_join(full.date.df, by = "date") %>% arrange(date, site)
   return(df.2)
 }
-# leaf_fall on each day of the interval
+# To get leaf fall on each day of the interval
 leaf.fall.daygaps <- lapply(df.sp_site, fill.day.gaps)
 
 ## Interpolating from weekly sums to daily leaf_gm
@@ -2496,12 +2500,15 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
   group_by(sp, date) %>%
   # Sample size is greater at BCI, so weighing that more
   # When sp at both sites, taking average of two sites weighted by the site.trap.area
-  summarise(leaf_fall = sum(leaf_gm.int.raw*site.trap.area, na.rm = TRUE)/sum(site.trap.area, na.rm = TRUE), .groups = "drop_last") %>%
+  summarise(leaf_fall = sum(leaf_gm.int.raw*site.trap.area, na.rm = TRUE)/sum(site.trap.area, na.rm = TRUE),
+            sum.site.trap.area = sum(site.trap.area, na.rm = TRUE),
+            BCI_50ha_present = if_else(any(site == "BCI-50ha"), TRUE, FALSE), .groups = "drop_last") %>%
   mutate(leaf_fall = if_else(is.nan(leaf_fall), 0, leaf_fall)) %>%
   ungroup(sp, date) %>%
   ## adding lifespan by species
   left_join(bci.lifespan %>%
-              select(sp, LMA, lifespan.filled) %>% rename(lifespan = lifespan.filled), by = "sp") %>%
+              select(sp, LMA, lifespan.filled, lifespan.sub) %>%
+              rename(lifespan = lifespan.filled), by = "sp") %>%
   subset(!is.na(lifespan)) %>%
   subset(sp != "na") %>%
   # to convert from leaf biomass units to area units
@@ -2509,7 +2516,77 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
   # leaf_fall is in gm
   mutate(leaf_fall_LAI = leaf_fall/LMA, LAI = NA)
 
-leaf.fall.sp <- split(leaf.fall.int, f = list(leaf.fall.int$sp), drop = TRUE)
+lma.lifespan.sp <- bci.lifespan %>%
+  select(sp, LMA, lifespan.filled, lifespan.sub, form) %>%
+  rename(lifespan = lifespan.filled) %>%
+  subset(sp %in% leaf.fall.int$sp) %>%
+  left_join(deci %>% dplyr::select(sp, deciduousness), by = "sp") %>%
+  mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE)) %>%
+  select(-deciduousness)
+
+leaf.fall.doy <- leaf.fall.int %>%
+  mutate(doy = as.numeric(format(date, "%j")),
+         year = as.numeric(format(date, "%Y"))) %>%
+  group_by(sp, doy) %>%
+  ## If a species has data from BCI_50ha_present, those dates will have greater sampling (greater trap area), so should weight it more
+  summarise(leaf_fall_LAI.mean = sum(leaf_fall_LAI*sum.site.trap.area, na.rm = TRUE)/sum(sum.site.trap.area, na.rm = TRUE), .groups = "drop_last") %>%
+  mutate(leaf_fall_LAI.mean.norm = leaf_fall_LAI.mean/max(leaf_fall_LAI.mean, na.rm = TRUE)) %>%
+  ungroup(sp, doy) %>%
+  subset(sp != "na" & doy != 366) %>%
+  left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
+  left_join(lma.lifespan.sp, by = "sp") %>%
+  mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE))
+
+f.1 <- ggplot(leaf.fall.doy,
+                 aes(x = doy)) +
+  facet_wrap(sp ~ .) +
+  ylim(c(0, 1)) +
+  geom_text(data = lma.lifespan.sp,
+            aes(x = 150, y = 0.15, label = sprintf('italic(LL)~"="~%1.0f', lifespan),
+                group = sp),
+            parse = TRUE, vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
+  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  # scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+
+f.1.1 <- f.1 +
+  geom_line(aes(y = leaf_fall_LAI.mean.norm, color = deciduousness, size = "Divided by maximum")) +
+  scale_size_manual(name = "Normalisation", values = c(1)) +
+  ylab(expression('Normalised Leaf_fall_LAI')) + xlab("DOY")
+ggsave("Leaf_fall_LAI.seasonality_mean.jpeg",
+       plot = f.1.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+# Could you estimate living canopy leaf mass per unit ground area present at time t (L[t])
+# from mean leaf longevity and leaf mass fall per unit ground area at time t (F[t])
+# as follows:  L[t] = F[t+1] + F[t+2] + … + F[t + mean leaf longevity]
+
+leaf.fall.doy$L <- NA
+leaf.fall.doy.sp <- split(leaf.fall.doy, f = list(leaf.fall.doy$sp), drop = TRUE)
+
+LAI.fun.loop <- function(df){
+  sp.lifespan <- as.integer(df$lifespan[1])
+  for (t in 1: nrow(df)) {
+    # Get indices of day of the year leaf fall for which should be added to day t
+    F.days <- c(t:(t+sp.lifespan)) %% 365
+    df$L[t] <- sum(df$leaf_fall_LAI.mean[F.days], na.rm = TRUE)
+  }
+  return(df)
+}
+LAI.doy.1 <- lapply(lapply(leaf.fall.doy.sp, LAI.fun.loop), as.data.frame) %>%
+  bind_rows(.id = "sp") %>%
+  group_by(sp) %>%
+  mutate(L.norm = L/max(L, na.rm = TRUE)) %>%
+  ungroup(sp) %>%
+  mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE))
+
+f.1.2 <- f.1.1 %+% LAI.doy.1 +
+  geom_line(aes(y = L.norm, color = deciduousness, linetype = lifespan.sub), size = 1) +
+  ylab(expression('Normalised LAI')) + xlab("DOY")
+ggsave("LAI.seasonality_mean_loop.jpeg",
+       plot = f.1.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
 
 ## For leaf cover, for each sp,
 ## Consider leaf_gain(t - lifespan) = leaf_fall(t),
@@ -2551,6 +2628,8 @@ LAI_fun <- function(df) {
   return(df)
 }
 
+leaf.fall.sp <- split(leaf.fall.int, f = list(leaf.fall.int$sp), drop = TRUE)
+
 LAI.doy <- lapply(lapply(leaf.fall.sp, LAI_fun), as.data.frame) %>%
   bind_rows(.id = "sp") %>%
   mutate(doy = as.numeric(format(date, "%j")),
@@ -2563,11 +2642,6 @@ LAI.doy <- lapply(lapply(leaf.fall.sp, LAI_fun), as.data.frame) %>%
   left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp") %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE),
          sp.year = paste(sp, year, sep = "."))
-
-lma.lifespan.sp <- LAI.doy %>%
-  group_by(sp) %>%
-  summarise(LMA = mean(LMA, na.rm = TRUE),
-            lifespan = mean(lifespan, na.rm = TRUE), .groups = "drop_last")
 
 f0.1 <- ggplot(LAI.doy, aes(x = date)) +
   facet_wrap(sp ~ ., scales = "free_y") +
@@ -2734,6 +2808,14 @@ f1.3.2.1 <- f1.3.0 +
   scale_size_manual(name = "Prior", values = c(0.5, 1.5))
 ggsave("LAI.seasonality_mean_overlaid_mod.jpeg",
        plot = f1.3.2.1, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+sp.LAI.for.model <- sp.LAI.for.model %>% left_join(LAI.doy.1 %>% select(sp, doy, L.norm), by = c("sp", "doy"))
+f1.3.2.2 <- f1.3.0 %+% sp.LAI.for.model +
+  geom_line(aes(y = L.norm, color = deciduousness, size = "Joe")) +
+  geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Rutuja")) +
+  scale_size_manual(name = "Method", values = c(0.5, 1.5))
+ggsave("LAI.seasonality_mean_loop_overlaid_mod.jpeg",
+       plot = f1.3.2.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
 f1.3.3 <- f1.3.0 +
   # geom_line(aes(y = LAI.norm.mod, color = deciduousness, size = "Max 1")) +

@@ -2302,6 +2302,7 @@ ggsave(("lifespan_by_lma_canopy_sitecolored.jpeg"),
        plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
 ll.lma.for.rel <- ll.lma.full %>% subset(strata == "CANOPY" & site == "FTS" & n_lifespan > 99)
+odd.sp <- c("ficuin", "cecrelo", "urecra") # ficus is asynchronous, cereopia is an odd pioneer: all of htem have lifespan less than 100 days, which considerably underestiamtes deciduous species mean lifespan
 ll.lma.pnm.canopy <- ll.lma.full %>% subset(strata == "CANOPY" & site == "PNM" & n_lifespan > 99 & lifeform6 == "TREE" & !sp %in% odd.sp)
 # with or without n_lifespan > 99 constraint, mean lifespan is 160
 mean(ll.lma.pnm.canopy$lifespan)

@@ -2214,7 +2214,7 @@ if(col.var == "deci") {
 }
 dev.off()
 #******************************************************
-### Load processed leaf Life-time and LMA data ------
+### Load processed Leaf Life-time and LMA data ------
 #******************************************************
 figures.folder.cohort <- paste0("figures/PhenoDemoTraitsPsi/leaf_cohort")
 if(!dir.exists(file.path(figures.folder.cohort))) {dir.create(file.path(figures.folder.cohort))}
@@ -2253,7 +2253,6 @@ ll.lma.full <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits
   rename(lifespan = lifetime, n_lifespan = n_lifetime) %>%
   mutate(log.ll = log(lifespan),
          log.lma = log(lma)) %>%
-  subset(n_lifespan > 99) %>% ## those with enough sample sizes
   left_join(deci %>% dplyr::select(-deciduousness.label, sp4, -sp), by = "sp4") %>%
   droplevels() %>% rename(LMA = lma)
 
@@ -2284,13 +2283,14 @@ ll.lma.plot <- ggplot(ll.lma.full, aes(x = LMA, y = lifespan, group = strata)) +
 #               labels = trans_format("log10", math_format(10^.x))) +
 # annotation_logticks()
 ll.lma.plot2by2 <- ll.lma.plot %+%
-  subset(ll.lma.full, strata == "CANOPY") +
+  subset(ll.lma.full, strata == "CANOPY" & n_lifespan > 99) + ## those with enough sample sizes) +
   geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5) +
   facet_wrap(site ~ .)
 ggsave(("lifespan_by_lma_canopy_two sites.jpeg"),
        plot = ll.lma.plot2by2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 6, units='in')
 
 ll.lma.plot2by2.strata <- ll.lma.plot %+%
+  subset(ll.lma.full, n_lifespan > 99) +
   geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5) +
   facet_wrap(site ~ strata)
 ggsave(("lifespan_by_lma_both_strata_two sites.jpeg"),
@@ -2301,47 +2301,95 @@ ll.lma.plot.canopy.sitecolored <- ll.lma.plot2by2 +
 ggsave(("lifespan_by_lma_canopy_sitecolored.jpeg"),
        plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-ll.lma <- ll.lma.full %>% subset(strata == "CANOPY" & site == "FTS")
-ll.lma.plot.canopy <- ll.lma.plot %+% ll.lma +
+ll.lma.for.rel <- ll.lma.full %>% subset(strata == "CANOPY" & site == "FTS" & n_lifespan > 99)
+ll.lma.pnm.canopy <- ll.lma.full %>% subset(strata == "CANOPY" & site == "PNM" & n_lifespan > 99 & lifeform6 == "TREE" & !sp %in% odd.sp)
+# with or without n_lifespan > 99 constraint, mean lifespan is 160
+mean(ll.lma.pnm.canopy$lifespan)
+# 158
+ll.lma.plot.canopy <- ll.lma.plot %+% ll.lma.for.rel +
   geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5)
 ggsave(("lifespan_by_lma_canopy.jpeg"),
        plot = ll.lma.plot.canopy, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
-
-
 # lifespan – median leaf longevity (days)
 # N_lifespan – sample size for lifespan (number of leaves)
 
 # LMA used above is LMADISC which is similar to LMALAM
 load(file = file.path(results.folder, "gap.models.Rdata"))
+# Gap-fill LMALAM_AVD with rel with LMADISC_AVD > rel with LMALEAF_AVD > Genus > Family as available
 bci.ll <- bci.traits %>%
-  select(sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
+  rename(genus = GENUS., family = FAMILY.) %>%
+  select(genus, family, sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
+  group_by(genus) %>%
+  mutate(LMA.genus.mean = mean(LMALAM_AVD, na.rm = TRUE),
+         LMA.genus.mean = ifelse(is.na(LMA.genus.mean),
+                                mean(LMADISC_AVD, na.rm = TRUE),
+                                LMA.genus.mean),
+         LMA.genus.mean = ifelse(is.na(LMA.genus.mean),
+                                 mean(LMALEAF_AVD, na.rm = TRUE), LMA.genus.mean)) %>%
+  ungroup(genus) %>%
+  group_by(family) %>%
+  mutate(LMA.family.mean = mean(LMALAM_AVD, na.rm = TRUE),
+         LMA.family.mean = ifelse(is.na(LMA.family.mean),
+                                 mean(LMADISC_AVD, na.rm = TRUE),
+                                 LMA.family.mean),
+         LMA.family.mean = ifelse(is.na(LMA.family.mean),
+                                 mean(LMALEAF_AVD, na.rm = TRUE), LMA.family.mean)) %>%
+  ungroup(family) %>%
   mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
                              predict(gap.models$LMA.LAM.DISC, newdata =  bci.traits),
-                             LMADISC_AVD),
+                             LMALAM_AVD),
          LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
                              predict(gap.models$LMA.LAM.LEAF, newdata = bci.traits),
-                             LMALEAF_AVD)) %>%
+                             LMALAM_AVD),
+         LMA.from.genus = ifelse(is.na(LMALAM_AVD) & !is.na(LMA.genus.mean), TRUE, FALSE),
+         LMALAM_AVD = ifelse(is.na(LMALAM_AVD), LMA.genus.mean, LMALAM_AVD),
+         LMA.from.family = ifelse(is.na(LMALAM_AVD) & !is.na(LMA.family.mean), TRUE, FALSE),
+         LMALAM_AVD = ifelse(is.na(LMALAM_AVD), LMA.family.mean, LMALAM_AVD)) %>%
   mutate(LMA = LMALAM_AVD) %>%
   mutate(form = recode_factor(as.factor(form1), `T` = "Canopy", `U` = "Understorey")) %>%
   transform(form = factor(form,
                           levels = c("Understorey", "Canopy"), ordered = TRUE)) %>%
-  select(sp, LMA, LMALEAF_AVD, form)
+  select(sp, LMA, LMALEAF_AVD, form, LMA.from.genus, genus, LMA.from.family, family)
 
 gap.models.ll <- vector(mode = "list", length = 1)
 names(gap.models.ll) <- c("LMA.lifespan")
-gap.models.ll$LMA.lifespan <- lm(lifespan ~ LMA, data = ll.lma)
+gap.models.ll$LMA.lifespan <- lm(lifespan ~ LMA, data = ll.lma.for.rel)
 save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
 
+## Gap-fill lifespan with genus, else family. If not available, then
+# If evergreen, use FTS relationship
+## If deciduous, use average value from lifespan for PNM
 bci.lifespan <- bci.ll %>%
-  full_join(ll.lma %>% subset(lifeform6 != "LIANA") %>%
+  subset(form == "Canopy") %>%
+  full_join(ll.lma.full %>%
+              subset(strata == "CANOPY") %>%
               select(sp, lifespan), by = "sp") %>%
+  left_join(deci %>% dplyr::select(sp, deciduous), by = "sp") %>%
+  ## First create dnus and family average
+  group_by(genus) %>%
+  mutate(LL.genus.mean = mean(lifespan, na.rm = TRUE)) %>%
+  ungroup(genus) %>%
+  group_by(family) %>%
+  mutate(LL.family.mean = mean(lifespan, na.rm = TRUE)) %>%
+  ungroup(family) %>%
   mutate(lifespan.filled = lifespan,
-         lifespan.sub = ifelse(!is.na(lifespan.filled), "original", NA),
-         lifespan.filled = ifelse(is.na(lifespan),
+         lifespan.sub = ifelse(!is.na(lifespan.filled), "LL.observed", NA),
+         # For Deciduous species substitute with genus > family > PNM average lifespan:
+         lifespan.filled = ifelse(is.na(lifespan.filled) & !is.na(LL.genus.mean),
+                                  LL.genus.mean, lifespan.filled),
+         lifespan.sub = ifelse(is.na(lifespan.sub) & !is.na(lifespan.filled), "Genus", lifespan.sub),
+
+         lifespan.filled = ifelse(is.na(lifespan.filled) & !is.na(LL.family.mean),
+                                  LL.family.mean, lifespan.filled),
+         lifespan.sub = ifelse(is.na(lifespan.sub) & !is.na(lifespan.filled), "Family", lifespan.sub),
+         lifespan.filled = ifelse(is.na(lifespan.filled) & deciduous != "E",
+                                  mean(ll.lma.pnm.canopy$lifespan, na.rm = TRUE), lifespan.filled),
+         lifespan.sub = ifelse(is.na(lifespan.sub) & !is.na(lifespan.filled), "PNM.site.mean", lifespan.sub),
+         # For Evergreen species predict with FTS based lifespan-LMA relationship:
+         lifespan.filled = ifelse(is.na(lifespan.filled) & deciduous == "E",
                                   predict(gap.models.ll$LMA.lifespan, newdata = bci.ll),
-                                  lifespan),
-         lifespan.sub = ifelse(!is.na(lifespan), "LL.ori",
-                                      ifelse(!is.na(lifespan.filled) & is.na(lifespan.sub), "LL.filled", NA))) %>%
+                                  lifespan.filled),
+         lifespan.sub = ifelse(is.na(lifespan.sub) & !is.na(lifespan.filled), "LMA.Relationship", lifespan.sub)) %>%
   droplevels()
 
 ## there shouldn't be any duplicate records for species
@@ -2408,14 +2456,13 @@ ggsave(("LAI_by_DOY_BCI.jpeg"),
 # 59 0.25-m2 traps at the BCI Poacher’s Peninsula site and
 # 64 0.5-m2 traps at the BCI 50-ha plot.
 load(file = file.path(results.folder, "bci.lifespan.Rdata"))
-
 tot.trap.area <- list("BCI50-ha" = 0.5*62, "BCI-Poachers" = 0.25*59, "San_Lorenzo" = 0.5*40)
 leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv")) %>%
   rename(date = mean_date,
          sp4 = sp) %>%
   mutate(date = as.Date(date)) %>%
   subset(site != "San_Lorenzo") %>%
-  droplevels() %>%
+  arrange(sp4, date, site) %>%
   # Need to convert absolute leaf mass to leaf mass per unit area (no of traps at a site* area of each trap)
   # Note for myself : column "n_traps" represents the number of traps leaf_gm observation came from--not used.
   mutate(site.trap.area = recode(site, "BCI50-ha" = tot.trap.area$`BCI50-ha`,
@@ -2425,8 +2472,11 @@ leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
   mutate(sp = if_else(is.na(sp), sp4, sp),
          sp_site = paste(sp, site, sep = "_")) %>%
-  left_join(bci.lifespan %>% dplyr::select(sp, form), by = "sp") %>%
-  subset(form == "Canopy") %>% droplevels()
+  left_join(bci.lifespan %>%
+              mutate(form = as.character(form)) %>%
+              select(sp, form, lifespan.filled, lifespan.sub), by = "sp") %>%
+  subset(form == "Canopy") %>%
+  subset(sp %in% erd.sp.names$sp) %>% droplevels()
 
 f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm_per_m2)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
@@ -2519,7 +2569,7 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
 lma.lifespan.sp <- bci.lifespan %>%
   select(sp, LMA, lifespan.filled, lifespan.sub, form) %>%
   rename(lifespan = lifespan.filled) %>%
-  subset(sp %in% leaf.fall.int$sp) %>%
+  subset(sp %in% unique(leaf.fall.int$sp)) %>%
   left_join(deci %>% dplyr::select(sp, deciduousness), by = "sp") %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE)) %>%
   select(-deciduousness)
@@ -2549,7 +2599,9 @@ f.1 <- ggplot(leaf.fall.doy,
                               override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
   # scale_color_viridis_d(drop = FALSE) +
-  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1))
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1)) +
+  theme(strip.text.x = element_text(size = 14),
+        legend.text = element_text(size = 14))
 
 f.1.1 <- f.1 +
   geom_line(aes(y = leaf_fall_LAI.mean.norm, color = deciduousness, size = "Divided by maximum")) +
@@ -2581,12 +2633,25 @@ LAI.doy.1 <- lapply(lapply(leaf.fall.doy.sp, LAI.fun.loop), as.data.frame) %>%
   ungroup(sp) %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE))
 
-f.1.2 <- f.1.1 %+% LAI.doy.1 +
-  geom_line(aes(y = L.norm, color = deciduousness, linetype = lifespan.sub), size = 1) +
+f.1.2 <- f.1 %+% LAI.doy.1 +
+  geom_line(aes(y = L.norm, color = deciduousness), size = 1.5) +
+  # scale_linetype_manual(values = c("dotted", "solid")) +
   ylab(expression('Normalised LAI')) + xlab("DOY")
 ggsave("LAI.seasonality_mean_loop.jpeg",
        plot = f.1.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
+rect.dat <- LAI.doy.1 %>% subset(sp %in% unique(LAI.doy.1$sp)) %>%
+  select(sp, deciduousness) %>% mutate(ymin = 0, ymax = 1, xmin = -Inf, xmax = Inf)
+f.1.3 <- f.1 %+% LAI.doy.1 +
+  # geom_rect(data = rect.dat, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = deciduousness),
+  #           alpha = 0.7, inherit.aes = FALSE) +
+  geom_line(aes(y = L.norm, color = lifespan.sub), size = 1.5) +
+  ylab(expression('Normalised LAI')) + xlab("DOY")
+ggsave("LAI.seasonality_mean_loop_color_substitution.jpeg",
+       plot = f.1.3, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
+sp.LAI.for.model <- LAI.doy.1
+save(sp.LAI.for.model, file = file.path(results.folder, "sp.LAI.for.model.Rdata"))
 
 ## For leaf cover, for each sp,
 ## Consider leaf_gain(t - lifespan) = leaf_fall(t),
@@ -2597,6 +2662,7 @@ LAI_fun <- function(df) {
   previous.dates <- data.frame(sp = df$sp[1],
                                date = as.Date(c(df$date[1] - sp.lifespan): df$date[1]))
   df <- df %>% full_join(previous.dates, by = c("date", "sp")) %>% arrange(date)
+  df$LAI <- NA
   for(t in 1: c(length(df$date) - sp.lifespan)) {
     if (t == 1) {
       df$LAI[t] <- df$leaf_fall_LAI[t + sp.lifespan]
@@ -2745,7 +2811,7 @@ f0.5 <- f0.1 %+% LAI.doy.2 +
 ggsave("LAI_ts_mod_detrended.jpeg",
        plot = f0.5, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
-sp.LAI.for.model <- LAI.doy.2 %>%
+sp.LAI.for.model.2 <- LAI.doy.2 %>%
   group_by(sp, doy) %>%
   summarise(LAI.mean = mean(LAI.det, na.rm = TRUE),
             LAI.mean.mod = mean(LAI.mod.det, na.rm = TRUE),
@@ -2831,4 +2897,5 @@ f1.3.4 <- f1.3.0 +
 ggsave("LAI.seasonality_mean_mod_deci_restricted.jpeg",
        plot = f1.3.4, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
-save(sp.LAI.for.model, file = file.path(results.folder, "sp.LAI.for.model.Rdata"))
+save(sp.LAI.for.model.2, file = file.path(results.folder, "sp.LAI.for.model.2.Rdata"))
+

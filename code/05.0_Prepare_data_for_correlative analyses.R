@@ -2575,6 +2575,23 @@ lma.lifespan.sp <- bci.lifespan %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE)) %>%
   select(-deciduousness)
 
+## Plotting leaf-fall
+f.0 <- ggplot(leaf.fall.int %>%
+                left_join(deci %>% dplyr::select(-deciduousness.label, -sp4), by = "sp"),
+              aes(x = date)) +
+  facet_wrap(sp ~ .) +
+  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3))) +
+  theme(legend.position = "top", legend.title = element_blank()) +
+  # scale_color_viridis_d(drop = FALSE) +
+  theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1)) +
+  theme(strip.text.x = element_text(size = 14),
+        legend.text = element_text(size = 14)) +
+  geom_line(aes(y = leaf_fall_LAI, color = deciduousness)) +
+  ylab(expression('Leaf_fall_LAI')) + xlab("DOY")
+ggsave("Leaf_fall_LAI_ts.jpeg",
+       plot = f.0, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
+
 leaf.fall.doy <- leaf.fall.int %>%
   mutate(doy = as.numeric(format(date, "%j")),
          year = as.numeric(format(date, "%Y"))) %>%
@@ -2654,6 +2671,9 @@ ggsave("LAI.seasonality_mean_loop_color_substitution.jpeg",
 sp.LAI.for.model <- LAI.doy.1
 save(sp.LAI.for.model, file = file.path(results.folder, "sp.LAI.for.model.Rdata"))
 
+### *****************************
+### Rutuja's old way of calculation----
+### *****************************
 ## For leaf cover, for each sp,
 ## Consider leaf_gain(t - lifespan) = leaf_fall(t),
 ## leaf_cover(t+1 - lifespan) = leaf_fall(t) + leaf_fall(t+1) and so on
@@ -2900,3 +2920,159 @@ ggsave("LAI.seasonality_mean_mod_deci_restricted.jpeg",
 
 save(sp.LAI.for.model.2, file = file.path(results.folder, "sp.LAI.for.model.2.Rdata"))
 
+
+#******************************************************
+  ### Load Leaf Cohort tracking data from the crane sites------
+#******************************************************
+figures.folder.cohort <- paste0("figures/PhenoDemoTraitsPsi/leaf_cohort")
+if(!dir.exists(file.path(figures.folder.cohort))) {dir.create(file.path(figures.folder.cohort))}
+
+rama95 <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/RAMA95.xlsx")) %>%
+  mutate(site = "PNM")
+rama97 <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/RAMA97.xlsx")) %>%
+  mutate(site = "PNM")
+sherman <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/SHERMAN.xlsx")) %>%
+  mutate(site = "SNL")
+
+cohort <- rbind(rama95, rama97) %>%
+  rbind(sherman) %>%
+  rename_all(tolower) %>%
+  rename(lifespan = lifetime) %>%
+  rename(sp4 = sp) %>%
+  mutate(dead = as.Date(dead), born = as.Date(born),
+         born.doy = as.numeric(format(born, "%j")),
+         dead.doy = as.numeric(format(dead, "%j"))) %>%
+  left_join(deci %>% dplyr::select(sp, sp4, deciduous, deciduousness), by = "sp4") %>%
+  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
+  mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
+         deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE)) %>%
+  subset(!is.na(deciduousness)) # only one species does not have a deciduousness label
+
+
+coh.plot.base <- ggplot(cohort) +
+  guides(color = guide_legend(title = "Deciduousness"))
+
+coh.plot1 <- coh.plot.base +
+  geom_point(aes(x = born, y = deci_sp.plot, color = deciduousness), alpha = 0.5) +
+  theme(axis.text.y = element_text(size = 3))
+ggsave(("born.doy_by_sp.jpeg"),
+       plot = coh.plot1, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
+
+coh.plot2 <- coh.plot.base +
+  geom_density(aes(x = born.doy, color = deciduousness, linetype = "Leaf Born"), size = 1) +
+  geom_density(aes(x = dead.doy, color = deciduousness, linetype = "Leaf Dead"), size = 1) +
+  scale_linetype_manual(name = "Event", values = c("solid", "twodash")) +
+  xlab("DOY")
+ggsave(("born.dead.doy_density_by_deciduousness.jpeg"),
+       plot = coh.plot2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
+
+rectangles.1 <- data.frame(
+  xmin = 120,
+  xmax = 335,
+  ymin = 0,
+  ymax = 0.05
+)
+coh.plot3.base <- coh.plot.base +
+  scale_linetype_manual(name = "Event", values = c("solid", "twodash")) +
+  facet_grid(site ~ deciduousness) +
+  guides(color = NULL) +
+  xlab("DOY") + ylab("Density") +
+  geom_rect(data=rectangles.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+            fill='gray80', alpha=0.8)
+coh.plot3.1 <- coh.plot3.base +
+  geom_density(aes(x = born.doy, color = sp, linetype = "Leaf Born"), show.legend = FALSE) +
+  ## limiting outliers
+  scale_y_continuous(limits = c(0, 0.05)) + ggtitle("Timing of Leaf Births")
+ggsave(("born.doy_density_by_sp_deciduousness.jpeg"),
+       plot = coh.plot3.1, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
+coh.plot3.2 <- coh.plot3.base +
+  geom_density(aes(x = dead.doy, color = sp, linetype = "Leaf Dead"), show.legend = FALSE) +
+  ggtitle("Timing of Leaf Deaths")
+ggsave(("dead.doy_density_by_sp_deciduousness.jpeg"),
+       plot = coh.plot3.2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
+
+coh.sp.summ <-  cohort %>%
+  group_by(sp, site, deciduousness, deci_sp) %>%
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
+            born.mean = mean(born, na.rm = TRUE),
+            dead.mean = mean(dead, na.rm = TRUE),
+            born.sd = sd(born, na.rm = TRUE),
+            dead.sd = sd(dead, na.rm = TRUE))
+formula = y~x
+coh.plot4.base <- ggplot(coh.sp.summ,
+                         aes(x = lifespan)) +
+  guides(color = guide_legend(title = "Deciduousness")) +
+  facet_wrap(site ~ .)
+coh.plot4.1 <- ggplot(coh.sp.summ) +
+  guides(color = guide_legend(title = "Deciduousness")) +
+  facet_wrap(site ~ .) +
+  geom_density(aes(x = born.mean, color = deciduousness)) +
+  xlab("Mean of leaf born dates")
+ggsave(("mean_leaf_born_dates.jpeg"),
+       plot = coh.plot4.1, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+
+coh.plot4.2 <- ggplot(coh.sp.summ) +
+  guides(color = guide_legend(title = "Deciduousness")) +
+  facet_wrap(site ~ .) +
+  geom_density(aes(x = dead.mean, color = deciduousness)) +
+  xlab("Mean of leaf death dates")
+ggsave(("mean_leaf_death_dates.jpeg"),
+       plot = coh.plot4.2, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+
+coh.plot5 <- ggplot(coh.sp.summ,
+                    aes(x = lifespan, y = born.sd)) +
+  geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
+  guides(color = guide_legend(title = "Deciduousness")) +
+  ylab("SD of Leaf Born Dates") + xlab("Leaf Longevity (Days)") +
+  geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
+              method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.8, npcy = 0.8, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+                  parse = TRUE, npcx = 0.8, npcy = 0.7, size = 6) +
+  facet_wrap(site ~ .)
+ggsave(("leaf_longevity_vs_leaf_born_days_concentration.jpeg"),
+       plot = coh.plot5, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+
+coh.plot6 <- ggplot(coh.sp.summ,
+                    aes(x = lifespan, y = dead.sd)) +
+  geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
+  guides(color = guide_legend(title = "Deciduousness")) +
+  ylab("SD of Leaf Death Dates") + xlab("Leaf Longevity (Days)") +
+  geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
+              method = "lm", se = FALSE) +
+  stat_poly_eq(aes(label = paste(..rr.label..)),
+               npcx = 0.8, npcy = 0.85, rr.digits = 2,
+               formula = formula, parse = TRUE, size = 6) +
+  stat_fit_glance(method = 'lm',
+                  method.args = list(formula = formula),
+                  geom = 'text_npc',
+                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+                  parse = TRUE, npcx = 0.8, npcy = 0.75, size = 6) +
+  facet_wrap(site ~ .)
+ggsave(("leaf_longevity_vs_leaf_death_days_concentration.jpeg"),
+       plot = coh.plot6, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+
+coh.summ <-  cohort %>%
+  group_by(sp, site, deciduousness, deci_sp) %>%
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
+            born.doy.mean = mean(born.doy, na.rm = TRUE),
+            dead.doy.mean = mean(dead.doy, na.rm = TRUE),
+            born.doy.sd = sd(born.doy, na.rm = TRUE),
+            dead.doy.sd = sd(dead.doy, na.rm = TRUE)) %>%
+  ungroup(sp, site, deciduousness, deci_sp) %>%
+  group_by(site, deciduousness) %>%
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
+            born.doy.sd = sd(born.doy.mean, na.rm = TRUE),
+            dead.doy.sd = sd(dead.doy.mean, na.rm = TRUE),
+            born.doy.mean = mean(born.doy.mean, na.rm = TRUE),
+            dead.doy.mean = mean(dead.doy.mean, na.rm = TRUE))
+
+save(cohort, file = file.path(results.folder, "cohort.Rdata"))
+save(coh.sp.summ, file = file.path(results.folder, "coh.sp.summ.Rdata"))

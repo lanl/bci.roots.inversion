@@ -1,5 +1,5 @@
 ---
-title: "LAI workflow documentation"
+title: "LAI Workflow Documentation"
 author: "Rutuja Chitra-Tarak"
 date: "1/15/2021"
 output:
@@ -138,15 +138,15 @@ sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2
 
 6. New: Using Joe's suggestion: Could you estimate living canopy leaf mass per unit ground area present at time t (L[t]) from mean leaf longevity and leaf mass fall per unit ground area at time t (F[t]) as follows:  L[t] = F[t+1] + F[t+2] + … + F[t + mean leaf longevity]
 
-    1. For each species, calculated a day of the year average of leaf_fall_LAI (m2/m2), weighted by total trap area of sites observed, to account for differential sampling intensity over time. This gives more weight to dates after 2013 when BCI-50ha site observations began. (Figure \@ref(fig:leaf_fall_LAI))) 
+    1. For each species, calculated a day of the year average of leaf_fall_LAI (m2/m2), weighted by total trap area of sites observed, to account for differential sampling intensity over time. This gives more weight to dates after 2013 when BCI-50ha site observations began. (Figure \@ref(fig:leaf-fall-LAI))) 
     2. LAI, for the changing fraction on the tree is obtained (Figure \@ref(fig:LAI-ssn-loop)) by   
     looping over days t in 1:365   
     LAI[t] <- sum(leaf_fall_LAI[c(t: (t+sp.lifespan)) %% 365])  
-    where sp.lifespan are the number of days in species leaf lifespan, named 'sp.lifespan'  
+    where sp.lifespan are the number of days in species leaf lifespan  
     To normalise LAI, it is the divided by the maximum value.  
 
 
-```{r leaf_fall_LAI, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{leaf_fall_LAI}Seasonality curves for Leaf Fall in LAI units based on Joe's calculation. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+```{r leaf-fall-LAI, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{leaf-fall-LAI}Seasonality curves for Leaf Fall in LAI units based on Joe's calculation. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/Leaf_fall_LAI.seasonality_mean.jpeg"))
 ```
 
@@ -157,62 +157,4 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seas
 
 ```{r LAI-ssn-loop-subcol, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop-subcol}Mean LAI seasonality curves based on Joe's approach to calculation. LL = species-specific leaf lifespan in days. Species are color coded by the method/source of leaf-lifespan substitution.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_loop_color_substitution.jpeg"))
-```
-
-## Comparison between LAI seasonality based on Rutuja's calculation (step #9, with Prior) vs. Joe's (Figure \@ref(fig:LAI-ssn-loop-mod))
-
-```{r LAI-ssn-loop-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop-mod}Mean LAI seasonality curves based on Rutuja's calculation (thick lines) vs. Joe's (thin lines). LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_loop_overlaid_mod.jpeg"))
-```
-
-# IGNORE THE REST
-6. Old : For each species, prepended its leaf_gm_per_m2 data-frame by adding the number of prior dates equivalent to days in the species leaf lifespan
-    Then LAI time series is calculated with the following steps: For t in 1 to c(total no of days in the data frame - leaf.lifespan),   
-    1. Assuming zero LAI to begin with, leaf gain on date 1 is leaf fall for the future date shifted by sp.lifespan. That is,    
-    If t == 1,  
-    LAI[t] = leaf_fall_LAI[sp.lifespan]  
-    1. New leaf gain is added to LAI of the previous date, but leaf fall does not begin until the future date equivalent to sp.lifespan. So,  
-    For t > 1, if t < sp.lifespan,   
-    LAI[t] <- LAI[t-1] + leaf_fall_LAI[sp.lifespan]  
-    1. Leaf fall begins on date equivalent to sp.lifespan. So,  
-    For t > 1, if t >= sp.lifespan,  
-    LAI[t] <- LAI[t-1] + leaf_fall_LAI[sp.lifespan] - leaf_fall_LAI[t]  
-    1. Because dates before the date when leaf-fall begins, that is, the prepended dates from t = 1: sp.lifespan, would underestimate LAI because of lack of a prior, I removed the time series for the prepended dates. The remaining LAI time series for each species is shown in (Figure \@ref(fig:LAI-ts)).  
-
-```{r LAI-ts, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts}LAI time series. LL = species-specific leaf lifespan in days.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts.jpeg"))
-```
-
-7. Per Joe, for some species LAI increases/decreases over time likely due to change in population levels. Therefore detrended the LAI time series by removing the slope (Figure \@ref(fig:LAI-ts-det)).
-
-```{r LAI-ts-det, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts-det}Detrended LAI time series. LL = species-specific leaf lifespan in days.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts_detrended.jpeg"))
-```
-
-8. A species-specific LAI seasonality curve is then built by taking a mean of LAI by DOY for the detrended LAI time series. This curve is then normalized by dividing by the max LAI value across DOYs (Figure \@ref(fig:LAI-ssn)). 
-
-```{r LAI-ssn, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn}Mean LAI seasonality curves. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean.jpeg"))
-```
-
-9. The prior LAI on date 1 (Step 8.1 above) for calculating the LAI time series in Figure \@ref(fig:LAI-ts) could be estimated from the mean LAI estimate for the DOY of day 1 Figure \@ref(fig:LAI-ssn)). So Step 8.1 becomes: If t == 1,  LAI[t] =  Expected_LAI[t] + leaf_fall_LAI[sp.lifespan]. Using this prior, and following rest of the steps 2-4, the resultant LAI time series is (Figure \@ref(fig:LAI-ts-mod)), and after detrending, mean LAI by DOY time series is calculated. These are shown in Figure \@ref(fig:LAI-ssn-mod) as thick lines overlaid on LAI by DOY curves calculated without a prior (thin lines). Using a prior significantly reduces the dip in LAI for many a species. This may be more realistic for evergreen species (Joe, your thoughts?).
-
-```{r LAI-ts-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align = 'center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ts-mod}LAI time series based on a prior LAI estimate. LL = species-specific leaf lifespan in days.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI_ts_mod.jpeg"))
-```
-
-```{r LAI-ssn-mod, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-mod}Mean LAI seasonality curves based on a prior LAI estimate (thick lines) overlaid on those without a prior (thin lines). LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_overlaid_mod.jpeg"))
-```
-
-10. To make non-evergreen species fully deciduous two options are tried: (1) By rescaling the *whole* mean LAI seasonality curves to range from 0-1 (Figure \@ref(fig:LAI-ssn-mod-deci-all); rescale1 <- function (x) {x/max(x)}. This hardly allows trees to have full LAI through the wet season. Especially, see SPONMO and TRATAS. Therefore (2), I rescaled *only the lowest periods* of mean LAI seasonality curves in Figure \@ref(fig:LAI-ssn-mod-deci-all)) such that the minimum is zero (rescale0 <- function (x) {c(x - min(x))/(max(x) - min(x))}. Brevideciduous species are deciduous for a short while, while obligate deciduous species for longer; so I varied the length of the deciduousness period based on deciduous type: For brevideciduous I chose the part of the curve for which LAI was less than 0.15 quantile of the LAI distribution in the mean seasonality curve; for facultative deciduous species < 0.2 quantile; and for obligate deciduous species < 0.3 quantile. These modified curves are shown in figure (Figure \@ref(fig:LAI-ssn-mod-deci)).
-
-
-```{r LAI-ssn-mod-deci-all, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-mod-deci-all}Mean LAI seasonality curves based on a prior LAI estimate are used: Curves are then rescaled so that for evergreen species the maximum is 1, while for non-evergreen species, the range is 0-1. Species are color coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_mod_deci_unrestricted_range01.jpeg"))
-```
-
-
-```{r LAI-ssn-mod-deci, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-mod-deci}Mean LAI seasonality curves based on a prior LAI estimate are used. Then all species' curves are first rescaled so that the maximum is 1. For non-evergreen species, lowest periods based on quantiles are rescaled further such the minimum is 0. Species are color coded by deciduousness.")}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_mod_deci_restricted.jpeg"))
 ```

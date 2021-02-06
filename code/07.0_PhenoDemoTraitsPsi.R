@@ -117,18 +117,18 @@ psi.corr.fun.ls.2 <- list(
     },
   "gr.Psi.leaf" =
     function(df, dflc) {
-      # dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm.mod)
+      # dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$L.norm)
       result.df <-
         as.data.table(psi.study)[data.table(dflc), on = 'doy'][,
           psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
-            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*LAI.norm.mod, na.rm = TRUE))]#[
+            , keyby = .(depth, interval, par.sam), .(gfac = mean(psi.mod*L.norm, na.rm = TRUE))]#[
               # , keyby = .(depth, interval), .(gfac = mean(gfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "gfac")
       return(list(result.df = result.df))
     },
   "gr.Psi.VPD.leaf.add" =
     function(df, dflc) {
-      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm.mod)
+      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$L.norm)
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
                                                       psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
@@ -139,7 +139,7 @@ psi.corr.fun.ls.2 <- list(
     },
   "gr.Psi.VPD.leaf.multi" =
     function(df, dflc) {
-      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$LAI.norm.mod)
+      dflc.dt <- data.table(doy = dflc$doy, LAI = dflc$L.norm)
       result.df <-
         as.data.table(psi.study)[dflc.dt, on = 'doy'][,
         psi.mod := range01(Exponential(A = df$A, B = df$B, psi = -psi))][
@@ -480,20 +480,27 @@ psi.study <- as.data.table(psi.m)[!is.na(interval),][,
 #
 # # psi.study <- as.data.frame(psi.study)
 ##*******************************************
-
 data.model.AB.sub <- data.model.AB %>%
   ## Using parameters fitted to data when available
-  mutate(A = ifelse(is.na(data.A), model.A, data.A),
-         B = ifelse(is.na(data.B), model.B, data.B)) %>%
-  subset(sp %in% union(growth.sub$sp, mort.sub$sp)) %>%
+  mutate(A = if_else(is.na(data.A), model.A, data.A),
+         B = if_else(is.na(data.B), model.B, data.B)) %>%
+  subset(sp %in% growth.sub$sp) %>%
   # ## And LMA from LMALAM from LEAF and DISC
   subset(sp.LMA.sub == "original") %>%
-  ## removing A & B predicted from gap-filled WSG
+  # removing A & B predicted from gap-filled WSG
   subset(sp.WSG.sub == "original")
-
 save(data.model.AB.sub, file = file.path(results.folder, "data.model.AB.sub.Rdata"))
 
 setdiff(unique(growth.sub$sp), unique(data.model.AB.sub$sp))
+
+## Need LAI for these species
+sp.growth <- unique(growth.sub$sp)
+save(sp.growth, file = file.path(results.folder, "sp.growth_for_LAI.Rdata"))
+## Or really for these with ab
+sp.ab.growth <- data.model.AB.sub$sp
+
+save(sp.ab.growth, file = file.path(results.folder, "sp.ab.growth_for_LAI.Rdata"))
+
 
 # sp not present in sp.LAI.mean but in growth data sets
 # sp.growth.not.LAI <- setdiff(unique(growth.sub$sp), unique(sp.LAI.mean$sp))
@@ -710,7 +717,7 @@ erd.model.iso.n.sp
 erd.model.p
 erd.model.r2
 
-chosen.model <- "gr.Psi.VPD.leaf.multi"
+chosen.model <- "gr.Psi.VPD.multi"
 save(chosen.model, file = file.path(results.folder, "chosen.model.Rdata"))
 save(erd.model.n.sp, file = file.path(results.folder, "erd.model.n.sp.Rdata"))
 save(erd.model.p, file = file.path(results.folder, "erd.model.p.Rdata"))

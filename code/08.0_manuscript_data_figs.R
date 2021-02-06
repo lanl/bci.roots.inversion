@@ -207,7 +207,7 @@ sp.withERD.LAI.to.plot <- sp.LAI.for.model %>%
          sp = factor(sp, levels = unique(sp[order(deciduous)]), ordered=TRUE))
 
 f4 <- ggplot(sp.withERD.LAI.to.plot,
-             aes(x = doy, y = LAI.norm.mod.deci)) +
+             aes(x = doy, y = L.norm)) +
   facet_wrap(. ~ s.names, scales = "free_y", ncol = 4) +
   ylim(c(0, 1)) +
   geom_line(aes(group = sp, color = deciduousness), size = 1.5) +
@@ -610,6 +610,10 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_evergreen.jpe
 ## Mortality vs. ERD by interval----
 #****************************
 # https://rpkgs.datanovia.com/ggpubr/reference/stat_cor.html
+mrate.depth.select <- mrate.depth.select %>%
+  transform(censusint.m.plot = factor(censusint.m,
+                                      labels = c("1982-85", "*1985-90", "1990-95", "1995-00", "*2000-05", "*2005-10", "2010-15")))
+
 mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ])))[2,4]
 })
@@ -624,10 +628,6 @@ m.p.05 <- round(mrate.p.vals["2000-05"], 2)
 m.p.10 <- round(mrate.p.vals["2005-10"], 1)
 
 m.r2 <- c(mrate.r2.vals["1985-90"], mrate.r2.vals["2000-05"], mrate.r2.vals["2005-10"])
-
-mrate.depth.select <- mrate.depth.select %>%
-  transform(censusint.m.plot = factor(censusint.m,
-                                      labels = c("1982-85", "*1985-90", "1990-95", "1995-00", "*2000-05", "*2005-10", "2010-15")))
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +

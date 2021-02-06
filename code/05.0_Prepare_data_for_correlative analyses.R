@@ -2301,12 +2301,12 @@ ll.lma.plot.canopy.sitecolored <- ll.lma.plot2by2 +
 ggsave(("lifespan_by_lma_canopy_sitecolored.jpeg"),
        plot = ll.lma.plot.canopy.sitecolored, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 4.5, units='in')
 
-ll.lma.for.rel <- ll.lma.full %>% subset(strata == "CANOPY" & site == "FTS" & n_lifespan > 99)
+ll.lma.for.rel <- ll.lma.full %>% subset(strata == "CANOPY" & site == "FTS" & n_lifespan > 99 & lifeform6 == "TREE")
 odd.sp <- c("ficuin", "cecrelo", "urecra") # ficus is asynchronous, cereopia is an odd pioneer: all of htem have lifespan less than 100 days, which considerably underestiamtes deciduous species mean lifespan
 ll.lma.pnm.canopy <- ll.lma.full %>% subset(strata == "CANOPY" & site == "PNM" & n_lifespan > 99 & lifeform6 == "TREE" & !sp %in% odd.sp)
-# with or without n_lifespan > 99 constraint, mean lifespan is 160
+# with or without n_lifespan > 99 constraint, mean lifespan is 183
 mean(ll.lma.pnm.canopy$lifespan)
-# 158
+# 181
 ll.lma.plot.canopy <- ll.lma.plot %+% ll.lma.for.rel +
   geom_point(aes(size = n_lifespan, fill = deciduous), shape = 21, color = "black", size = 2.5)
 ggsave(("lifespan_by_lma_canopy.jpeg"),
@@ -2357,11 +2357,37 @@ names(gap.models.ll) <- c("LMA.lifespan")
 gap.models.ll$LMA.lifespan <- lm(lifespan ~ LMA, data = ll.lma.for.rel)
 save(gap.models.ll, file = file.path(results.folder, "gap.models.ll.Rdata"))
 
-## Gap-fill lifespan with genus, else family. If not available, then
+#
+#******************************************************
+### Load Leaf Cohort tracking data from the crane sites------
+#******************************************************
+figures.folder.cohort <- paste0("figures/PhenoDemoTraitsPsi/leaf_cohort")
+if(!dir.exists(file.path(figures.folder.cohort))) {dir.create(file.path(figures.folder.cohort))}
+
+rama95 <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/RAMA95.xlsx")) %>%
+  mutate(site = "PNM")
+rama97 <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/RAMA97.xlsx")) %>%
+  mutate(site = "PNM")
+sherman <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/SHERMAN.xlsx")) %>%
+  mutate(site = "SNL")
+
+cohort <- rbind(rama95, rama97) %>%
+  rbind(sherman) %>%
+  rename_all(tolower) %>%
+  rename(lifespan = lifetime) %>%
+  rename(sp4 = sp) %>%
+  left_join(deci %>% dplyr::select(sp, sp4), by = "sp4")
+coh.sp.summ <-  cohort %>%
+  group_by(sp) %>%
+  summarise(lifespan = mean(lifespan, na.rm = TRUE), .groups = "drop_last")
+save(coh.sp.summ, file = file.path(results.folder, "coh.sp.summ.Rdata"))
+
+## Gap-fill lifespan with cohort based dataset, else, genus, else family. If not available, then
 # If evergreen, use FTS relationship
 ## If deciduous, use average value from lifespan for PNM
 bci.lifespan <- bci.ll %>%
   subset(form == "Canopy") %>%
+  left_join(coh.sp.summ %>% rename(LL.cohort = lifespan), by = "sp") %>%
   full_join(ll.lma.full %>%
               subset(strata == "CANOPY") %>%
               select(sp, lifespan), by = "sp") %>%
@@ -2374,8 +2400,13 @@ bci.lifespan <- bci.ll %>%
   mutate(LL.family.mean = mean(lifespan, na.rm = TRUE)) %>%
   ungroup(family) %>%
   mutate(lifespan.filled = lifespan,
-         lifespan.sub = ifelse(!is.na(lifespan.filled), "LL.observed", NA),
-         # For Deciduous species substitute with genus > family > PNM average lifespan:
+         lifespan.sub = ifelse(!is.na(lifespan.filled), "Observed", NA),
+         ## sp "drypst" LL.cohort is < 100, which seems incorrect
+         lifespan.filled = ifelse(is.na(lifespan.filled) & !is.na(LL.cohort) & sp != "drypst",
+                                  LL.cohort, lifespan.filled),
+         lifespan.sub = ifelse(is.na(lifespan.sub) & !is.na(lifespan.filled), "Cohort", lifespan.sub),
+
+         # For Deciduous species substitute with cohort > genus > family > PNM average lifespan:
          lifespan.filled = ifelse(is.na(lifespan.filled) & !is.na(LL.genus.mean),
                                   LL.genus.mean, lifespan.filled),
          lifespan.sub = ifelse(is.na(lifespan.sub) & !is.na(lifespan.filled), "Genus", lifespan.sub),
@@ -2457,6 +2488,7 @@ ggsave(("LAI_by_DOY_BCI.jpeg"),
 # 59 0.25-m2 traps at the BCI Poacher’s Peninsula site and
 # 64 0.5-m2 traps at the BCI 50-ha plot.
 load(file = file.path(results.folder, "bci.lifespan.Rdata"))
+load(file = file.path(results.folder, "sp.growth_for_LAI.Rdata"))
 tot.trap.area <- list("BCI50-ha" = 0.5*62, "BCI-Poachers" = 0.25*59, "San_Lorenzo" = 0.5*40)
 leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-fall_data/Rutuja.csv")) %>%
   rename(date = mean_date,
@@ -2477,7 +2509,7 @@ leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-
               mutate(form = as.character(form)) %>%
               select(sp, form, lifespan.filled, lifespan.sub), by = "sp") %>%
   subset(form == "Canopy") %>%
-  subset(sp %in% erd.sp.names$sp) %>% droplevels()
+  subset(sp %in% sp.growth) %>% droplevels()
 
 f1 <- ggplot(leaf.fall, aes(x = date, y = leaf_gm_per_m2)) +
   geom_line(aes(group = sp, color = sp), show.legend = FALSE)
@@ -2673,17 +2705,8 @@ save(sp.LAI.for.model, file = file.path(results.folder, "sp.LAI.for.model.Rdata"
 
 
 #******************************************************
-  ### Load Leaf Cohort tracking data from the crane sites------
+### Cohort leaf presentation data lifespan vs. leaf born and death rates ------
 #******************************************************
-figures.folder.cohort <- paste0("figures/PhenoDemoTraitsPsi/leaf_cohort")
-if(!dir.exists(file.path(figures.folder.cohort))) {dir.create(file.path(figures.folder.cohort))}
-
-rama95 <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/RAMA95.xlsx")) %>%
-  mutate(site = "PNM")
-rama97 <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/RAMA97.xlsx")) %>%
-  mutate(site = "PNM")
-sherman <- read_excel(file.path("data-raw/traits/Panama_cranes_leaf_phenology_data/SHERMAN.xlsx")) %>%
-  mutate(site = "SNL")
 
 cohort <- rbind(rama95, rama97) %>%
   rbind(sherman) %>%
@@ -2699,6 +2722,13 @@ cohort <- rbind(rama95, rama97) %>%
          deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE)) %>%
   subset(!is.na(deciduousness)) # only one species does not have a deciduousness label
 
+coh.sp.summ <-  cohort %>%
+  group_by(sp, site, deciduousness, deci_sp) %>%
+  summarise(lifespan = mean(lifespan, na.rm = TRUE),
+            born.mean = mean(born, na.rm = TRUE),
+            dead.mean = mean(dead, na.rm = TRUE),
+            born.sd = sd(born, na.rm = TRUE),
+            dead.sd = sd(dead, na.rm = TRUE))
 
 coh.plot.base <- ggplot(cohort) +
   guides(color = guide_legend(title = "Deciduousness"))
@@ -2717,113 +2747,106 @@ coh.plot2 <- coh.plot.base +
 ggsave(("born.dead.doy_density_by_deciduousness.jpeg"),
        plot = coh.plot2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
 
-rectangles.1 <- data.frame(
-  xmin = 120,
-  xmax = 335,
-  ymin = 0,
-  ymax = 0.05
-)
-coh.plot3.base <- coh.plot.base +
-  scale_linetype_manual(name = "Event", values = c("solid", "twodash")) +
-  facet_grid(site ~ deciduousness) +
-  guides(color = NULL) +
-  xlab("DOY") + ylab("Density") +
-  geom_rect(data=rectangles.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
-            fill='gray80', alpha=0.8)
-coh.plot3.1 <- coh.plot3.base +
-  geom_density(aes(x = born.doy, color = sp, linetype = "Leaf Born"), show.legend = FALSE) +
-  ## limiting outliers
-  scale_y_continuous(limits = c(0, 0.05)) + ggtitle("Timing of Leaf Births")
-ggsave(("born.doy_density_by_sp_deciduousness.jpeg"),
-       plot = coh.plot3.1, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
-coh.plot3.2 <- coh.plot3.base +
-  geom_density(aes(x = dead.doy, color = sp, linetype = "Leaf Dead"), show.legend = FALSE) +
-  ggtitle("Timing of Leaf Deaths")
-ggsave(("dead.doy_density_by_sp_deciduousness.jpeg"),
-       plot = coh.plot3.2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
+  rectangles.1 <- data.frame(
+    xmin = 120,
+    xmax = 335,
+    ymin = 0,
+    ymax = 0.05
+  )
+  coh.plot3.base <- coh.plot.base +
+    scale_linetype_manual(name = "Event", values = c("solid", "twodash")) +
+    facet_grid(site ~ deciduousness) +
+    guides(color = NULL) +
+    xlab("DOY") + ylab("Density") +
+    geom_rect(data=rectangles.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+              fill='gray80', alpha=0.8)
+  coh.plot3.1 <- coh.plot3.base +
+    geom_density(aes(x = born.doy, color = sp, linetype = "Leaf Born"), show.legend = FALSE) +
+    ## limiting outliers
+    scale_y_continuous(limits = c(0, 0.05)) + ggtitle("Timing of Leaf Births")
+  ggsave(("born.doy_density_by_sp_deciduousness.jpeg"),
+         plot = coh.plot3.1, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
+  coh.plot3.2 <- coh.plot3.base +
+    geom_density(aes(x = dead.doy, color = sp, linetype = "Leaf Dead"), show.legend = FALSE) +
+    ggtitle("Timing of Leaf Deaths")
+  ggsave(("dead.doy_density_by_sp_deciduousness.jpeg"),
+         plot = coh.plot3.2, file.path(figures.folder.cohort), device = "jpeg", height = 4.5, width = 9, units='in')
 
-coh.sp.summ <-  cohort %>%
-  group_by(sp, site, deciduousness, deci_sp) %>%
-  summarise(lifespan = mean(lifespan, na.rm = TRUE),
-            born.mean = mean(born, na.rm = TRUE),
-            dead.mean = mean(dead, na.rm = TRUE),
-            born.sd = sd(born, na.rm = TRUE),
-            dead.sd = sd(dead, na.rm = TRUE))
-formula = y~x
-coh.plot4.base <- ggplot(coh.sp.summ,
-                         aes(x = lifespan)) +
-  guides(color = guide_legend(title = "Deciduousness")) +
-  facet_wrap(site ~ .)
-coh.plot4.1 <- ggplot(coh.sp.summ) +
-  guides(color = guide_legend(title = "Deciduousness")) +
-  facet_wrap(site ~ .) +
-  geom_density(aes(x = born.mean, color = deciduousness)) +
-  xlab("Mean of leaf born dates")
-ggsave(("mean_leaf_born_dates.jpeg"),
-       plot = coh.plot4.1, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+  formula = y~x
+  coh.plot4.base <- ggplot(coh.sp.summ,
+                           aes(x = lifespan)) +
+    guides(color = guide_legend(title = "Deciduousness")) +
+    facet_wrap(site ~ .)
+  coh.plot4.1 <- ggplot(coh.sp.summ) +
+    guides(color = guide_legend(title = "Deciduousness")) +
+    facet_wrap(site ~ .) +
+    geom_density(aes(x = born.mean, color = deciduousness)) +
+    xlab("Mean of leaf born dates")
+  ggsave(("mean_leaf_born_dates.jpeg"),
+         plot = coh.plot4.1, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
 
-coh.plot4.2 <- ggplot(coh.sp.summ) +
-  guides(color = guide_legend(title = "Deciduousness")) +
-  facet_wrap(site ~ .) +
-  geom_density(aes(x = dead.mean, color = deciduousness)) +
-  xlab("Mean of leaf death dates")
-ggsave(("mean_leaf_death_dates.jpeg"),
-       plot = coh.plot4.2, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+  coh.plot4.2 <- ggplot(coh.sp.summ) +
+    guides(color = guide_legend(title = "Deciduousness")) +
+    facet_wrap(site ~ .) +
+    geom_density(aes(x = dead.mean, color = deciduousness)) +
+    xlab("Mean of leaf death dates")
+  ggsave(("mean_leaf_death_dates.jpeg"),
+         plot = coh.plot4.2, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
 
-coh.plot5 <- ggplot(coh.sp.summ,
-                    aes(x = lifespan, y = born.sd)) +
-  geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
-  guides(color = guide_legend(title = "Deciduousness")) +
-  ylab("SD of Leaf Born Dates") + xlab("Leaf Longevity (Days)") +
-  geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
-              method = "lm", se = FALSE) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.8, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 6) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
-                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.8, npcy = 0.7, size = 6) +
-  facet_wrap(site ~ .)
-ggsave(("leaf_longevity_vs_leaf_born_days_concentration.jpeg"),
-       plot = coh.plot5, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+  coh.plot5 <- ggplot(coh.sp.summ,
+                      aes(x = lifespan, y = born.sd)) +
+    geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
+    guides(color = guide_legend(title = "Deciduousness")) +
+    ylab("SD of Leaf Born Dates") + xlab("Leaf Longevity (Days)") +
+    geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
+                method = "lm", se = FALSE) +
+    stat_poly_eq(aes(label = paste(..rr.label..)),
+                 npcx = 0.8, npcy = 0.8, rr.digits = 2,
+                 formula = formula, parse = TRUE, size = 6) +
+    stat_fit_glance(method = 'lm',
+                    method.args = list(formula = formula),
+                    geom = 'text_npc',
+                    aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                       sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+                    parse = TRUE, npcx = 0.8, npcy = 0.7, size = 6) +
+    facet_wrap(site ~ .)
+  ggsave(("leaf_longevity_vs_leaf_born_days_concentration.jpeg"),
+         plot = coh.plot5, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
 
-coh.plot6 <- ggplot(coh.sp.summ,
-                    aes(x = lifespan, y = dead.sd)) +
-  geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
-  guides(color = guide_legend(title = "Deciduousness")) +
-  ylab("SD of Leaf Death Dates") + xlab("Leaf Longevity (Days)") +
-  geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
-              method = "lm", se = FALSE) +
-  stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.8, npcy = 0.85, rr.digits = 2,
-               formula = formula, parse = TRUE, size = 6) +
-  stat_fit_glance(method = 'lm',
-                  method.args = list(formula = formula),
-                  geom = 'text_npc',
-                  aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
-                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.8, npcy = 0.75, size = 6) +
-  facet_wrap(site ~ .)
-ggsave(("leaf_longevity_vs_leaf_death_days_concentration.jpeg"),
-       plot = coh.plot6, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
+  coh.plot6 <- ggplot(coh.sp.summ,
+                      aes(x = lifespan, y = dead.sd)) +
+    geom_point(aes(color = deciduousness), alpha = 0.8, size = 3) +
+    guides(color = guide_legend(title = "Deciduousness")) +
+    ylab("SD of Leaf Death Dates") + xlab("Leaf Longevity (Days)") +
+    geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
+                method = "lm", se = FALSE) +
+    stat_poly_eq(aes(label = paste(..rr.label..)),
+                 npcx = 0.8, npcy = 0.85, rr.digits = 2,
+                 formula = formula, parse = TRUE, size = 6) +
+    stat_fit_glance(method = 'lm',
+                    method.args = list(formula = formula),
+                    geom = 'text_npc',
+                    aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+                                       sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+                    parse = TRUE, npcx = 0.8, npcy = 0.75, size = 6) +
+    facet_wrap(site ~ .)
+  ggsave(("leaf_longevity_vs_leaf_death_days_concentration.jpeg"),
+         plot = coh.plot6, file.path(figures.folder.cohort), device = "jpeg", height = 4, width = 7, units='in')
 
-coh.summ <-  cohort %>%
-  group_by(sp, site, deciduousness, deci_sp) %>%
-  summarise(lifespan = mean(lifespan, na.rm = TRUE),
-            born.doy.mean = mean(born.doy, na.rm = TRUE),
-            dead.doy.mean = mean(dead.doy, na.rm = TRUE),
-            born.doy.sd = sd(born.doy, na.rm = TRUE),
-            dead.doy.sd = sd(dead.doy, na.rm = TRUE)) %>%
-  ungroup(sp, site, deciduousness, deci_sp) %>%
-  group_by(site, deciduousness) %>%
-  summarise(lifespan = mean(lifespan, na.rm = TRUE),
-            born.doy.sd = sd(born.doy.mean, na.rm = TRUE),
-            dead.doy.sd = sd(dead.doy.mean, na.rm = TRUE),
-            born.doy.mean = mean(born.doy.mean, na.rm = TRUE),
-            dead.doy.mean = mean(dead.doy.mean, na.rm = TRUE))
+  coh.summ <-  cohort %>%
+    group_by(sp, site, deciduousness, deci_sp) %>%
+    summarise(lifespan = mean(lifespan, na.rm = TRUE),
+              born.doy.mean = mean(born.doy, na.rm = TRUE),
+              dead.doy.mean = mean(dead.doy, na.rm = TRUE),
+              born.doy.sd = sd(born.doy, na.rm = TRUE),
+              dead.doy.sd = sd(dead.doy, na.rm = TRUE)) %>%
+    ungroup(sp, site, deciduousness, deci_sp) %>%
+    group_by(site, deciduousness) %>%
+    summarise(lifespan = mean(lifespan, na.rm = TRUE),
+              born.doy.sd = sd(born.doy.mean, na.rm = TRUE),
+              dead.doy.sd = sd(dead.doy.mean, na.rm = TRUE),
+              born.doy.mean = mean(born.doy.mean, na.rm = TRUE),
+              dead.doy.mean = mean(dead.doy.mean, na.rm = TRUE))
 
-save(cohort, file = file.path(results.folder, "cohort.Rdata"))
-save(coh.sp.summ, file = file.path(results.folder, "coh.sp.summ.Rdata"))
+  save(cohort, file = file.path(results.folder, "cohort.Rdata"))
+

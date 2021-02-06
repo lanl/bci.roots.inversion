@@ -19,8 +19,12 @@ suppressPackageStartupMessages(
 options(tinytex.verbose = TRUE)
 ```
 
-2. Gap-filled species-level mean leaf lifespan, with genus-level mean. If genus-level not available, then family-level mean. When neither were available: (1) for deciduous species, used mean lifespan at PNM site, (2) for evergreen species, used a relationship of leaf lifespan (LL) with LMA. This LMA-based relationship was based on data at San-Lorenzo (FTS) for canopy leaves and for species with sufficient sample sizes (n_lifespan > 100) (Figure \@ref(fig:ll-lma)). Per Joe, BCI climate is more similar to San Lorenzo, while PNM site is much drier. More importantly, the BCI 50-ha plot and San Lorenzo support old-growth forests. PNM supports much younger, secondary forest (age unknown, perhaps 100 years). So, used the leaf lifespan-LMA relationship for San Lorenzo. This was used to predict leaf lifespan data for species without leaf lifespan data based on their LMA, after gap-filling species LMA data:
-    Gap-filled LMALAM_AVD with the following sequence of priority: 
+1. Gap-filled species-level mean leaf lifespan with observations from crane sites (data referred to as "cohort""); if not with genus-level mean; else family-level mean. When neither were available: 
+    1. For deciduous species, used mean lifespan at PNM site
+    2. For evergreen species, used a relationship of leaf lifespan (LL) with LMA. This LMA-based relationship was based on data at San-Lorenzo (FTS) for canopy leaves and for species with sufficient sample sizes (n_lifespan > 100) (Figure \@ref(fig:ll-lma)). 
+    
+    Per Joe, BCI climate is more similar to San Lorenzo, while PNM site is much drier. More importantly, the BCI 50-ha plot and San Lorenzo support old-growth forests. PNM supports much younger, secondary forest (age unknown, perhaps 100 years). So, used the leaf lifespan-LMA relationship for San Lorenzo. This was used to predict leaf lifespan data for species without leaf lifespan data based on their LMA, after gap-filling species LMA data:  
+    Gap-filled LMALAM_AVD with the following sequence of priority:    
     LMALAM_AVD relationship with LMADISC_AVD > LMALAM_AVD rel. with LMALEAF_AVD > Genus-level mean LMALAM_AVD (gap-filled with LMADISC_AVD/LMALEAF_AVD) > Family-level mean LMALAM_AVD (gap-filled with LMADISC_AVD/LMALEAF_AVD)
 
 ```{r ll-lma, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", results = "asis", fig.cap = paste0("\\label{lab-ll-lma}Species-specific Leaf lifespan vs. LMA observed for canopy leaves at San Lorenzo in Panama. Each observation (circle) is color coded by deciduous class. A linear model fit (line) and equation with R2 and p-value are shown.")}
@@ -59,7 +63,7 @@ fill.day.gaps <- function(df) {
     mutate(n.days = c(7, as.numeric(date - lag(date))[-1])) %>%
     #  leaf_fall rate per day for the census interval is stored on the day of the census:
     mutate(leaf_gm_rate = leaf_gm_per_m2/n.days,
-           # approx() will interpolate this forward until the next census,
+           # approx() in the next function will interpolate this forward until the next census,
            # we want it to interpolate this value backward over the past census interval,
            # so just for computation purposes, leading this value
            leaf_gm_rate_lead = lead(leaf_gm_rate, n = 1))
@@ -136,7 +140,7 @@ sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2
     leaf_fall_LAI (in m2/m2) = leaf_gm_per_m2 / LMA (in g/m2) --- (Eq 2)  
     LMA units are from Metadata_Lftraits_VariableDefinitionsOnly.doc for data in BCITRAITS_20101220.csv)
 
-6. New: Using Joe's suggestion: Could you estimate living canopy leaf mass per unit ground area present at time t (L[t]) from mean leaf longevity and leaf mass fall per unit ground area at time t (F[t]) as follows:  L[t] = F[t+1] + F[t+2] + … + F[t + mean leaf longevity]
+6. Joe's suggestion: Estimate living canopy leaf mass per unit ground area present at time t (L[t]) from mean leaf longevity and leaf mass fall per unit ground area at time t (F[t]) as follows:  L[t] = F[t+1] + F[t+2] + … + F[t + mean leaf longevity]
 
     1. For each species, calculated a day of the year average of leaf_fall_LAI (m2/m2), weighted by total trap area of sites observed, to account for differential sampling intensity over time. This gives more weight to dates after 2013 when BCI-50ha site observations began. (Figure \@ref(fig:leaf-fall-LAI))) 
     2. LAI, for the changing fraction on the tree is obtained (Figure \@ref(fig:LAI-ssn-loop)) by   
@@ -146,15 +150,14 @@ sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2
     To normalise LAI, it is the divided by the maximum value.  
 
 
-```{r leaf-fall-LAI, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{leaf-fall-LAI}Seasonality curves for Leaf Fall in LAI units based on Joe's calculation. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+```{r leaf-fall-LAI, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{leaf-fall-LAI}Seasonality curves for Leaf Fall in LAI units. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/Leaf_fall_LAI.seasonality_mean.jpeg"))
 ```
 
-```{r LAI-ssn-loop, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop}Mean LAI seasonality curves based on Joe's approach to calculation. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
+```{r LAI-ssn-loop, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop}Mean LAI seasonality curves. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_loop.jpeg"))
 ```
 
-
-```{r LAI-ssn-loop-subcol, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop-subcol}Mean LAI seasonality curves based on Joe's approach to calculation. LL = species-specific leaf lifespan in days. Species are color coded by the method/source of leaf-lifespan substitution.")}
+```{r LAI-ssn-loop-subcol, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{LAI-ssn-loop-subcol}Mean LAI seasonality curves with species color coded by the source of leaf-lifespan observation/substitution. LL = species-specific leaf lifespan in days.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf_fall/LAI.seasonality_mean_loop_color_substitution.jpeg"))
 ```

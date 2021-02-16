@@ -5,14 +5,14 @@
 # Author : Rutuja Chitra-Tarak
 # Original date: Summer, 2020
 #-----------------------------------------------------
-
-rm(list=ls())
-
-#*******************************************
-####   Load Libraries, Prep for graphics, folders  ####
-#*******************************************
-#### Written  with R version 3.6.3 ###
-#*******************************************
+#
+# rm(list=ls())
+#
+# #*******************************************
+# ####   Load Libraries, Prep for graphics, folders  ####
+# #*******************************************
+# #### Written  with R version 3.6.3 ###
+# #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
 groundhog.day = "2020-04-01"
 pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl', 'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally')

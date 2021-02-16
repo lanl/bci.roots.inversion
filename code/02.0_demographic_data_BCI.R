@@ -6,9 +6,17 @@
 
 rm(list=ls())
 gc()
-# load("/Library/Frameworks/R.framework/Versions/3.4/Resources/library/CTFSRPackage/CTFSRPackage.Rdata")
-if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, hms, ggpmisc)
+
+#*******************************************
+####   Load Libraries, Prep for graphics, folders  ####
+#*******************************************
+#### Written with R version 3.6.3 ###
+#*******************************************
+if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-04-01"
+pkgs=c('tidyverse', 'hms', 'ggpmisc')
+groundhog.library(pkgs, groundhog.day)
+
 
 # graphics info
 theme_set(theme_bw())

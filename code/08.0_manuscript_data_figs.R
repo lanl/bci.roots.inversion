@@ -384,14 +384,14 @@ hyd.table <-  erd.stem.traits %>%
   left_join(erd.sp.names, by = c("sp")) %>%
   subset(sp %in% erd.sp) %>%
   select(-sp) %>%
-  relocate(Genus, Species, Family, lwp.min_Predawn, TLP) %>%
+  select(Genus, Species, Family, lwp.min_Predawn, TLP, everything()) %>%
   mutate(lwp.min_Predawn = round(lwp.min_Predawn, 2),
          TLP = round(TLP, 2))
 
 erd.stem.traits.only <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%
-              dplyr::select(sp, depth, depth.se), by = "sp") %>%
+              select(sp, depth, depth.se), by = "sp") %>%
   subset(!is.na(depth)) %>%
   droplevels()
 erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)

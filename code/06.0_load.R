@@ -9,11 +9,14 @@
 rm(list=ls())
 
 #*******************************************
-####   Load Libraries, Prep for graphics, folders  ##
+####   Load Libraries, Prep for graphics, folders  ####
 #*******************************************
-
-if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, readxl, forcats, scales, data.table, ggpmisc, GGally)
+#### Written  with R version 3.6.3 ###
+#*******************************************
+if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-04-01"
+pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl', 'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally')
+groundhog.library(pkgs, groundhog.day)
 
 # graphics info
 theme_set(theme_bw())

@@ -22,10 +22,14 @@ source("code/06.0_load.R")
 ####   Load Libraries, Prep for graphics, folders  ##
 #*******************************************
 
-if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra,
-               scales, GGally, ggpmisc, Evapotranspiration,
-               data.table, bci.elm.fates.hydro, mgcv)
+if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-04-01"
+pkgs=c('tidyverse', 'readxl', 'forcats', 'agricolae', 'gridExtra',
+       'scales', 'GGally', 'ggpmisc', 'Evapotranspiration',
+       'data.table', 'mgcv')
+
+groundhog.library(pkgs, groundhog.day)
+
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),

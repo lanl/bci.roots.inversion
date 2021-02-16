@@ -820,14 +820,18 @@ mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select.sp.mean,
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
         axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
         legend.background = element_rect(fill = "transparent")) +
   scale_x_continuous(breaks = c(sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   # scale_fill_brewer(palette = "Greens") + #palette = "Spectral"
   guides(fill = guide_legend(title = "Census Interval"), override.aes = list(size = 1))
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.tiff")),
-       plot = mfac.plot.9.0.int,  height = 3.2, width = 3.5, units = 'in')
+       plot = mfac.plot.9.0.int,  height = 3.2, width = 3.9, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.jpeg")),
-       plot = mfac.plot.9.0.int,  height = 3.2, width = 3.5, units = 'in')
+       plot = mfac.plot.9.0.int,  height = 3.2, width = 3.9, units = 'in')
+
+
+# scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
 
 mrate.mfac.depth.select.evg <- subset(mrate.mfac.depth.select,
                                       deciduous == "E") %>%

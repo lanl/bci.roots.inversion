@@ -10,10 +10,10 @@ gc()
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ####
 #*******************************************
-#### Written with R version 3.6.3 ###
+#### Written with R version 4 ###
 #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
+groundhog.day = "2020-05-01"
 pkgs=c('tidyverse', 'hms', 'ggpmisc')
 groundhog.library(pkgs, groundhog.day)
 

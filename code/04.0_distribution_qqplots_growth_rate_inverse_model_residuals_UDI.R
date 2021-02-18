@@ -11,10 +11,10 @@ gc()
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ####
 #*******************************************
-#### Written  with R version 3.6.3 ###
+#### Written  with R version 4 ###
 #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
+groundhog.day = "2020-05-01"
 pkgs=c('tidyverse', 'gridExtra', 'spatstat', 'MASS')
 groundhog.library(pkgs, groundhog.day)
 
@@ -25,11 +25,22 @@ if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder)
 ### Growth rates of dbh residuals ------
 #*****************
 
-load(file.path("results/GLUEsetup_part2_BCI.RData"))
-growth.rate <- as.vector(unlist(growth_by_si.info$growth))
+## growth rates when dbh.residuals = "on" are residuals from a dbh mixed effects model (for spp) of
+## growth. A median residual for each sp_size is calculated only when at least data from
+# 3 trees are present across all census intervals.
+# Medians within sp_size are then centered and scaled. {residual - E(residual)/sd(residual)}
+intervals <- 5
+growth.selection <- "size_class_predefined_cc_scaled"
+growth.name <- load(file = paste0("results/sp_size.stats_growth_dbh.residuals_on_", intervals,
+                                  "_", growth.selection, ".Rdata"))
+
+growth <- get(growth.name); rm(growth.name)
+grate.long <- dplyr::bind_rows(growth, .id = 'sp_size')
+
+growth.rate <- grate.long$median
 qex <- function(x) qexp((rank(x)-.375)/(length(x)+.25))
 
-jpeg(file.path(figures.folder, "growth_rates_distribution_dbh.residuals_", growth_by_si.info$dbh.residuals, ".jpeg"),
+jpeg(file.path(figures.folder, "growth_rates_distribution_dbh.residuals_on.jpeg"),
      width = 960, height = 960, units = "px", pointsize = 24,
      quality = 100)
 par(mfrow = c(2, 2))
@@ -43,50 +54,11 @@ dev.off()
 ks.test(growth.rate, "plnorm", alternative = c("two.sided"), exact = FALSE)
 shapiro.test(sample(log(growth.rate), 5000))
 
-load("/Users/rutuja/Work_at_LANL/Projects/bci.roots.inversion/results/splevel/GLUE.resid_drop.monthsNone_cor0.3_2019-10-14_5000_0_med_size_class_predefined_cc_scaled_on_5.Rdata")
-resid.growth.all <- as.numeric(unlist(GLUE.resid))
-resid.growth <- sample(resid.growth.all, 10000)
-jpeg(file.path(figures.folder, "residual_growth_rates_distribution.jpeg", width = 960, height = 960, units = "px", pointsize = 24,
-     quality = 100))
-par(mfrow = c(2, 2))
-qqnorm(resid.growth, main = "Normal Q-Q plot: Residuals")
-plot(qex(resid.growth), resid.growth)
-qqnorm(log(resid.growth), main = "Normal Q-Q plot: log(Residuals)")
-plot(qex(resid.growth), log(resid.growth))
-dev.off()
-
-shapiro.test(sample(resid.growth.all, 5000))
-ks.test(sample(resid.growth.all, 5000), "pnorm",alternative = c("two.sided"), exact = FALSE)
-### load udi as well
-# rm(ds.bestfit);
-file.extension.base3 <- "drop.monthsFebMar_cor0.3_2019-10-14_5000_0_med_size_class_predefined_cc_scaled_on_5_dryseason_on_iso.subset_off"
-load(file = paste0("results/splevel/best10.type.udi_", file.extension.base3, ".Rdata"), envir = parent.frame(), verbose = FALSE)
-
-udi <- best10.type.udi[, sample(ncol(best10.type.udi), 10000)]
-
-pdf("figures/udi_distribution.pdf")
-for (i in 1:10) {
-par(mfrow = c(2, 2))
-ind <- apply(udi, 1, function(x) all(is.na(x)))
-udi.sp <- as.numeric(udi[!ind,][i, ])
-qqnorm(udi.sp, main = "Normal Q-Q plot: Uptake Depth Index")
-plot(qex(udi.sp), udi.sp)
-qqnorm(log(udi.sp), main = "Normal Q-Q plot: log(Uptake Depth Index)")
-plot(qex(udi.sp), log(udi.sp))
-}
-dev.off()
-
-for (i in 1:10) {
-  ind <- apply(udi, 1, function(x) all(is.na(x)))
-  udi.sp <- as.numeric(udi[!ind,][i, ])
-  shapiro.test(sample(udi.sp, 5000))
-  ks.test(sample(udi.sp, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
-}
 
 #*****************
 ### PSI ----------
 #*****************
-psi.mean <- bci.elm.fates.hydro::gpp
+psi.mean <- bci.elm.fates.hydrology::gpp
 hist(psi.mean$psi)
 shapiro.test(sample(psi.mean$psi, 5000))
 ks.test(sample(psi.mean$psi, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
@@ -164,7 +136,7 @@ dev.off()
 ### GPP ----------
 #*****************
 
-gpp <- bci.elm.fates.hydro::gpp %>% rename(gpp = value)
+gpp <- bci.elm.fates.hydrology::gpp %>% rename(gpp = value)
 hist(gpp$gpp)
 shapiro.test(sample(gpp$gpp, 5000))
 ks.test(sample(gpp$gpp, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)

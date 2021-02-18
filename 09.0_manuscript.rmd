@@ -16,9 +16,10 @@ csl: new-phytologist.csl
 ---
 
 ```{r, include=FALSE, echo = FALSE}
-if(!require("pacman", quietly=TRUE)) install.packages("pacman")
-suppressPackageStartupMessages(
-  pacman::p_load(bookdown, knitr, pander, citr, broom))
+if (!require("groundhog", quietly=TRUE)) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-04-01"
+pkgs=c('knitr', 'pander', 'citr', 'broom')
+suppressPackageStartupMessages(groundhog.library(pkgs, groundhog.day))
 options(tinytex.verbose = TRUE)
 source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")
@@ -242,8 +243,7 @@ In some of the alternative models for effective rooting depth, we explored the e
 
 We used $\mathrm{\delta}$^2^H~xylem~ as an independent observation to validate the ERD models. As root water-uptake is generally a non-fractionating process, tree $\mathrm{\delta}$^2^H~xylem~ reflects the signature of source water. Given a vertical gradient of $\mathrm{\delta}$^2^H in soil and groundwater $\mathrm{\delta}$^2^H~xylem~ provides an index of rooting depth [@Dawson.1991]. We leveraged $\mathrm{\delta}$^2^H~xylem~ from BCI [@Meinzer:2001] for the dry-season of March 1997 as this period showed largest seasonal divergence in $\mathrm{\delta}$^2^H~xylem~ among species and vertically in soil and groundwater $\mathrm{\delta}$^2^H at natural abundance level (Fig. S3). Analyzing $\mathrm{\delta}$^2^H~xylem~ for 12 tree species @Meinzer:1999 found that four species sourced water deeper than 1 m, two other at least 0.8 m deep, one between 0 to 0.2 m, and five in the 0.2 to 0.7 m depth range over which the relationship between soil depth and $\mathrm{\delta}$^2^H~soil~ was variable. 
 
-\
-We removed those species that would be leafless in March 1997 because $\mathrm{\delta}$^2^H~xylem~ for these species may not be linked with water sourced at the time of measurement and thus not comparable to species that had leaves. We also removed one species whose $\mathrm{\delta}$^2^H~xylem~ was in the uncertain depth range. For each model of ERD (Eq. \@ref(eq:M-chosen) and alternatives in SI), modeled species ERD was regressed against species $\mathrm{\delta}$^2^H~xylem~ for a maximum of six species.
+\We removed one species with a $\mathrm{\delta}$^2^H value of -33.5 (SE$\pm$2.6) which is particularly difficult to assign a source-water depth given the uncertainty in soil water $\mathrm{\delta}$^2^H data by depth (see Fig S3). $\mathrm{\delta}$^2^H~xylem~ from leafless trees may not be linked with water sourced at the time of measurement and thus may not be comparable to species that had leaves. Leaflessness status of sampled trees is not recorded in [@Meinzer:2001]. We therefore removed five species that are typically leafless in March (Joseph Wright, personal observation), that is, the month of $\mathrm{\delta}$^2^H~xylem~ sampling. For each model of ERD (Eq. \@ref(eq:M-chosen) and alternatives in SI), modeled species ERD was regressed against species $\mathrm{\delta}$^2^H~xylem~ for a maximum of six species.
 
 ## Relationships between ERD and above-ground hydraulic traits
 

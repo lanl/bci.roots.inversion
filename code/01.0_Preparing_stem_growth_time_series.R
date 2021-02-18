@@ -11,7 +11,7 @@ gc()
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ####
 #*******************************************
-#### Written with R version 3.6.3 ###
+#### Written with R version 4 ###
 #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
 groundhog.day = "2020-04-01"
@@ -614,7 +614,7 @@ gro.long.cc.med <- gro.long.cc %>%
   subset(sp_size %in% gro.long.cc.norm.med$sp_size) %>%
   ungroup(sp_size, interval)
 
-g11 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
+g11 <- ggplot(gro.long.cc.norm.stem %>% subset(sp_size == "alsebl_large"),
               aes(x = interval)) +
   geom_line(aes(y = dbh.resid.range, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
   geom_line(data = gro.long.cc.norm.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid.range), color = "black", lwd = 1) +
@@ -623,7 +623,7 @@ g11
 ggsave("dbh.residuals_stem_range01 and scaled_median range01 in black and median raw overlaid_in red__alsebl_large.jpeg", plot = g11, path =
          file.path("figures/dbh"), height = 5, width = 5, units='in')
 
-g12 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
+g12 <- ggplot(gro.long.cc.norm.stem %>% subset(sp_size == "alsebl_large"),
               aes(x = interval)) +
   geom_line(aes(y = dbh.resid.scale, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
   geom_line(data = gro.long.cc.norm.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid.scale), color = "black", lwd = 1) +
@@ -631,7 +631,7 @@ g12 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
 g12
 ggsave("dbh.residuals_stem_center and scaled_median center in black and scaled and median raw overlaid_in red_alsebl_large.jpeg", plot = g12, path =
          file.path("figures/dbh"), height = 5, width = 5, units='in')
-g13 <- ggplot(gro.long.cc.norm %>% subset(sp_size == "alsebl_large"),
+g13 <- ggplot(gro.long.cc.norm.stem %>% subset(sp_size == "alsebl_large"),
               aes(x = interval)) +
   geom_line(aes(y = dbh.resid.center, group = stemID, color = as.factor(stemID)), show.legend = FALSE) +
   geom_line(data = gro.long.cc.norm.med %>% subset(sp_size == "alsebl_large"), aes(y = med.dbh.resid.center), color = "black", lwd = 1) +

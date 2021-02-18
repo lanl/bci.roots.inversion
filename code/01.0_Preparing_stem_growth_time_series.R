@@ -7,8 +7,17 @@
 # for 50 ha obs species groups
 rm(list = ls())
 gc()
-if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, purrrlyr, scales, grid, gridExtra, lme4)
+
+#*******************************************
+####   Load Libraries, Prep for graphics, folders  ####
+#*******************************************
+#### Written with R version 3.6.3 ###
+#*******************************************
+if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-04-01"
+pkgs=c('tidyverse', 'purrrlyr', 'scales', 'grid', 'gridExtra', 'lme4')
+groundhog.library(pkgs, groundhog.day)
+
 
 # graphics info
 theme_set(theme_bw())

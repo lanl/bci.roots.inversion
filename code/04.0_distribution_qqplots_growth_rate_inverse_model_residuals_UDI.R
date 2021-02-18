@@ -6,10 +6,18 @@
 ###-------------------------------
 
 rm(list = ls())
-
 gc()
-if (!require("pacman")) install.packages("pacman")
-p_load(tidyverse, gridExtra, bci.elm.fates.hydro, spatstat, MASS)
+
+#*******************************************
+####   Load Libraries, Prep for graphics, folders  ####
+#*******************************************
+#### Written  with R version 3.6.3 ###
+#*******************************************
+if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-04-01"
+pkgs=c('tidyverse', 'gridExtra', 'spatstat', 'MASS')
+groundhog.library(pkgs, groundhog.day)
+
 figures.folder <- paste0("figures/Distributions")
 if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
 

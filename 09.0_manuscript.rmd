@@ -16,10 +16,8 @@ csl: new-phytologist.csl
 ---
 
 ```{r, include=FALSE, echo = FALSE}
-if (!require("groundhog", quietly=TRUE)) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
-pkgs=c('knitr', 'pander', 'citr', 'broom')
-suppressPackageStartupMessages(groundhog.library(pkgs, groundhog.day))
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(knitr, pander, citr, broom)
 options(tinytex.verbose = TRUE)
 source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")

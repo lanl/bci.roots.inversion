@@ -8,20 +8,10 @@
 
 rm(list=ls())
 
-#*******************************************
-####   Load Libraries, Prep for graphics, folders  ####
-#*******************************************
-#### Written  with R version 3.6.3 ###
-#*******************************************
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
-pkgs=c('tidyverse','readxl', 'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally',
-       'agricolae', 'gridExtra', 'zoo', 'Evapotranspiration',
-       'data.table', 'mgcv', 'lubridate', 'smooth', 'viridis')
-groundhog.library(pkgs, groundhog.day)
-library('bci.hydromet') # This is processed BCI climate data with Eddy Flux tower data
-library('bci.elm.fates.hydrology') # This has calibrated ELM-FATES Psi
-
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse, readxl, forcats, agricolae, gridExtra, zoo,
+               scales, GGally, ggpmisc, Evapotranspiration,
+               data.table, bci.elm.fates.hydro, mgcv, lubridate, smooth, bci.hydromet, viridis)
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),
@@ -133,7 +123,7 @@ deci <- read_excel(file.path("data-raw/traits/nomenclature_R_20190524_Rready_Osv
 deci.level_key <- c("Evg" = "1", "DF" = "2", "DB" = "3", "DO" = "4") #c(a = "apple", b = "banana", c = "carrot")
 
 deci <- deci %>% mutate(sp = tolower(sp6)) %>%
-  dplyr::select(sp4, sp, deciduous) %>%
+  select(sp4, sp, deciduous) %>%
   subset(deciduous %in% c("E", "DF", "DO", "DB")) %>% droplevels() %>%
   mutate(deciduousness = recode_factor(as.factor(deciduous), `E` = "Evergreen", `DB` = "Brevideciduous",
                                        `DF` = "Facultative Deciduous", `DO` = "Obligate Deciduous"),
@@ -148,14 +138,14 @@ deci <- deci %>% mutate(sp = tolower(sp6)) %>%
                                          levels = c("E = Evergreen", "DB = Brevideciduous",
                                                     "DF = Facultative Deciduous", "DO = Obligate Deciduous"), ordered = TRUE)) %>%
   mutate(DeciLvl = as.numeric(recode_factor(deciduous, !!!deci.level_key))) %>%
-  dplyr::select(sp4, sp, deciduous, deciduousness, deciduousness.label, DeciLvl)
+  select(sp4, sp, deciduous, deciduousness, deciduousness.label, DeciLvl)
 
 head(deci)
 save(deci, file = file.path(results.folder, "deci.prepped.Rdata"))
 
 # deci.2 <- read.csv("data-raw/traits/HydraulicTraits_Kunert/deciduous_species_Meakem.csv")
 # deci.2 <- deci.2 %>% mutate(sp = as.character(Species.code), deciduousness = as.character(Deciduousness)) %>%
-#   dplyr::select(sp, deciduousness)
+#   select(sp, deciduousness)
 
 #******************************************************
 ### Load LWP -----
@@ -169,14 +159,14 @@ lwp <- lwp %>%
          date = as.Date(Date),
          LWP_date.time.chr = paste(date.chr, LWP_coll_time),
          LWP_date.time = as.POSIXct(LWP_date.time.chr, tz = "America/Panama", format = "%Y-%m-%d %H:%M")) %>%
-  subset(LWP_bar != -9999) %>% dplyr::select(-date.chr, -LWP_date.time.chr, -Date)
+  subset(LWP_bar != -9999) %>% select(-date.chr, -LWP_date.time.chr, -Date)
 head(lwp)
 ## same sp is not measured at two different locations
 lwp.all <- lwp %>%
   mutate(sp = tolower(Species),
          # Brett's e-mail: ALBIED should be ALBIAD for Albizia adinocephala. We were using ALBIED mistakenly at the beginning
          sp = ifelse(sp == "albied", "albiad", sp)) %>%
-  dplyr::select(-Species) %>%
+  select(-Species) %>%
   rename(location = Location) %>%
   group_by(location, date, sp, Gasex_typeOrSequence, LWP_coll_time) %>%
   summarise(lwp.min = -min(LWP_bar/10, na.rm = TRUE)) %>% ## in MPa
@@ -253,7 +243,7 @@ lwp.diff <- lwp.all %>%
   unite("deci_sp", deciduous, sp, remove = FALSE)
 # View(lwp.diff)
 lwp.min.wide <- lwp.min.diurnal %>% pivot_wider(names_from = time, values_from = c(lwp.min, lwp.se, lwp.diff)) %>%
-  mutate(lwp.diff = lwp.diff_Diurnal) %>% dplyr::select(-lwp.diff_Diurnal, -lwp.diff_Predawn)
+  mutate(lwp.diff = lwp.diff_Diurnal) %>% select(-lwp.diff_Diurnal, -lwp.diff_Predawn)
 
 lwp.min <- lwp.min.diurnal %>%
   left_join(deci, by = "sp")
@@ -269,7 +259,7 @@ save(lwp.min.wide, file = file.path(results.folder, "lwp.min.wide.Rdata"))
 moist.pref <- read.csv("data-raw/Condit_et_al_2013/TreeCommunityDrySeasonSpeciesResponse.csv")
 moist.pref <- moist.pref %>% mutate(sp = paste0(tolower(str_sub(species, 1, 4)), str_sub(genus, 1, 2))) %>%
   rename(moist.pref = Moist, moist.pref.2 = Moist.2) %>%
-  dplyr::select(sp, moist.pref, moist.pref.2) %>% arrange(sp)
+  select(sp, moist.pref, moist.pref.2) %>% arrange(sp)
 # Positive values indicate moist site preference
 
 hab.swp <- read.csv(file.path("data-raw/sp.plot.hab.swp.csv"))
@@ -277,7 +267,7 @@ sp.hab <- moist.pref %>% full_join(hab.swp, by = "sp") %>%
   rename(Panama.moist.pref = moist.pref, Panama.moist.pref.2 = moist.pref.2) %>%
   mutate(Plot.swp.pref = med.swp.reg - mean(med.swp.reg, na.rm = TRUE),
          Plot.swp.ENSO = med.swp.dry - mean(med.swp.dry, na.rm = TRUE)) %>%
-  dplyr::select(-med.swp.reg, -med.swp.dry, -sd.swp.reg, -sd.swp.dry, -Panama.moist.pref.2, -Plot.swp.ENSO)
+  select(-med.swp.reg, -med.swp.dry, -sd.swp.reg, -sd.swp.dry, -Panama.moist.pref.2, -Plot.swp.ENSO)
 save(sp.hab, file = file.path(results.folder, "sp.habitat_preference_Panama_and_BCI50ha.Rdata"))
 #******************************************************
 ## Load Demographic data----
@@ -309,13 +299,13 @@ census.years.short <- format(strptime(census.years, "%Y"), "%y")
 
 mrate.long <- mrate.long %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  dplyr::select(-"_") %>%
+  select(-"_") %>%
   left_join(deci, by = "sp") %>%
   mutate(censusint.m = recode(census, `1985` = "1982-85", `1990` = "1985-90", `1995` = "1990-95", `2000` = "1995-00", `2005` = "2000-05", `2010` = "2005-10", `2015` = "2010-15"),
          size.num = recode_factor(size, !!!size.level_key),
          size = factor(size, levels = c("tiny", "small", "medium", "large"))) %>%
   left_join(demo.sp_size %>% mutate(mean.mrate = mrate, mean.grate = grate) %>%
-              dplyr::select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
+              select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
   mutate(diff.mrate = mrate - mean.mrate)
 adult.mrate.long <- adult.mrate.long %>%
   left_join(deci, by = "sp") %>%
@@ -329,21 +319,21 @@ adult.mrate.long <- adult.mrate.long %>%
               mutate(mean.mrate = mrate.adult, na.rm = TRUE,
                      mean.grate = grate.adult, na.rm = TRUE,
                      grate.se = g.adult.se, na.rm = TRUE) %>%
-              dplyr::select(sp, mean.mrate, mean.grate, grate.se), by = "sp") %>%
+              select(sp, mean.mrate, mean.grate, grate.se), by = "sp") %>%
   mutate(diff.mrate = mrate - mean.mrate)
 grate.long <- grate.long %>%
   separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  dplyr::select(-"_") %>%
+  select(-"_") %>%
   left_join(deci, by = "sp") %>%
   mutate(censusint.m = recode(interval, `1` = "1982-85", `2` = "1985-90",
                               `3` = "1990-95", `4` = "1995-00", `5` = "2000-05", `6` = "2005-10", `7` = "2010-15"),
          size.num = recode_factor(size, !!!size.level_key),
          size = factor(size, levels = c("tiny", "small", "medium", "large"))) %>%
   left_join(demo.sp_size %>% mutate(mean.mrate = mrate, mean.grate = grate) %>%
-              dplyr::select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
+              select(sp_size, mean.mrate, mean.grate), by = "sp_size") %>%
   group_by(sp_size) %>%
   ungroup(sp_size) %>%
-  left_join(gro.long.cc.med %>% dplyr::select(sp_size, interval, med.dbh.resid, med.growth),
+  left_join(gro.long.cc.med %>% select(sp_size, interval, med.dbh.resid, med.growth),
             by = c("sp_size", "interval"))
 
 save(grate.long, file = file.path(results.folder, "grate.long_by_species-size_deciduousness.Rdata"))
@@ -360,8 +350,8 @@ cut.breaks <- census.beg
 cut.breaks.2 <- as.Date(paste0(seq(1990, 2015, by = 5), "-01-01"))
 cut.labels.2 <- paste0(seq(1990, 2010, by = 5), "-", seq(1995, 2015, by = 5))
 cut.labels.interval <- 3: (length(census.meds)-1)
-psi <- bci.elm.fates.hydrology::psi
-gpp <- bci.elm.fates.hydrology::gpp
+psi <- bci.elm.fates.hydro::psi
+gpp <- bci.elm.fates.hydro::gpp
 
 psi <- psi %>%
   mutate(interval.yrs = forcats::fct_explicit_na(cut(date, include.lowest = TRUE, breaks = cut.breaks,
@@ -371,7 +361,7 @@ psi <- psi %>%
 #                           seq(from = 0.1, to =
 #                                 psi$depth[length(psi$depth)], by = 0.1))
 #
-# psi.date <- split(psi %>% dplyr::select(-interval.yrs), f = list(psi$date, psi$par.sam), drop = TRUE)
+# psi.date <- split(psi %>% select(-interval.yrs), f = list(psi$date, psi$par.sam), drop = TRUE)
 #
 # psi.interp.approx <- function(df) {
 #   x <- df$depth
@@ -423,7 +413,7 @@ clim.dat <- clim.dat %>%
          Year = format(datetime, "%Y"),
          SVP = 0.61121 * exp((18.678 - Temp_deg_C/234.84) * (Temp_deg_C/(257.14 + Temp_deg_C))),
                 VPD = SVP * (1 - RH_prc/100)) %>%
-  dplyr::select(-DateTime) %>%
+  select(-DateTime) %>%
   mutate(date = as.Date(datetime, tz = "America/Panama"))
 head(clim.dat$datetime)
 # the above takes in the given data as in Panama format, but converts it to Sys timezone
@@ -434,13 +424,13 @@ clim.dat.yr <- clim.dat %>% subset(!is.na(Year) & !Year %in% c(1985, 2019)) %>%
 ggplot(clim.dat.yr, aes(x = Year, y = rain)) +
   geom_bar(stat = "identity")
 
-clim.daily.rain <- clim.dat %>% dplyr::select(-datetime) %>%
-  dplyr::select(date,  Rainfall_mm_hr) %>%
+clim.daily.rain <- clim.dat %>% select(-datetime) %>%
+  select(date,  Rainfall_mm_hr) %>%
   group_by(date) %>%
   summarise(Precip = sum(Rainfall_mm_hr, na.rm = T))
 
 clim.daily.min.max <- clim.dat %>%
-  dplyr::select(-datetime) %>%
+  select(-datetime) %>%
   group_by(date) %>%
   summarise(Tmax = max(Temp_deg_C, na.rm = TRUE),
             Tmin = min(Temp_deg_C, na.rm = TRUE),
@@ -531,7 +521,7 @@ write.csv(clim.daily,
 save(clim.daily,
      file = file.path(results.folder, "clim.daily_with_pet.PM.Rdata"))
 
-## manual rain gauge
+## manual rain guage
 rain.man.stats <- bci.hydromet::bci.met %>%
   mutate(date = as.POSIXct(date, format = "%m/%d/%y %H:%M",
                                tz = "America/Panama"),
@@ -551,7 +541,7 @@ save(rain.man.stats,
 # # GPP from ELM.FATES output
 # gpp.rel.daily <- gpp %>% group_by(date) %>%
 #   summarise(gpp = median(value)) %>%
-#   left_join(clim.daily %>% dplyr::select(date, VPD, pet.PM, Rs), by = "date")
+#   left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date")
 
 # GPP Observed
 figures.folder.gpp <- paste0("figures/PhenoDemoTraitsPsi/gpp_by_env_variables")
@@ -565,7 +555,7 @@ bci.tower$time <- strftime(bci.tower$datetime, format = "%H:%M", tz = "America/P
 str(bci.tower$datetime); str(bci.tower$time)
 
 obs.gpp.d <- bci.tower %>%
-  dplyr::select(datetime, time, gpp, vpd, FLAG) %>% # in mumol/m2/2: units must be mumol/m2/s
+  select(datetime, time, gpp, vpd, FLAG) %>% # in mumol/m2/2: units must be mumol/m2/s
   ## removing GPP when FLAG = 0 (that is data is gap-filled, does increase the daily relationship R2 to 0.78,
   ## but retaining gap-filled data gives a better monthly-scale relationship (r2 = 0.13, so retained.))
   subset(time %in% select.time) %>%
@@ -598,7 +588,7 @@ gpp.daily <- ggplot(obs.gpp.d) +
 ggsave(("gpp.daily.jpeg"),
        plot = gpp.daily, file.path(figures.folder.gpp), device = "jpeg", height = 3, width = 9, units='in')
 
-obs.qet.d <- bci.hydromet::forcings %>% dplyr::select(date, AET, AET.flag.day) %>% # in mm/day
+obs.qet.d <- bci.hydromet::forcings %>% select(date, AET, AET.flag.day) %>% # in mm/day
   rename(AET.gap.tower = AET.flag.day,
          AET.tower = AET) %>% # this is gap filled AET
   subset(date > "2012-07-02" & date < "2017-09-01") %>% ## date after which ET data is present
@@ -606,11 +596,11 @@ obs.qet.d <- bci.hydromet::forcings %>% dplyr::select(date, AET, AET.flag.day) %
 head(obs.qet.d)
 
 gpp.rel.daily <- obs.gpp.d %>%
-  left_join(clim.daily %>% dplyr::select(date, VPD, pet.PM, Rs), by = "date") %>%
+  left_join(clim.daily %>% select(date, VPD, pet.PM, Rs), by = "date") %>%
   left_join(obs.qet.d, by = "date") %>%
-  left_join(bci.hydromet::met.tower %>% dplyr::select(date, Rs) %>% rename(Rs.tower = Rs), by = "date") %>%
-  left_join(bci.hydromet::bci.met %>% dplyr::select(date, PET_man) %>% rename(Pan.Evap = PET_man), by = "date") %>%
-  left_join(bci.hydromet::met.petPM %>% dplyr::select(date, pet.PM) %>% rename(pet.PM.tower = pet.PM), by = "date") %>%
+  left_join(bci.hydromet::met.tower %>% select(date, Rs) %>% rename(Rs.tower = Rs), by = "date") %>%
+  left_join(bci.hydromet::bci.met %>% select(date, PET_man) %>% rename(Pan.Evap = PET_man), by = "date") %>%
+  left_join(bci.hydromet::met.petPM %>% select(date, pet.PM) %>% rename(pet.PM.tower = pet.PM), by = "date") %>%
   subset(date < max(obs.gpp.d$date, na.rm = TRUE)) %>%
   droplevels()
 
@@ -632,12 +622,12 @@ ggsave(("gpp.re.daily.jpeg"),
 
 gpp.rel.monthly <- gpp.rel.daily %>%
   mutate(month = format(date, format = "%b%Y")) %>%
-  dplyr::select(-date) %>%
+  select(-date) %>%
   group_by(month) %>%
   summarise_all(list(~mean(., na.rm = TRUE)))
 gpp.rel.weekly <- gpp.rel.daily %>%
   mutate(week = format(date, format = "%U%Y")) %>%
-  dplyr::select(-date) %>%
+  select(-date) %>%
   group_by(week) %>%
   summarise_all(list(~mean(., na.rm = TRUE)))
 
@@ -858,7 +848,7 @@ save(gpp.models, file = file.path(results.folder, "gpp.models.Rdata"))
 # nlrq(ks~m*(exp(-(-psych_psi/b)^a))
 hyd <- read.csv("data-raw/traits/HydraulicTraits_BrettWolfe/ht1_20200103.csv") # Brett's data
 # vc_a = vc_a, vc_b = vc_b, vc_a_se = vc_a_se, vc_b_se = vc_b_se,
-hyd <- hyd %>% dplyr::select(-genus, -species, -deciduousness, -site) %>%
+hyd <- hyd %>% select(-genus, -species, -deciduousness, -site) %>%
   rename(KmaxS = vc_m, KmaxS_se = vc_m_se,
          LMA = lma_gm2_m, WD = xylem_den_m, TLP = tlp_m,
          p50S = p50, p80S = p80, p88S = p88,
@@ -874,7 +864,7 @@ hyd <- hyd %>% dplyr::select(-genus, -species, -deciduousness, -site) %>%
          HSMFelbow_Xylem = lwp.min_Diurnal - Felbow_Xylem,
          HSMFelbow_Bark = lwp.min_Diurnal - Felbow_Bark,
          CWR_Total = CWR_Xylem + CWR_Bark) %>%
-  left_join(deci %>% dplyr::select(-sp4, -deciduousness.label), by = "sp") %>%
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   left_join(sp.hab, by = "sp")
 
 length(unique(hyd$sp)) # 27 sp across BCI, PNM, San Lorenzo
@@ -930,8 +920,8 @@ traits.labels.table.1 <- data.frame(trait = factor(c("lwp.min_Predawn", "lwp.min
 ####----Phenology by Brett Wolfe hydraulic traits-----
 #******************************************************
 
-hyd.long <- hyd %>% dplyr::select(-DeciLvl) %>%
-  dplyr::select(sp, deciduousness, deciduous, location, TLP, p50S, p88S, vc_a, vc_b,
+hyd.long <- hyd %>% select(-DeciLvl) %>%
+  select(sp, deciduousness, deciduous, location, TLP, p50S, p88S, vc_a, vc_b,
          CWR_Total, Fcap_Xylem, CWR_Xylem, Felbow_Xylem, Fcap_Bark, CWR_Bark, Felbow_Bark, WD, LMA,
          HSM50S, HSM88S, HSMTLP, HSMFelbow_Xylem, HSMFelbow_Bark, HSMTLP.50S, HSMTLP.88S,
          Panama.moist.pref, Plot.swp.pref, lwp.min_Diurnal, lwp.min_Predawn) %>%
@@ -954,14 +944,14 @@ hyd.labels.data <- hyd.labels %>%
               summarise(value = max(value, na.rm = TRUE)), by = c("trait")) %>%
   subset(deciduousness != "NA") %>%
   droplevels() %>%
-  left_join(traits.labels.table.1 %>% dplyr::select(trait, trait.plot), by = "trait")
+  left_join(traits.labels.table.1 %>% select(trait, trait.plot), by = "trait")
 
 hyd.long <- hyd.long %>%
   left_join(traits.labels.table.1, by = "trait")
 
 save(hyd, file = file.path(results.folder, "hyd.traits.all.RData"))
 
-hyd.error <- hyd %>% dplyr::select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
+hyd.error <- hyd %>% select(sp, KmaxS_se, vc_b_se, vc_a_se, tlp_sd) %>%
   rename(KmaxS = KmaxS_se, vc_b = vc_b_se, vc_a = vc_a_se, TLP = tlp_sd) %>%
   gather(trait, se, -sp) %>%
   ## But for TLP it's not se but sd
@@ -977,25 +967,25 @@ save(hyd.long, file = file.path(results.folder, "hyd.traits.key.long.RData"))
 traits.indi <- read.csv("data-raw/traits/HydraulicTraits_Kunert/hydraulic_traits_panama_kunert.csv") # Nobby's data
 traits <- traits.indi %>%
   rename(TLP = mean_TLP_Mpa, Chl = Chl_m2_per_g) %>%
-  dplyr::select(sp, TLP, Chl) %>% group_by(sp) %>%
+  select(sp, TLP, Chl) %>% group_by(sp) %>%
   summarise_all(mean, na.rm = TRUE)
 traits <- traits %>%
-  left_join(lwp.min.wide %>% dplyr::select(sp, lwp.min_Predawn, lwp.min_Diurnal) %>%
+  left_join(lwp.min.wide %>% select(sp, lwp.min_Predawn, lwp.min_Diurnal) %>%
               subset(location = "PA-BCI"), by = "sp")
 
 leaf_cond.models <- read.csv("data-raw/traits/HydraulicTraits_Kunert/Panama_fits_leaf_K_p50_Kunert.csv")
 
 leaf.k.p80 <- leaf_cond.models %>% subset(model_type == "Exponential") %>%
   mutate(sp = data.type, p50L = -psi_kl50, p80L = -psi_kl80, KmaxL = Kmax) %>% # these are Kmax that are extrapolated from the exponential curve
-  dplyr::select(sp, KmaxL, p50L, p80L) # 21 species
+  select(sp, KmaxL, p50L, p80L) # 21 species
 traits <- traits %>%
   full_join(leaf.k.p80 %>% mutate(sp = as.character(sp)), by = "sp") %>%
   mutate(HSMTLP.50L = TLP - p50L, HSMLWP.50L = lwp.min_Diurnal - p50L,
          HSMTLP.80L = TLP - p80L, HSMLWP.80L = lwp.min_Diurnal - p80L,
          HSMLWP.TLP = lwp.min_Diurnal - TLP) %>%
   left_join(sp.hab, by = "sp") %>%
-  left_join(deci %>% dplyr::select(-sp4, -deciduousness.label), by = "sp") %>%
-  left_join(bci.traits %>% dplyr::select(sp, form1, SG100C_AVG), by = "sp")
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
+  left_join(bci.traits %>% select(sp, form1, SG100C_AVG), by = "sp")
 
 traits.labels.table.2 <- data.frame(trait = factor(c("KmaxL", "lwp.min_Predawn", "lwp.min_Diurnal", "TLP", "p50L", "p80L",
                                                      "HSMLWP.TLP", "HSMLWP.50L", "HSMTLP.50L",
@@ -1031,7 +1021,7 @@ traits.labels.table.2 <- data.frame(trait = factor(c("KmaxL", "lwp.min_Predawn",
 ####----Phenology by Kunert hydraulic traits-----
 #******************************************************
 
-traits.long <- traits %>% dplyr::select(-DeciLvl) %>%
+traits.long <- traits %>% select(-DeciLvl) %>%
   gather(trait, value, -sp, -deciduousness, -deciduous, -form1) %>%
   subset(deciduousness != "NA") %>%
   droplevels()
@@ -1055,7 +1045,7 @@ traits.labels.data <- traits.labels %>%
   transform(deciduousness = factor(deciduousness,
                                    levels = c("Evergreen", "Brevideciduous",
                                               "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE)) %>%
-  left_join(traits.labels.table.2 %>% dplyr::select(trait, trait.plot), by = "trait")
+  left_join(traits.labels.table.2 %>% select(trait, trait.plot), by = "trait")
 
 traits.long <- traits.long %>%
   left_join(traits.labels.table.2, by = "trait")
@@ -1070,12 +1060,12 @@ traits.long <- traits.long %>%
          deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
 # just for sp with hyd.traits, but traits.long does not have all those sp, and hab preference and WSG traits will be missed
 ## so beginning with those other traits
-traits.wide <- traits.long %>% dplyr::select(-trait.plot, -trait.plot.chart) %>% pivot_wider(names_from = trait, values_from = value)
+traits.wide <- traits.long %>% select(-trait.plot, -trait.plot.chart) %>% pivot_wider(names_from = trait, values_from = value)
 traits.long.hyd <- sp.hab %>%
-  full_join(bci.traits %>% dplyr::select(sp, form1, SG100C_AVG), by = "sp") %>%
-  full_join(deci %>% dplyr::select(-sp4), by = "sp") %>%
+  full_join(bci.traits %>% select(sp, form1, SG100C_AVG), by = "sp") %>%
+  full_join(deci %>% select(-sp4), by = "sp") %>%
   subset(sp %in% unique(c(hyd$sp, traits$sp))) %>%
-  left_join(traits.wide %>% dplyr::select(-form1, -deciduous, -deciduousness,
+  left_join(traits.wide %>% select(-form1, -deciduous, -deciduousness,
                                    -SG100C_AVG, -Panama.moist.pref, -Plot.swp.pref), by = "sp") %>%
   pivot_longer(cols = c(-sp, -form1, -deciduous, -deciduousness, -DeciLvl,
                         -deciduousness.label, -sp.plot, -deci_sp, -deci_sp.plot),
@@ -1149,14 +1139,14 @@ ggsave("leaf.stem.trade_off.jpeg", plot = ls.trade, path =
 traits.for.kcurves <- traits.indi %>%
   rename(TLP = mean_TLP_Mpa, Chl = Chl_m2_per_g, LMA = LMA_g_per_m2,
          SPAD = mean_SPAD, WD = WD_g_per_cm3, LD = LD_g_per_cm3) %>%
-  dplyr::select(sp, TLP, Chl, LMA, SPAD, WD, LD) %>% group_by(sp) %>%
+  select(sp, TLP, Chl, LMA, SPAD, WD, LD) %>% group_by(sp) %>%
   summarise_all(mean, na.rm = TRUE)
 sp.exp.param <- leaf_cond.models %>% subset(model_type == "Exponential") %>%
-  mutate(sp = data.type) %>% dplyr::select(sp, A, B, Kmax, Kmax_at_0.1) %>%
+  mutate(sp = data.type) %>% select(sp, A, B, Kmax, Kmax_at_0.1) %>%
   left_join(traits.for.kcurves, by = "sp") %>%
-  left_join(deci %>% dplyr::select(-sp4, -deciduousness.label), by = "sp") %>%
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   left_join(bci.traits %>%
-              dplyr::select(sp, SG100C_AVG, SG60C_AVG, LMALEAF_AVD, LMALAM_AVD, LMADISC_AVD, ## LMADISC_AVD is not available when LMALAM_AVD isn't
+              select(sp, SG100C_AVG, SG60C_AVG, LMALEAF_AVD, LMALAM_AVD, LMADISC_AVD, ## LMADISC_AVD is not available when LMALAM_AVD isn't
                      HEIGHT_AVG, WSG_CHAVE), by = "sp")
 range(sp.exp.param$Kmax, na.rm = TRUE)
 # 0.9679718 9.9476435
@@ -1265,7 +1255,7 @@ if(!dir.exists(file.path(figures.folder.kleaf))) {dir.create(file.path(figures.f
 ## ******
 ### PCA to check which variables strongly correlate with Parameters A & B
 ## ******
-df.pca <- sp.exp.param %>% remove_rownames %>% column_to_rownames(var = "sp") %>% select_if(is.numeric) ## more species without Kmax data %>% dplyr::select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
+df.pca <- sp.exp.param %>% remove_rownames %>% column_to_rownames(var = "sp") %>% select_if(is.numeric) ## more species without Kmax data %>% select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
 # if (diff(range(df.pca$root.95, na.rm = TRUE)) == 0) {
 df.pca <- df.pca %>% subset(complete.cases(df.pca))
 result.pca <- prcomp(df.pca, center = TRUE, scale = TRUE)
@@ -1343,7 +1333,7 @@ multipoly <- function(vec.z, vec.x, vec.y, common.spp = TRUE, given.df) {
         rn <- (i - 1)*length(vec.x) + j
         if (common.spp == TRUE) {
           ## to compare with data present on all variables on same species
-          df.select <- given.df %>% dplyr::select(vec.z, vec.x, vec.y)
+          df.select <- given.df %>% select(vec.z, vec.x, vec.y)
           df <- df.select[complete.cases(df.select), ]
         } else {
           df <- given.df[!is.na(given.df[, vec.y[i]]) & !is.na(given.df[, vec.x[j]]), ]
@@ -1442,7 +1432,7 @@ A.multivar.1 <- multipoly("A", c("B"),
                           c("LMALAM_AVD.filled", "LMA"), common.spp = TRUE, given.df = sp.exp.param)
                           # ## matching species with those in B slightly reduces R2
                           # given.df = sp.exp.param[complete.cases(sp.exp.param %>%
-                          #                                          dplyr::select(c("SG100C_AVG.filled", "WD", "LMALAM_AVD.filled", "LMA"))),])
+                          #                                          select(c("SG100C_AVG.filled", "WD", "LMALAM_AVD.filled", "LMA"))),])
 A.multivar.1
 save(A.multivar, file = file.path(results.folder, "A.multivar_filled_common.spp_TRUE.Rdata"))
 
@@ -1504,9 +1494,9 @@ save(k_by_psi.models, file = file.path(results.folder, "k_by_psi.models.Rdata"))
 ###**********
 ## Predict A & B from soft traits and the above models
 ###**********
-bci.AB <- bci.traits %>% dplyr::select(sp, SG100C_AVG, SG60C_AVG, WSG_CHAVE,
+bci.AB <- bci.traits %>% select(sp, SG100C_AVG, SG60C_AVG, WSG_CHAVE,
                                 LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
-  left_join(sp.exp.param %>% dplyr::select(sp, LMA), by = "sp")
+  left_join(sp.exp.param %>% select(sp, LMA), by = "sp")
 
 bci.AB <- bci.AB %>% mutate(sp.LMA.sub = ifelse(!is.na(LMALAM_AVD), "original", NA),
                             sp.WSG.sub = ifelse(!is.na(SG100C_AVG), "original", NA),
@@ -1554,7 +1544,7 @@ sp.exp.param <- sp.exp.param %>% mutate(model.A = predict(k_by_psi.models$A.B.LM
 data.model.AB <- bci.AB %>%
   subset(B >= 0 & A >= 0) %>%
   rename(model.A = A, model.B = B) %>%
-  left_join(sp.exp.param %>% dplyr::select(sp, A, B) %>%
+  left_join(sp.exp.param %>% select(sp, A, B) %>%
               rename(data.A = A, data.B = B), by = "sp") %>%
   droplevels()
 # species with AB data and modeled A B >= 0
@@ -1630,7 +1620,7 @@ ggplot(subset(data.model.AB, !is.na(data.B)) %>% droplevels(),
 ggplot(subset(data.model.AB, !is.na(data.B)) %>% droplevels(),
        aes(y = data.B, x = psi_kl80, color = SG100C_AVG)) +
   geom_point(size = 3) +
-  scale_color_viridis_c(direction = -1)
+  scale_color_viridis(direction = -1)
 load(file = file.path("results/obs_vcurves_leaf.Rdata"))
 
 pred.df.1 <- pred.df %>% left_join(data.model.AB, by = "sp") %>%
@@ -1640,7 +1630,7 @@ obs.vcurves_fits <- ggplot(pred.df.1, aes(x = psi, y = predicted)) +
   xlab("Leaf Water Potential (-MPa)") +
   ylab(expression(atop(italic('K')['max, leaf'], ""^(mmol*~m^-2*~s^-1*~MPa^-1)))) +
   # scale_color_gradient(low = "blue", high = "Red")
-  scale_color_viridis_c(name = expression("WSG ("*g*cm^-3*")"), direction = -1) +
+  scale_color_viridis(name = expression("WSG ("*g*cm^-3*")"), direction = -1) +
   theme(legend.position = c(0.8, 0.65),
         legend.title = element_text(size = 10),
         legend.text = element_text(size = 10),
@@ -1662,12 +1652,12 @@ obs.vcurves_full.pre <- ggplot(obs.sp.vcurves.1, aes(x = psi, y = k.predict)) +
         legend.background = element_rect(fill = "transparent"))
 obs.vcurves_full.wsg <- obs.vcurves_full.pre +
   geom_line(aes(group = sp, col = SG100C_AVG), size = 0.5) +
-  scale_color_viridis_c(name = expression("WSG ("*g*cm^-3*")"), direction = -1, option = "B")
+  scale_color_viridis(name = expression("WSG ("*g*cm^-3*")"), direction = -1, option = "B")
 ggsave(plot = obs.vcurves_full.wsg, file.path(figures.folder.kleaf, paste0("obs_vcurves_fits_ggplot_wsg.tiff")),
        device = "tiff", height = 3, width = 3.5, units='in')
 obs.vcurves_full.lma <- obs.vcurves_full.pre +
   geom_line(aes(group = sp, col = LMALAM_AVD.filled), size = 0.5) +
-  scale_color_viridis_c(name = expression("LMA ("*g*cm^-2*")"), direction = -1, option = "D")
+  scale_color_viridis(name = expression("LMA ("*g*cm^-2*")"), direction = -1, option = "D")
 ggsave(plot = obs.vcurves_full.lma, file.path(figures.folder.kleaf, paste0("obs_vcurves_fits_ggplot_lma.tiff")),
        device = "tiff", height = 3, width = 3.5, units='in')
 
@@ -1682,12 +1672,12 @@ obs.plccurves.pre <- ggplot(obs.sp.vcurves.1, aes(x = psi, y = k.predict.percent
 
 obs.plccurves.wsg <- obs.plccurves.pre +
   geom_line(aes(group = sp, col = SG100C_AVG), size = 0.5) +
-  scale_color_viridis_c(name = expression("WSG ("*g*cm^-3*")"), direction = -1, option = "B")
+  scale_color_viridis(name = expression("WSG ("*g*cm^-3*")"), direction = -1, option = "B")
 ggsave(plot = obs.plccurves.wsg, file.path(figures.folder.kleaf, paste0("obs_plccurves_fits_ggplot_wsg.tiff")),
        device = "tiff", height = 3, width = 3.5, units='in')
 obs.plccurves.lma <- obs.plccurves.pre +
   geom_line(aes(group = sp, col = LMALAM_AVD.filled), size = 0.5) +
-  scale_color_viridis_c(name = expression("LMA ("*g*cm^-2*")"), direction = -1, option = "D")
+  scale_color_viridis(name = expression("LMA ("*g*cm^-2*")"), direction = -1, option = "D")
 ggsave(plot = obs.plccurves.lma, file.path(figures.folder.kleaf, paste0("obs_plccurves_fits_ggplot_lma.tiff")),
        device = "tiff", height = 3, width = 3.5, units='in')
 
@@ -1965,11 +1955,11 @@ sp.exp.param.stem <- hyd %>%
   rename(Kmax = KmaxS, A = vc_a, B = vc_b, A_se = vc_a_se, B_se = vc_b_se,
          LMA_sd = lma_gm2sd, LMA_n = lma_n,
          WD_sd = xylem_den_sd) %>%
-  dplyr::select(sp, Kmax, A, B, A_se, B_se, WD, LMA, LMA_sd, LMA_n, WD_sd) %>%
-  left_join(deci %>% dplyr::select(-sp4, -deciduousness.label), by = "sp") %>%
+  select(sp, Kmax, A, B, A_se, B_se, WD, LMA, LMA_sd, LMA_n, WD_sd) %>%
+  left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp") %>%
   left_join(bci.traits %>%
-              dplyr::select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD), by = "sp") %>%
-  left_join(data.model.AB %>% dplyr::select(sp, model.B, model.A, data.A, data.B), by = "sp")
+              select(sp, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD), by = "sp") %>%
+  left_join(data.model.AB %>% select(sp, model.B, model.A, data.A, data.B), by = "sp")
 range(sp.exp.param.stem$Kmax, na.rm = TRUE)
 # 0.87 8.83
 
@@ -1978,7 +1968,7 @@ range(sp.exp.param.stem$Kmax, na.rm = TRUE)
 ## ******
 
 df.pca.stem <- sp.exp.param.stem %>% remove_rownames %>% column_to_rownames(var = "sp") %>%
-  select_if(is.numeric) ## more species without Kmax data %>% dplyr::select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
+  select_if(is.numeric) ## more species without Kmax data %>% select(-SafetyMargin.p50, -p50_Kmax, -Kmax)
 # if (diff(range(df.pca$root.95, na.rm = TRUE)) == 0) {
 df.pca.stem <- df.pca.stem %>% subset(complete.cases(df.pca.stem))
 result.pca.stem <- prcomp(df.pca.stem, center = TRUE, scale = TRUE)
@@ -2043,7 +2033,7 @@ save(k_by_psi.models.stem, file = file.path(results.folder, "k_by_psi.models.ste
 ## Predict A & B from soft traits and the above models
 ###**********
 
-bci.AB.stem <- bci.traits %>% dplyr::select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
+bci.AB.stem <- bci.traits %>% select(sp, WSG_CHAVE, SG60C_AVG, SG100C_AVG, LMALEAF_AVD, LMALAM_AVD)
 bci.AB.stem <- bci.AB.stem %>% mutate(LMALAM_AVD = ifelse(is.na(LMALAM_AVD),
                              predict(gap.models$LMA.LAM.LEAF, newdata = bci.AB.stem), LMALAM_AVD))
 bci.AB.stem <- bci.AB.stem %>% mutate(LMA = predict(k_by_psi.models.stem[[3]], newdata = bci.AB.stem))
@@ -2056,7 +2046,7 @@ bci.AB.stem <- bci.AB.stem %>% mutate(B = predict(k_by_psi.models.stem[[1]], new
 data.model.AB.stem <- bci.AB.stem %>%
   subset(B >= 0 & A >= 0) %>%
   rename(model.A = A, model.B = B) %>%
-  left_join(sp.exp.param.stem %>% dplyr::select(sp, A, B) %>%
+  left_join(sp.exp.param.stem %>% select(sp, A, B) %>%
               rename(data.A = A, data.B = B), by = "sp")
 
 for (i in 1:nrow(data.model.AB.stem)) {
@@ -2130,7 +2120,7 @@ df.name <- "predicted_AB"
 
 if (df.name == "predicted_AB_for_data_sp") {
   df.plot.stem <- bci.AB.stem %>%
-    left_join(deci %>% dplyr::select(-sp4, -deciduousness.label), by = "sp")
+    left_join(deci %>% select(-sp4, -deciduousness.label), by = "sp")
 } else if(df.name == "predicted_AB") {
   df.plot.stem <- sp.exp.param.stem
 }
@@ -2259,7 +2249,7 @@ ll.lma.full <- read_excel(file.path("data-raw/traits/Wright_SJ_Lftraits/lftraits
   rename(site = `site$`, sp4 = `sp4$`, strata = `strata$`, lifeform6 = `lifeform6$`,
          genus = `genus$`, species = `species$`) %>%
   left_join(deci %>% dplyr::select(sp, sp4), by = "sp4") %>%
-  dplyr::select(site, sp, sp4, genus, species, lifetime, n_lifetime, lma, strata, lifeform6) %>%
+  select(site, sp, sp4, genus, species, lifetime, n_lifetime, lma, strata, lifeform6) %>%
   rename(lifespan = lifetime, n_lifespan = n_lifetime) %>%
   mutate(log.ll = log(lifespan),
          log.lma = log(lma)) %>%
@@ -2329,7 +2319,7 @@ load(file = file.path(results.folder, "gap.models.Rdata"))
 # Gap-fill LMALAM_AVD with rel with LMADISC_AVD > rel with LMALEAF_AVD > Genus > Family as available
 bci.ll <- bci.traits %>%
   rename(genus = GENUS., family = FAMILY.) %>%
-  dplyr::select(genus, family, sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
+  select(genus, family, sp, form1, LMALAM_AVD, LMALEAF_AVD, LMADISC_AVD) %>%
   group_by(genus) %>%
   mutate(LMA.genus.mean = mean(LMALAM_AVD, na.rm = TRUE),
          LMA.genus.mean = ifelse(is.na(LMA.genus.mean),
@@ -2360,7 +2350,7 @@ bci.ll <- bci.traits %>%
   mutate(form = recode_factor(as.factor(form1), `T` = "Canopy", `U` = "Understorey")) %>%
   transform(form = factor(form,
                           levels = c("Understorey", "Canopy"), ordered = TRUE)) %>%
-  dplyr::select(sp, LMA, LMALEAF_AVD, form, LMA.from.genus, genus, LMA.from.family, family)
+  select(sp, LMA, LMALEAF_AVD, form, LMA.from.genus, genus, LMA.from.family, family)
 
 gap.models.ll <- vector(mode = "list", length = 1)
 names(gap.models.ll) <- c("LMA.lifespan")
@@ -2400,7 +2390,7 @@ bci.lifespan <- bci.ll %>%
   left_join(coh.sp.summ %>% rename(LL.cohort = lifespan), by = "sp") %>%
   full_join(ll.lma.full %>%
               subset(strata == "CANOPY") %>%
-              dplyr::select(sp, lifespan), by = "sp") %>%
+              select(sp, lifespan), by = "sp") %>%
   left_join(deci %>% dplyr::select(sp, deciduous), by = "sp") %>%
   ## First create dnus and family average
   group_by(genus) %>%
@@ -2517,7 +2507,7 @@ leaf.fall <- read.csv(file.path("data-raw/traits/Wright_Osvaldo_BCI_weekly_leaf-
          sp_site = paste(sp, site, sep = "_")) %>%
   left_join(bci.lifespan %>%
               mutate(form = as.character(form)) %>%
-              dplyr::select(sp, form, lifespan.filled, lifespan.sub), by = "sp") %>%
+              select(sp, form, lifespan.filled, lifespan.sub), by = "sp") %>%
   subset(form == "Canopy") %>%
   subset(sp %in% sp.growth) %>% droplevels()
 
@@ -2582,15 +2572,14 @@ leaf.interp.approx <- function(df) {
     mutate(leaf_gm.int.raw = ifelse(is.na(leaf_gm_rate), leaf_gm.int.raw, leaf_gm_rate),
            sp = df$sp[1],
            site = df$site[1],
-           site.trap.area = df$site.trap.area[1]) %>%
-    dplyr::select(-sp_site)
+           site.trap.area = df$site.trap.area[1])
   return(df.1)
 }
 
 leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
                         as.data.frame) %>%
   bind_rows(.id = "sp_site") %>%
-  dplyr::select(-leaf_gm_rate_lead) %>%
+  select(-leaf_gm_rate_lead) %>%
   group_by(sp, date) %>%
   # Sample size is greater at BCI, so weighing that more
   # When sp at both sites, taking average of two sites weighted by the site.trap.area
@@ -2598,12 +2587,10 @@ leaf.fall.int <- lapply(lapply(leaf.fall.daygaps, leaf.interp.approx),
             sum.site.trap.area = sum(site.trap.area, na.rm = TRUE),
             BCI_50ha_present = if_else(any(site == "BCI-50ha"), TRUE, FALSE), .groups = "drop_last") %>%
   mutate(leaf_fall = if_else(is.nan(leaf_fall), 0, leaf_fall)) %>%
-  ungroup(sp, date)
-
-leaf.fall.int <- leaf.fall.int %>%
+  ungroup(sp, date) %>%
   ## adding lifespan by species
   left_join(bci.lifespan %>%
-              dplyr::select(sp, LMA, lifespan.filled, lifespan.sub) %>%
+              select(sp, LMA, lifespan.filled, lifespan.sub) %>%
               rename(lifespan = lifespan.filled), by = "sp") %>%
   subset(!is.na(lifespan)) %>%
   subset(sp != "na") %>%
@@ -2613,12 +2600,12 @@ leaf.fall.int <- leaf.fall.int %>%
   mutate(leaf_fall_LAI = leaf_fall/LMA, LAI = NA)
 
 lma.lifespan.sp <- bci.lifespan %>%
-  dplyr::select(sp, LMA, lifespan.filled, lifespan.sub, form) %>%
+  select(sp, LMA, lifespan.filled, lifespan.sub, form) %>%
   rename(lifespan = lifespan.filled) %>%
   subset(sp %in% unique(leaf.fall.int$sp)) %>%
   left_join(deci %>% dplyr::select(sp, deciduousness), by = "sp") %>%
   mutate(sp = factor(sp, levels = unique(sp[order(deciduousness)]), ordered=TRUE)) %>%
-  dplyr::select(-deciduousness)
+  select(-deciduousness)
 
 ## Plotting leaf-fall
 f.0 <- ggplot(leaf.fall.int %>%
@@ -2628,7 +2615,7 @@ f.0 <- ggplot(leaf.fall.int %>%
   guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
                               override.aes = list(size = 3))) +
   theme(legend.position = "top", legend.title = element_blank()) +
-  # scale_color_viridis_c_d(drop = FALSE) +
+  # scale_color_viridis_d(drop = FALSE) +
   theme(axis.text.x = element_text(face = "plain", angle = 90, vjust = 1, hjust = 1)) +
   theme(strip.text.x = element_text(size = 14),
         legend.text = element_text(size = 14)) +
@@ -2704,7 +2691,7 @@ ggsave("LAI.seasonality_mean_loop.jpeg",
        plot = f.1.2, file.path(figures.folder.phen), device = "jpeg", height = 12, width = 14, units='in')
 
 rect.dat <- LAI.doy.1 %>% subset(sp %in% unique(LAI.doy.1$sp)) %>%
-  dplyr::select(sp, deciduousness) %>% mutate(ymin = 0, ymax = 1, xmin = -Inf, xmax = Inf)
+  select(sp, deciduousness) %>% mutate(ymin = 0, ymax = 1, xmin = -Inf, xmax = Inf)
 f.1.3 <- f.1 %+% LAI.doy.1 +
   # geom_rect(data = rect.dat, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = deciduousness),
   #           alpha = 0.7, inherit.aes = FALSE) +
@@ -2812,7 +2799,7 @@ ggsave(("born.dead.doy_density_by_deciduousness.jpeg"),
     guides(color = guide_legend(title = "Deciduousness")) +
     ylab("SD of Leaf Born Dates") + xlab("Leaf Longevity (Days)") +
     geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
-                method = "lm", se = FALSE, formula = formula) +
+                method = "lm", se = FALSE) +
     stat_poly_eq(aes(label = paste(..rr.label..)),
                  npcx = 0.8, npcy = 0.8, rr.digits = 2,
                  formula = formula, parse = TRUE, size = 6) +
@@ -2832,7 +2819,7 @@ ggsave(("born.dead.doy_density_by_deciduousness.jpeg"),
     guides(color = guide_legend(title = "Deciduousness")) +
     ylab("SD of Leaf Death Dates") + xlab("Leaf Longevity (Days)") +
     geom_smooth(data = subset(coh.sp.summ, site == "SNL"),
-                method = "lm", se = FALSE, formula = formula) +
+                method = "lm", se = FALSE) +
     stat_poly_eq(aes(label = paste(..rr.label..)),
                  npcx = 0.8, npcy = 0.85, rr.digits = 2,
                  formula = formula, parse = TRUE, size = 6) +

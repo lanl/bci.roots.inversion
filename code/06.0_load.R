@@ -7,20 +7,15 @@
 #-----------------------------------------------------
 #
 rm(list=ls())
-#
-# #*******************************************
-# ####   Load Libraries, Prep for graphics, folders  ####
-# #*******************************************
+
+#*******************************************
+####   Load Libraries, Prep for graphics, folders  ##
+#*******************************************
 # #### Written  with R version 3.6.3 ###
 # #*******************************************
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-set.groundhog.folder('/Users/ftuser/Library/R/3.6/library')
-groundhog.day = "2020-04-01"
-groundhog.library('devtools', groundhog.day)
-devtools::unload('lattice') # this is to remove a newer version that conflicts with what groundhog needs
-pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
-       'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown')
-groundhog.library(pkgs, groundhog.day)
+
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse, readxl, forcats, scales, data.table, ggpmisc, GGally)
 
 # graphics info
 theme_set(theme_bw())

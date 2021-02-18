@@ -11,17 +11,8 @@
 
 rm(list=ls())
 gc()
-#*******************************************
-####   Load Libraries, Prep for graphics, folders  ####
-#*******************************************
-#### Written with R version 3.6.3 ###
-#*******************************************
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
-pkgs=c('tidyverse', 'scales', 'ggpmisc')
-groundhog.library(pkgs, groundhog.day)
-
-
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse, scales, ggpmisc)
 # graphics info
 theme_set(theme_bw())
 theme_update(text = element_text(size = 14),
@@ -129,7 +120,7 @@ iso.2 <- iso.2.raw %>%
 iso.2 <- iso.2 %>% left_join(iso %>% dplyr::select(sp, Phenology), by = "sp") %>%
   left_join(iso.change %>% rename(change.source = source), by = "sp") %>%
   arrange(Phenology)
-# View(iso.2)
+View(iso.2)
 
 #### Plotting soil isotopic variation from Meinzer et al and Jackson et al -----------
 iso.soil.1 <- read.csv("data-raw/traits/isotopes/Meinzer1999_Fig2A_soil_deltaD_BCI_data_Mar_Apr_1997.csv", na.strings = c("NA",""), header = T, row.names = NULL, check.names = F)
@@ -152,7 +143,7 @@ g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
   xlab(soil.label) + ylab("Depth (cm)") +
   scale_y_reverse() +
   xlim(-60,0) +  theme(text = element_text(size = 20)) +
-  geom_smooth(method = "lm", se = FALSE, size = 0.5, formula = formula) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
   geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.3, width = 0.2) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2) +
   stat_poly_eq(aes(label = stat(eq.label)),
@@ -172,7 +163,7 @@ ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_
 ggsave(file.path(paste0("figures/UDI_confidence/Meinzer_etal_1999_Depth_vs_soil_deltaD.tiff")),
        height = 3, width = 3.2, units='in')
 
-g1 +   geom_smooth(method = "loess", se = FALSE, span = 0.7, formula = formula) #+
+g1 +   geom_smooth(method = "loess", se = FALSE, span = 0.7) #+
   # geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.5)
 
 depth.m2 <- lm(depth ~ soil.deltaD, data = iso.soil.2)
@@ -183,7 +174,7 @@ depth.m2.label1 = paste0("Depth = ", round(depth.m2$coefficients[2], 2),
 depth.m2.label2 = paste0("R2 = ", round(summ.depth.m2$r.squared, 2),
                          "\np = ", round(summ.depth.m2$coefficients[2, 4], 4))
 # but iso.soil.2 does not have se
-g1 %+% iso.soil.2 + geom_smooth(method = "glm", se = FALSE, formula = formula) +
+g1 %+% iso.soil.2 + geom_smooth(method = "glm", se = FALSE) +
   geom_text(x = -35, y= 0, label = depth.m2.label1, color = "black", size = 3) +
   geom_text(x = -10, y= -85, label = depth.m2.label2, color = "black", size = 4) +
   xlim(-60,0) +  ylim(100, 0) + theme(text = element_text(size = 20))
@@ -221,7 +212,7 @@ ggplot(iso.2.raw, aes(y =  Xylem_sap_deltaD_permil, x = DBH, color = tlp)) +
 ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_March97_DBH_Fig5B.jpeg")), height = 5, width = 7, units ='in')
 
 ggplot(iso.2.raw, aes(y =  delta_sapflow_percent_per_day, x = delta_xylem_sap_deltaD_permil_per_day, color = tlp)) +
-  geom_smooth(method = "lm", se = FALSE, size = 0.5, color = "black", formula = formula) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5, color = "black") +
   geom_text(aes(y =  delta_sapflow_percent_per_day + 0.05, label = sp),
             size = 4) +
   geom_point(aes(shape = deciduousness), size = 3) +
@@ -235,7 +226,7 @@ ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Xylem_Sap_deltaD_b
        height = 5, width = 7, units ='in')
 
 ggplot(iso.2.raw, aes(y = SE_mean_monthly_leaf_fall, x = delta_xylem_sap_deltaD_permil_per_day, color = tlp)) +
-  geom_smooth(method = "lm", se = FALSE, size = 0.5, color = "black", formula = formula) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5, color = "black") +
   geom_text(aes(y = SE_mean_monthly_leaf_fall + 0.002, label = sp),
             size = 4) +
   geom_point(aes(shape = deciduousness), size = 3) +
@@ -295,7 +286,7 @@ ggsave(file.path(paste0("data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fi
 save(iso.1.3.join, file = "data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4.Rdata")
 load(file = "data-raw/traits/isotopes/Oecologia 1995 Jackson_Fig3_Fig4_& Meinzer 1999_Fig4.Rdata")
 ## Combine all isotopic records:
-# View(iso)
+View(iso)
 
 iso.all.list <- list(iso, iso.2.raw, iso.3, iso.change)
 names(iso.all.list) <- c(iso$source[1], iso.2.raw$source[1], iso.3$source[1], iso.change$source[1])

@@ -1048,5 +1048,5 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
 #****************************
 ## species with lifespan----
 #****************************
-erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifetime)])])
-erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifetime)])])
+erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifespan)])])
+erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifespan)])])

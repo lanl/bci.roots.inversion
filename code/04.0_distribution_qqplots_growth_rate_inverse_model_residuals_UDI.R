@@ -17,6 +17,7 @@ if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
 groundhog.day = "2020-05-01"
 pkgs=c('tidyverse', 'gridExtra', 'spatstat', 'MASS')
 groundhog.library(pkgs, groundhog.day)
+library(bci.elm.fates.hydrology)
 
 figures.folder <- paste0("figures/Distributions")
 if(!dir.exists(file.path(figures.folder))) {dir.create(file.path(figures.folder))}
@@ -58,12 +59,12 @@ shapiro.test(sample(log(growth.rate), 5000))
 #*****************
 ### PSI ----------
 #*****************
-psi.mean <- bci.elm.fates.hydrology::gpp
+psi.mean <- bci.elm.fates.hydrology::psi
 hist(psi.mean$psi)
 shapiro.test(sample(psi.mean$psi, 5000))
 ks.test(sample(psi.mean$psi, 5000), "plnorm", alternative = c("two.sided"), exact = FALSE)
 
-swp <- -psi.mean$psi
+swp <- -psi.mean$psi[1:100000]
 
 # https://daviddalpiaz.github.io/stat3202-sp19/notes/fitting.html
 jpeg(file.path(figures.folder, "psi_distribution.jpeg"), width = 900, height = 600, units = "px", pointsize = 24,

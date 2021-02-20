@@ -15,7 +15,7 @@ bibliography: references.bib
 csl: new-phytologist.csl
 ---
 
-```{r, include=FALSE, echo = FALSE}
+```{r setup, include=FALSE, echo = FALSE}
 if(!require("pacman", quietly=TRUE)) install.packages("pacman")
 suppressPackageStartupMessages(
   pacman::p_load(bookdown, knitr, pander, citr, broom))
@@ -27,7 +27,6 @@ source("code/08.0_manuscript_data_figs.R")
 ```
 
 ```{r setup2, echo = FALSE}
-library(knitr)
 opts_knit$set(eval.after = "fig.cap")
 ```
 

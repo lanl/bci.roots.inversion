@@ -15,9 +15,9 @@ bibliography: references.bib
 csl: new-phytologist.csl
 ---
 
-```{r, include=FALSE, echo = FALSE}
+```{r setup1, include=FALSE, echo = FALSE}
 if (!require("groundhog", quietly=TRUE)) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
+groundhog.day = "2020-05-01"
 pkgs=c('knitr', 'pander', 'citr', 'broom')
 suppressPackageStartupMessages(groundhog.library(pkgs, groundhog.day))
 options(tinytex.verbose = TRUE)
@@ -27,8 +27,7 @@ source("code/08.0_manuscript_data_figs.R")
 # install.packages(c("vctrs", "rlang"))
 ```
 
-```{r setup, echo = FALSE}
-library(knitr)
+```{r setup2, echo = FALSE}
 opts_knit$set(eval.after = "fig.cap")
 ```
 

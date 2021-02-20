@@ -23,7 +23,7 @@ source("code/06.0_load.R")
 #*******************************************
 
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
+groundhog.day = "2020-05-01"
 pkgs=c('tidyverse', 'readxl', 'forcats', 'agricolae', 'gridExtra',
        'scales', 'GGally', 'ggpmisc', 'Evapotranspiration',
        'data.table', 'mgcv')

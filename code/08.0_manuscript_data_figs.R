@@ -374,7 +374,7 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 # save.image("results/manuWorkSpace.RData")
 
 #****************************
-### Hydraulic traits vs. ERD---
+### Hydraulic traits vs. ERD----
 #****************************
 
 hyd.table <-  erd.stem.traits %>%
@@ -383,15 +383,15 @@ hyd.table <-  erd.stem.traits %>%
   pivot_wider(names_from = trait, values_from = value) %>%
   left_join(erd.sp.names, by = c("sp")) %>%
   subset(sp %in% erd.sp) %>%
-  select(-sp) %>%
-  select(Genus, Species, Family, lwp.min_Predawn, TLP, everything()) %>%
+  dplyr::select(-sp) %>%
+  dplyr::select(Genus, Species, Family, lwp.min_Predawn, TLP, everything()) %>%
   mutate(lwp.min_Predawn = round(lwp.min_Predawn, 2),
          TLP = round(TLP, 2))
 
 erd.stem.traits.only <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%
-              select(sp, depth, depth.se), by = "sp") %>%
+              dplyr::select(sp, depth, depth.se), by = "sp") %>%
   subset(!is.na(depth)) %>%
   droplevels()
 erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
@@ -425,9 +425,9 @@ erd.pairs <- erd.stem.traits.only.lab %>%
   pivot_wider(names_from = trait.plot.chart, values_from = value) %>%
   rename(ERD = depth)
 
-p_load(corrplot, ggcorrplot)
+
 cor.data <- erd.pairs %>% dplyr::select(-sp) %>%
-  relocate(ERD, `italic(\"K\")[\"max,stem\"]`)
+  dplyr::select(ERD, `italic(\"K\")[\"max,stem\"]`, everything())
 M <- cor(cor.data, use = "pairwise.complete.obs", method = "spearman")
 
 res1 <- cor.mtest(cor.data, conf.level = 0.95,
@@ -471,9 +471,9 @@ corrplot(M, type = "upper", order = "original",
          insig = "p-val", sig.level = -1, pch.col = "grey90",
          diag = FALSE, cl.ratio = .2, cl.align = "l", win.asp= 1)
 graphics.off()
-chart.erd.pairs <- ggpairs(
+chart.erd.pairs <- GGally::ggpairs(
   erd.pairs %>% dplyr::select(-sp),
-  upper = list(continuous = wrap('cor', method = "spearman")),
+  upper = list(continuous ='cor'),
   # upper = list(continuous = wrap(cor_func.2,
   #                                method = 'spearman', symbol = expression('\u03C1 ='))),
   lower = list(
@@ -814,7 +814,7 @@ mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select.sp.mean,
                                  fill = censusint.m)) +
   xlab("Effective Rooting Depth (m)") +
   ylab(expression('Time spent beyond '*Psi['crit']*' (%yr'^-1*')')) +
-  geom_bar(position = position_dodge2(), stat="identity") +
+  geom_col(position = position_dodge2()) +
   geom_errorbar(position = position_dodge2(.9, padding = .6)) +
   theme(legend.position = c(0.75, 0.65),
         legend.title = element_text(size = 10),
@@ -1050,3 +1050,4 @@ ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
 #****************************
 erd.sp.with.ll <- length(erd.sp[erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifespan)])])
 erd.sp.wo.ll <- length(erd.sp[!erd.sp %in% unique(bci.lifespan$sp[!is.na(bci.lifespan$lifespan)])])
+

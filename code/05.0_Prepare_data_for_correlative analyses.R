@@ -11,11 +11,11 @@ rm(list=ls())
 #*******************************************
 ####   Load Libraries, Prep for graphics, folders  ####
 #*******************************************
-#### Written  with R version 3.6.3 ###
+#### Written  with R version 4.0.3 ###
 #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-04-01"
-pkgs=c('tidyverse','readxl', 'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally',
+groundhog.day = "2020-05-01"
+pkgs=c('magick', 'cowplot', 'tidyverse','readxl', 'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally',
        'agricolae', 'gridExtra', 'zoo', 'Evapotranspiration',
        'data.table', 'mgcv', 'lubridate', 'smooth', 'viridis')
 groundhog.library(pkgs, groundhog.day)
@@ -614,7 +614,8 @@ gpp.rel.daily <- obs.gpp.d %>%
   subset(date < max(obs.gpp.d$date, na.rm = TRUE)) %>%
   droplevels()
 
-gpp.rel.daily.long <- gpp.rel.daily %>% pivot_longer(-date, values_to = "value", names_to = "variable")
+gpp.rel.daily.long <- gpp.rel.daily %>% dplyr::select(-.groups) %>%
+  pivot_longer(-date, values_to = "value", names_to = "variable")
 
 gpp.rel.daily.plot <- ggplot(gpp.rel.daily.long) +
   # geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
@@ -1070,7 +1071,10 @@ traits.long <- traits.long %>%
          deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
 # just for sp with hyd.traits, but traits.long does not have all those sp, and hab preference and WSG traits will be missed
 ## so beginning with those other traits
-traits.wide <- traits.long %>% dplyr::select(-trait.plot, -trait.plot.chart) %>% pivot_wider(names_from = trait, values_from = value)
+traits.wide <- traits.long %>% dplyr::select(-trait.plot, -trait.plot.chart) %>%
+  mutate(row = row_number()) %>%
+  pivot_wider(names_from = trait, values_from = value) %>%
+  dplyr::select(-row)
 traits.long.hyd <- sp.hab %>%
   full_join(bci.traits %>% dplyr::select(sp, form1, SG100C_AVG), by = "sp") %>%
   full_join(deci %>% dplyr::select(-sp4), by = "sp") %>%
@@ -1085,6 +1089,7 @@ traits.long.hyd <- sp.hab %>%
   mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
          deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE)) %>%
   droplevels()
+
 
 save(traits, file = file.path(results.folder, "kunert.traits.all.RData"))
 save(traits.long, file = file.path(results.folder, "kunert.traits.key.long.RData"))

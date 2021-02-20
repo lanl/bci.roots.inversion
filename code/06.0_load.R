@@ -11,16 +11,15 @@ rm(list=ls())
 # #*******************************************
 # ####   Load Libraries, Prep for graphics, folders  ####
 # #*******************************************
-# #### Written  with R version 3.6.3 ###
+# #### Written  with R version 4.0.3 ###
 # #*******************************************
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-set.groundhog.folder('/Users/ftuser/Library/R/3.6/library')
-groundhog.day = "2020-04-01"
-groundhog.library('devtools', groundhog.day)
-devtools::unload('lattice') # this is to remove a newer version that conflicts with what groundhog needs
-pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
-       'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown')
-groundhog.library(pkgs, groundhog.day)
+# if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+# # set.groundhog.folder('/Users/ftuser/Library/R/3.6/library')
+# groundhog.day = "2020-05-01"
+# groundhog.library('devtools', groundhog.day)
+# pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
+#        'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown', 'broom')
+# groundhog.library(pkgs, groundhog.day)
 
 # graphics info
 theme_set(theme_bw())
@@ -41,7 +40,7 @@ if(!dir.exists(file.path(results.folder))) {dir.create(file.path(results.folder)
 ## Load ELM-FATES best-fit parameters -----
 #******************************************************
 params.obj.top.few <- read.csv(file = file.path("results/2019-10-14_5000/params.obj.top.few_100.csv"), header = TRUE)
-p.best <- params.obj.top.few[,1:13]
+p.best <- params.obj.top.few[, 1:13]
 #******************************************************
 ## Load Deciduousness-----
 #******************************************************
@@ -110,8 +109,8 @@ growth <- get(growth.name); rm(growth.name)
 ## No. of trees by sp for grpwth data
 g.n <- lapply(growth[grep("large", names(growth))], as.data.frame) %>%
   bind_rows(.id = "sp_size") %>%
-  separate(sp_size, c("sp", "size", sep = "_"), remove = FALSE, extra = "drop", fill = "right") %>%
-  dplyr::select(-sp_size, -"_") %>%
+  tidyr::separate(col = sp_size, into = c("sp", "size"), sep = "_", remove = FALSE, extra = "drop", fill = "right") %>%
+  dplyr::select(-sp_size) %>%
   group_by(sp) %>%
   summarise(n = mean(trees), .groups = "drop_last")
 

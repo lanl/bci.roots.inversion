@@ -45,11 +45,11 @@ Gather all pre-requisites for rooting depth inverse model (effective rooting dep
 source("code/05.0_Prepare_data_for_correlative analyses.R")
 ```
 
-Script to load data generated from the data preparation script above for use in inverse model as well as manuscript
+Script to load data generated from the data preparation script above for use in inverse model as well as manuscript. It's needed for rest of the scripts.
 
-```{r Chunk 06.0, eval = FALSE}
-source("code/06.0_load.R")
-```
+<!-- ```{r Chunk 06.0, eval = FALSE} -->
+<!-- source("code/06.0_load.R") -->
+<!-- ``` -->
 
 # Model Setup
 
@@ -64,17 +64,18 @@ source("code/07.0_PhenoDemoTraitsPsi.R")
 **Figures**
 
 ```{r Chunk 08.0, eval = FALSE}
+source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")
 ```
 
 **Main text**
 
 ```{r Chunk 09.0, eval = FALSE}
-source("code/09.0_manuscript.rmd")
+render("09.0_manuscript.rmd", output_format = "bookdown::html_document2")
 ```
 
 **Supporting Information**
 
 ```{r Chunk 10.0, eval = FALSE}
-source("code/10.0_Supporting_Information.Rmd")
+render("10.0_Supporting_Information.Rmd", output_format = "bookdown::html_document2")
 ```

@@ -15,15 +15,17 @@ bibliography: references.bib
 csl: new-phytologist.csl
 ---
 
-```{r setup, include=FALSE, echo = FALSE}
-if(!require("pacman", quietly=TRUE)) install.packages("pacman")
-suppressPackageStartupMessages(
-  pacman::p_load(bookdown, knitr, pander, citr, broom))
+```{r setup1, include=FALSE, echo = FALSE}
+if (!require("groundhog", quietly=TRUE)) install.packages("groundhog"); library(groundhog)
+groundhog.day = "2020-05-01"
+# pkgs=c('knitr', 'pander', 'citr', 'broom')
+groundhog.library('knitr', groundhog.day)
+groundhog.library('pander', groundhog.day)
+# groundhog.library('citr', groundhog.day)
+groundhog.library('broom', groundhog.day)
 options(tinytex.verbose = TRUE)
 source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")
-# load("results/manuWorkSpace.RData")
-# install.packages(c("vctrs", "rlang"))
 ```
 
 ```{r setup2, echo = FALSE}

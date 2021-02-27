@@ -507,31 +507,29 @@ save(sp.ab.growth, file = file.path(results.folder, "sp.ab.growth_for_LAI.Rdata"
 
 
 # sp not present in sp.LAI.mean but in growth data sets
-# sp.growth.not.LAI <- setdiff(unique(growth.sub$sp), unique(sp.LAI.mean$sp))
-# sp.LAI.for.model <- sp.LAI.mean %>%
-#   bind_rows(data.frame(sp = rep(sp.growth.not.LAI, each = max(sp.LAI.mean$doy)),
-#                        doy = rep(unique(sp.LAI.mean$doy), times = length(sp.growth.not.LAI)),
-#                        LAI.mean = NA, LAI.sd = NA)) %>%
-#   left_join(deci %>% select(sp, deciduous), by = "sp") %>%
-#   mutate(LAI = ifelse(deciduous == "E", 1, LAI.mean)) %>%
-#   select(-LAI.sd) %>%
-#   as.data.frame()
-#   ## But "ficutr", "pri2co", "termob" do not have LAI data and also not Evergreen either but DB,
-#   ## so taking average DB species' leaf-cover,  "pri2co" 's deciduousness not known, so can't gap-fill
-#   # First joinging average deci LAI then substituing for missing data by species
-# sp.LAI.for.model <- sp.LAI.for.model %>%
-#   left_join(sp.LAI.for.model %>% group_by(deciduous, doy) %>%
-#               summarise(deci.LAI = mean(LAI, na.rm = TRUE), .groups = "drop"),
-#             by = c("deciduous", "doy")) %>%
-#   mutate(LAI = ifelse(is.na(LAI), deci.LAI, LAI))
+# sp.growth.not.LAI <- setdiff(unique(growth.sub$sp), unique(sp.LAI.for.model$sp))
+
+# Compared to earlier version when LAI was defined based on leaffall alone, "guapst" was included
+# But not since LAI is defined based on leaf fall and lifespan, as "guapst" does not have a lifespan estimate
+# But it could still be included in the models without lifespan
+# For that it will need to have NAs for LAI in sp.LAI.for.model.mod
+sp.growth.not.LAI <- "guapst"
+sp.LAI.for.model.mod <- sp.LAI.for.model %>%
+  mutate(sp = as.character(sp)) %>%
+  select(sp, doy, L.norm) %>%
+  bind_rows(data.frame(sp = rep(sp.growth.not.LAI, each = max(sp.LAI.for.model$doy)),
+                       doy = rep(unique(sp.LAI.for.model$doy), times = length(sp.growth.not.LAI)),
+                       L.norm = NA)) %>%
+  arrange(sp, doy) %>%
+  as.data.frame()
 
 setdiff(unique(growth.sub$sp), unique(sp.LAI.for.model$sp))
 # unique(sp.LAI.for.model[is.na()]$sp)
 
 AB.sp.ls <- split(data.model.AB.sub, f = list(data.model.AB.sub$sp), drop = TRUE)
-LAI.sp.ls <- split(sp.LAI.for.model, f = list(sp.LAI.for.model$sp), drop = TRUE)
+LAI.sp.ls <- split(sp.LAI.for.model.mod, f = list(sp.LAI.for.model.mod$sp), drop = TRUE)
 
-sp.ab.LAI <- intersect(unique(data.model.AB.sub$sp), unique(sp.LAI.for.model$sp))
+sp.ab.LAI <- intersect(unique(data.model.AB.sub$sp), unique(sp.LAI.for.model.mod$sp))
 
 ## both needs to have the same species (in the same order)
 AB.sp.ls <- AB.sp.ls[sp.ab.LAI]
@@ -603,22 +601,7 @@ for (i in names(gfac.interval)) {
     subset(corr == corr.max) %>% dplyr::select(-corr.max) %>%
     ungroup(sp, par.sam)
 
-  # Get sumamy corr across the best corr within each sp and par.sam
-  ml.corr.best[[i]] <- ml.corr.best.parsam[[i]] %>% group_by(sp) %>%
-    summarise(corr.upper.CI = -quantile(corr, probs = 0.975),
-              corr.lower.CI = -quantile(corr, probs = 0.025),
-              corr = -median(corr, na.rm = TRUE), .groups = "drop_last")
 }
-## species by depth by heat rsq
-ml.rsq.combine <- dplyr::bind_rows(ml.corr, .id = "corr.func") %>%
-  transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
-  left_join(deci %>% dplyr::select(-sp4), by = "sp") %>%
-  transform(deciduousness = factor(deciduousness,
-                                   levels = c("Evergreen", "Brevideciduous",
-                                              "Facultative Deciduous", "Obligate Deciduous"), ordered = TRUE)) %>%
-  unite("deci_sp", deciduous, sp, remove = FALSE) %>%
-  mutate(sp.plot = factor(sp, levels=unique(sp[order(deciduousness)]), ordered=TRUE),
-         deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(deciduousness)]), ordered=TRUE))
 
 ml.rsq.combine.best.parsam <- dplyr::bind_rows(ml.corr.best.parsam, .id = "corr.func") %>%
   transform(corr.func = factor(corr.func, levels = names.gfac)) %>%
@@ -640,6 +623,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best.parsam %>%
             corr = mean(corr, na.rm = TRUE),
             R2.se = sd(R2, na.rm = TRUE)/sqrt(n()),
             R2 = mean(R2, na.rm = TRUE), .groups = "drop_last") %>%
+  ungroup(sp, corr.func, size, deciduous, deciduousness, deciduousness.label, DeciLvl, sp.plot, deci_sp, deci_sp.plot) %>%
   dplyr::select(sp, depth, corr, R2, everything()) %>%
   unite(corr.func_sp_depth, corr.func, sp, depth, remove = FALSE)
 
@@ -653,7 +637,8 @@ iso.2 <- iso.2.raw %>%
   summarise(se = sd(Xylem_sap_deltaD_permil, na.rm = TRUE)/sqrt(n()),
             Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
             n = n(),
-            DBH = mean(DBH, na.rm = TRUE), .groups = "drop_last")
+            DBH = mean(DBH, na.rm = TRUE), .groups = "drop_last") %>%
+  ungroup(sp, source)
 
 ## those species that were likely leafless at the time of Xylem sap isotopes collection
 ## in Mar & April need to be removed
@@ -672,6 +657,7 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
               group_by(sp) %>%
               summarise(Xylem_sap_deltaD_permil.mean = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
                         se.mean = mean(se, na.rm = TRUE), .groups = "drop_last") %>%
+              ungroup(sp) %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil.mean, se.mean), by = "sp") %>%
   droplevels()
 

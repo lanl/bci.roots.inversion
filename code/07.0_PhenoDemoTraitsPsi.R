@@ -22,7 +22,11 @@ source("code/06.0_load.R")
 ####   Load Libraries, Prep for graphics, folders  ##
 #*******************************************
 
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+if (!require("groundhog")) install.packages("groundhog");
+groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
+set.groundhog.folder(groundhog.folder)
+library(groundhog)
 groundhog.day = "2020-05-01"
 pkgs=c('tidyverse', 'readxl', 'forcats', 'agricolae', 'gridExtra',
        'scales', 'GGally', 'ggpmisc', 'Evapotranspiration',
@@ -344,9 +348,7 @@ depth.labels <- c(0.4, soil.depths[8:length(soil.depths)]) # mean(c(0.21, 0.37, 
 #cut(depth.sub, include.lowest = TRUE, breaks = depth.breaks, labels = depth.labels, right = TRUE)
 psi.study <- as.data.table(psi.m)[!is.na(interval),][,
   ':='(doy = format(date, "%j"), year = format(date, "%Y"))][
-  (doy < 368) & (!year %chin% c("1990")) &
-    (!year %chin% c("1991") | depth == 2.9) &
-    (!year %chin% c("1991", "1992") | depth < 2.9)][,
+  (doy < 368) & (!year %chin% c("1990"))][,
      c("year") := NULL][,
       doy := as.numeric(as.character(doy))][
         depth %chin% depth.sub][,':='(depth = cut(depth, include.lowest = TRUE,
@@ -825,7 +827,7 @@ hyd.depth <- hyd.long %>%
   pivot_wider(names_from = trait.plot.chart, values_from = value)
 
 erd.stem.traits <- hyd.long %>%
-  subset(trait %in% c("KmaxS", "TLP", "p88S", "HSM88S", "lwp.min_Diurnal", "lwp.min_Predawn")) %>%
+  subset(trait %in% c("KmaxS", "TLP", "p50S", "p88S", "HSM88S", "lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   subset(trait != "depth") %>%
   left_join(hyd.depth %>% dplyr::select(sp, `Depth[italic("Rsq")]`), by = "sp") %>%
   dplyr::select(deci_sp, sp, trait, `Depth[italic("Rsq")]`, value) %>%

@@ -60,11 +60,11 @@ source("code/08.0_manuscript_data_figs.R")
 **Main text**
 
 ``` r
-source("code/09.0_manuscript.rmd")
+render("09.0_manuscript.rmd", output_format = "bookdown::html_document2")
 ```
 
 **Supporting Information**
 
 ``` r
-source("code/10.0_Supporting_Information.Rmd")
+render("10.0_Supporting_Information.Rmd", output_format = "bookdown::html_document2")
 ```

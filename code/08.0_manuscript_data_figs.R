@@ -120,7 +120,7 @@ plot.psi.stat.7.interval.q5.depth.base <-
   geom_rect(data = psi.rectangle.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill = type), color = NA,
             alpha = 0.8, size = 0.3) + #  #cce6ff
   geom_ribbon(aes(x = doy, ymin = q5.clim, ymax = q100.clim, group = as.factor(depth),
-                  fill = "95% CI"), alpha = 0.5) +
+                  fill = "95% CI"), alpha = 0.9) +
   theme(panel.grid.major.y = element_line(size = 0.1)) +
   # geom_line(data = psi.stat.4 %>%
   #             subset(extreme.yr.q2.5 & depth %in% c(0.12, 0.62, 1) & interval.yrs != "(Missing)"),
@@ -280,7 +280,7 @@ p4 <- ggplot(ml.rsq.combine.chosen,
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
-                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+                                     sprintf('italic(p)~"="~%.3f', stat(p.value)))),
                   parse = TRUE,
                   npcx = 0.9, npcy = 0.1, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3.5) +
@@ -320,7 +320,7 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
                                               label = sprintf('italic(n)~"="~%.2f', N), group = models.plot1),
             parse = TRUE, vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
   ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans="reverse", breaks = unique(ml.rsq.combine.sub$depth)) +
+  scale_y_continuous(trans="rev_sqrt", breaks = unique(ml.rsq.combine.sub$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
                npcx = 0.95, npcy = 0.15, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
@@ -378,22 +378,25 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 #****************************
 
 hyd.table <-  erd.stem.traits %>%
-  subset(!trait %in% c("lwp.min_Diurnal", "HSM88S")) %>%
+  subset(!trait %in% c("lwp.min_Predawn", "HSM88S")) %>%
   dplyr::select(sp, trait, value) %>%
   pivot_wider(names_from = trait, values_from = value) %>%
   left_join(erd.sp.names, by = c("sp")) %>%
   subset(sp %in% erd.sp) %>%
   dplyr::select(-sp) %>%
-  dplyr::select(Genus, Species, Family, lwp.min_Predawn, TLP, everything()) %>%
-  mutate(lwp.min_Predawn = round(lwp.min_Predawn, 2),
+  dplyr::select(Genus, Species, Family, lwp.min_Diurnal, TLP, everything()) %>%
+  mutate(lwp.min_Diurnal = round(lwp.min_Diurnal, 2),
          TLP = round(TLP, 2))
 
-erd.stem.traits.only <- erd.stem.traits %>%
+erd.stem.traits.only.SI <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%
               dplyr::select(sp, depth, depth.se), by = "sp") %>%
   subset(!is.na(depth)) %>%
   droplevels()
+erd.stem.traits.only <- erd.stem.traits.only.SI %>%
+  subset(!trait %in% c("p50S"))
+
 erd.stem.traits.sp <- unique(erd.stem.traits.only$sp)
 
 traits.labels.select <- data.frame(trait = factor(c("KmaxS", "TLP", "p88S", "HSM88S"),
@@ -414,7 +417,6 @@ erd.stem.traits.only.lab <- erd.stem.traits.only %>%
   left_join(traits.labels.select %>%
               dplyr::select(trait, trait.plot, trait.plot.chart), by = "trait") %>%
   droplevels()
-
 #****************************
 ## Correlation chart: ERD vs. hydraulic traits----
 #****************************
@@ -424,7 +426,6 @@ erd.pairs <- erd.stem.traits.only.lab %>%
   dplyr::select(sp, depth, trait.plot.chart, value) %>%
   pivot_wider(names_from = trait.plot.chart, values_from = value) %>%
   rename(ERD = depth)
-
 
 cor.data <- erd.pairs %>% dplyr::select(-sp) %>%
   dplyr::select(ERD, `italic(\"K\")[\"max,stem\"]`, everything())
@@ -471,11 +472,29 @@ corrplot(M, type = "upper", order = "original",
          insig = "p-val", sig.level = -1, pch.col = "grey90",
          diag = FALSE, cl.ratio = .2, cl.align = "l", win.asp= 1)
 graphics.off()
+
+## For SI with p50 and HSM50
+
+traits.labels.select.SI <- data.frame(trait = factor(c("KmaxS", "TLP", "p50S", "p88S", "HSM88S"),
+                                                     levels = c("KmaxS", "TLP", "p50S", "p88S", "HSM88S"), ordered = TRUE)) %>%
+  transform(trait.plot.chart = factor(trait, labels = c(expression(italic('K')['max,stem']),
+                                                        expression(Psi[tlp]),
+                                                        expression(Psi['50,stem']),
+                                                        expression(Psi['88,stem']),
+                                                        expression(Psi[min]*'-'*Psi['88,stem']))))
+
+erd.pairs.SI <- erd.stem.traits.only.SI %>%
+  left_join(traits.labels.select.SI, by = "trait") %>%
+  dplyr::select(sp, depth, trait.plot.chart, value) %>%
+  pivot_wider(names_from = trait.plot.chart, values_from = value) %>%
+  rename(ERD = depth)
+
+
 chart.erd.pairs <- GGally::ggpairs(
-  erd.pairs %>% dplyr::select(-sp),
-  upper = list(continuous ='cor'),
-  # upper = list(continuous = wrap(cor_func.2,
-  #                                method = 'spearman', symbol = expression('\u03C1 ='))),
+  erd.pairs.SI %>% dplyr::select(-sp),
+  # upper = list(continuous ='cor'),
+  upper = list(continuous = wrap('cor',
+                                 method = 'spearman', symbol = expression('\u03C1 ='))),
   lower = list(
     continuous = function(data, mapping, ...) {
       ggally_smooth_lm(data = data, mapping = mapping) +
@@ -501,7 +520,7 @@ chart.erd.pairs <- GGally::ggpairs(
     hjust = 1
   ))
 ggsave(file.path(figures.folder, paste0("erd.stem.traits_cor.chart.jpeg")),
-       plot = chart.erd.pairs, height = 5.5, width = 5.5, units ='in')
+       plot = chart.erd.pairs, height = 7, width = 7, units ='in')
 
 #****************************
 traits.labels.cor.p <- traits.labels.select %>%
@@ -612,22 +631,22 @@ ggsave(file.path(paste0(figures.folder, "/mortality_rate_by rdi.gr_evergreen.jpe
 # https://rpkgs.datanovia.com/ggpubr/reference/stat_cor.html
 mrate.depth.select <- mrate.depth.select %>%
   transform(censusint.m.plot = factor(censusint.m,
-                                      labels = c("1982-85", "*1985-90", "1990-95", "1995-00", "*2000-05", "*2005-10", "2010-15")))
+                                      labels = c("*1982-85", "*1985-90", "1990-95", "*1995-00", "*2000-05", "2005-10", "2010-15")))
 
 mrate.p.vals = sapply(unique(mrate.depth.select$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ])))[2,4]
 })
 mrate.p.vals.dat <- mrate.depth.select[mrate.depth.select$censusint.m %in%
-                                         names(mrate.p.vals)[round(mrate.p.vals, 2) < 0.1 | round(mrate.p.vals, 1) == 0.1],]
+                                         names(mrate.p.vals)[round(mrate.p.vals, 2) < 0.1],] # | round(mrate.p.vals, 1) == 0.1
 mrate.r2.vals <- sapply(unique(mrate.depth.select$censusint.m), function(i) {
   round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select[mrate.depth.select$censusint.m==i, ]))$r.squared, 2)*100
 })
-
+m.p.85 <- round(mrate.p.vals["1982-85"], 2)
 m.p.90 <- round(mrate.p.vals["1985-90"], 1)
+m.p.00 <- round(mrate.p.vals["1995-00"], 1)
 m.p.05 <- round(mrate.p.vals["2000-05"], 2)
-m.p.10 <- round(mrate.p.vals["2005-10"], 1)
 
-m.r2 <- c(mrate.r2.vals["1985-90"], mrate.r2.vals["2000-05"], mrate.r2.vals["2005-10"])
+m.r2 <- c(mrate.r2.vals["1982-85"], mrate.r2.vals["1985-90"], mrate.r2.vals["1995-00"], mrate.r2.vals["2000-05"])
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
@@ -682,20 +701,27 @@ ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.jpeg")),
 #        plot = mrate.plot.15.1.sub, height = 2.5, width = 10, units = 'in')
 
 
-mrate.depth.select.evg <- subset(mrate.depth.select, deciduous == "E")
+mrate.depth.select.evg <- mrate.depth.select %>%
+  transform(censusint.m.plot = factor(censusint.m,
+                                      labels = c("*1982-85", "**1985-90", "1990-95", "**1995-00", "**2000-05", "**2005-10", "2010-15"))) %>%
+  subset(deciduous == "E")
 mrate.p.vals.evg <- sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
   coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ])))[2,4]
 })
 mrate.p.vals.dat.evg <- mrate.depth.select.evg[mrate.depth.select.evg$censusint.m %in%
-                                                 names(mrate.p.vals.evg)[round(mrate.p.vals.evg, 2) < 0.1 | round(mrate.p.vals.evg, 1) == 0.1],]
+                                                 names(mrate.p.vals.evg)[round(mrate.p.vals.evg, 2) < 0.05 | round(mrate.p.vals.evg, 2) == 0.05 | round(mrate.p.vals.evg, 2) == 0.06],]
 mrate.r2.vals.evg <- sapply(unique(mrate.depth.select.evg$censusint.m), function(i) {
   round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.evg[mrate.depth.select.evg$censusint.m==i, ]))$r.squared, 2)*100
 })
-m.evg.p.90 <- round(mrate.p.vals.evg["1985-90"], 1)
+m.evg.p.85 <- round(mrate.p.vals.evg["1982-85"], 2)
+m.evg.p.90 <- round(mrate.p.vals.evg["1985-90"], 2)
+m.evg.p.00 <- round(mrate.p.vals.evg["1995-00"], 2)
 m.evg.p.05 <- round(mrate.p.vals.evg["2000-05"], 2)
 m.evg.p.10 <- round(mrate.p.vals.evg["2005-10"], 2)
 
+m.evg.r2.85 <- mrate.r2.vals.evg["1982-85"]
 m.evg.r2.90 <- mrate.r2.vals.evg["1985-90"]
+m.evg.r2.00 <- mrate.r2.vals.evg["1995-00"]
 m.evg.r2.05 <- mrate.r2.vals.evg["2000-05"]
 m.evg.r2.10 <- mrate.r2.vals.evg["2005-10"]
 
@@ -823,6 +849,9 @@ mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select.sp.mean,
         axis.text.x = element_text(size = 10),
         legend.background = element_rect(fill = "transparent")) +
   scale_x_continuous(breaks = c(sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+  # scale_y_continuous(trans = 'sqrt') +
+  scale_y_continuous(trans = sqrt_trans(),
+                       breaks = trans_breaks("sqrt", function(x) x^2)) +
   # scale_fill_brewer(palette = "Greens") + #palette = "Spectral"
   guides(fill = guide_legend(title = "Census Interval"), override.aes = list(size = 1))
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr.tiff")),

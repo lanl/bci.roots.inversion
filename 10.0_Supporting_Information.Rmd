@@ -16,13 +16,15 @@ csl: new-phytologist.csl
 ---
 
 ```{r setup1, include=FALSE, echo = FALSE}
-if (!require("groundhog", quietly=TRUE)) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-05-01"
-# pkgs=c('knitr', 'pander', 'citr', 'broom')
-groundhog.library('knitr', groundhog.day)
-groundhog.library('pander', groundhog.day)
-# groundhog.library('citr', groundhog.day)
-groundhog.library('broom', groundhog.day)
+if (!require("groundhog")) install.packages("groundhog");
+groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
+set.groundhog.folder(groundhog.folder)
+library(groundhog)
+
+groundhog.day = "2021-01-01"
+pkgs=c('knitr', 'pander', 'broom')
+groundhog.library(pkgs, groundhog.day)
 options(tinytex.verbose = TRUE)
 source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")
@@ -61,8 +63,8 @@ knitr::include_graphics(file.path("figures/ELM_FATES_parameter_sensitivity/sens.
 ```
 
 
-```{r swp-all-depths, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-all-depths}Daily mean soil water potential ($\\Psi_{\\textrm{soil},z}$) by depth $z$ (m; panels) over 1990-2018 predicted from each of the the 100 best-fit ensembles (colored lines). Vertical gray lines demarcate median dates of the demographic censuses at the BCI 50 ha plot."}
-knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_daily_all_depths_params.top.few_full.jpeg"))
+```{r swp-all-depths, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-all-depths}Daily mean soil water potential ($\\Psi_{\\textrm{soil},z}$) by depth $z$ (m; panels) over 1990-2018 predicted from each of the the 100 best-fit ensembles (colored lines). Vertical gray lines demarcate median dates of the demographic censuses at the BCI 50 ha plot. Years 1991 & 1992 for depths > 2.9 m showed marks of model initialisation phase for ELM-FATES, which was run from ($\\Psi_{\\textrm{soil},z}$) = 0 for all depths, starting from 1985-01-01. We therefore removed $\\Psi_{\\textrm{soil}}$ for years 1991 & 1992 for depths greater than 2.9 m, and conservatively removed $\\Psi_{\\textrm{soil}}$ for year 1991 for the depth of 2.9 m."}
+knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_daily_all_depths_params.top.few_full_beg_1991.jpeg"))
 ```
 
 
@@ -80,11 +82,11 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.dept
 ```
 
 
-```{r erd-hyd-full, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd-full}. Pairwise correlations (upper triangle) and corresponding linear regressions (lower triangle) among modelled Effective Rooting Depth (ERD) and hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's correlation coefficients and significance levels are shown (upper-half; '*' $p$ < 0.05; '.' $p$ < 0.1; ' ' $p$ < 1)")}
+```{r erd-hyd-full, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "60%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-hyd-full}Pairwise Spearman's correlations (upper triangle) and corresponding linear regressions (lower triangle) among modelled Effective Rooting Depth (ERD) and hydraulic properties for seven canopy species found on Barro Colorado Island (Panama).Spearman's correlation coefficients and significance levels are shown (upper-half; '*' $p$ < 0.05; '.' $p$ < 0.1; ' ' $p$ < 1).")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits_cor.chart.jpeg"))
 ```
 
-```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Linear model fits (blue lines) with confidance bands (gray area) are shown for significant fits at $\\alpha$ = 0.1."}
+```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Linear model fits (blue lines) with confidance bands (gray area) are shown for significant fits at $\\alpha$ = 0.05, identified by census-intervals with a superscript *."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
 ```
 
@@ -151,7 +153,7 @@ We generated an estimate of the mean seasonality curve for normalized leaf area 
 For five species, an estimate of leaf lifespan was available from direct observations [@Osnas.2018]. For the rest `r erd.sp.wo.ll` species, leaf lifespan was predicted from LMA ($\overline{lifespan} = `r ll.lma.cf[1]` + `r ll.lma.cf[2]`LMA$; $R$^2^ = `r ll.lma.r2`; $p$ `r ll.lma.p`, $n$ = `r ll.lma.n`).
 
 
-```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover}Seasonal variation in standardised LAI (range 0-1) for ", length(erd.sp)," species at Barro Colorado Island (panels). Species are color-coded by deciduousness.")}
+```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover}Seasonal variation in standardised LAI (range 0-1) for ", length(erd.sp)," species at Barro Colorado Island (panels). Species are color-coded by deciduous category as defined by expert botanists.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf.cover_BCI_multi_panel.jpeg"))
 ```
 

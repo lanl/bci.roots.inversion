@@ -13,28 +13,18 @@ rm(list=ls())
 # #*******************************************
 # #### Written  with R version 4.0.3 ###
 # #*******************************************
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+if (!require("groundhog")) install.packages("groundhog");
+groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
+set.groundhog.folder(groundhog.folder)
+library(groundhog)
 # set.groundhog.folder('/Users/ftuser/Library/R/3.6/library')
-groundhog.day = "2020-05-01"
+groundhog.day = "2021-01-01"
 groundhog.library('devtools', groundhog.day)
-# pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
-#        'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown', 'broom')
+pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
+       'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown', 'broom')
+groundhog.library(pkgs, groundhog.day)
 
-groundhog.library('lattice', groundhog.day)
-groundhog.library('magick', groundhog.day)
-groundhog.library('cowplot', groundhog.day)
-groundhog.library('corrplot', groundhog.day)
-groundhog.library('ggcorrplot', groundhog.day)
-groundhog.library('tidyverse', groundhog.day)
-groundhog.library('readxl', groundhog.day)
-groundhog.library('forcats', groundhog.day)
-groundhog.library('scales', groundhog.day)
-groundhog.library('data.table', groundhog.day)
-groundhog.library('ggpmisc', groundhog.day)
-groundhog.library('GGally', groundhog.day)
-groundhog.library('bookdown', groundhog.day)
-groundhog.library('rmarkdown', groundhog.day)
-groundhog.library('broom', groundhog.day)
 
 # graphics info
 theme_set(theme_bw())

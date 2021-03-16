@@ -27,7 +27,7 @@ groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversi
 if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
 set.groundhog.folder(groundhog.folder)
 library(groundhog)
-groundhog.day = "2020-05-01"
+groundhog.day = "2021-01-01"
 pkgs=c('tidyverse', 'readxl', 'forcats', 'agricolae', 'gridExtra',
        'scales', 'GGally', 'ggpmisc', 'Evapotranspiration',
        'data.table', 'mgcv')
@@ -491,7 +491,7 @@ data.model.AB.sub <- data.model.AB %>%
   mutate(A = if_else(is.na(data.A), model.A, data.A),
          B = if_else(is.na(data.B), model.B, data.B)) %>%
   subset(sp %in% growth.sub$sp) %>%
-  # ## And LMA from LMALAM from LEAF and DISC
+  ## And LMA from LMALAM from LEAF and DISC
   subset(sp.LMA.sub == "original") %>%
   # removing A & B predicted from gap-filled WSG
   subset(sp.WSG.sub == "original")
@@ -518,7 +518,7 @@ save(sp.ab.growth, file = file.path(results.folder, "sp.ab.growth_for_LAI.Rdata"
 sp.growth.not.LAI <- "guapst"
 sp.LAI.for.model.mod <- sp.LAI.for.model %>%
   mutate(sp = as.character(sp)) %>%
-  select(sp, doy, L.norm) %>%
+  dplyr::select(sp, doy, L.norm) %>%
   bind_rows(data.frame(sp = rep(sp.growth.not.LAI, each = max(sp.LAI.for.model$doy)),
                        doy = rep(unique(sp.LAI.for.model$doy), times = length(sp.growth.not.LAI)),
                        L.norm = NA)) %>%
@@ -657,9 +657,8 @@ ml.rsq.combine.best <- ml.rsq.combine.best %>%
   left_join(iso.1.3.join %>%
               subset(!sp %in% as.character(leafless_mar.apr$sp[leafless_mar.apr$leafless_in_mar_apr_from_notes == "Yes"])) %>%
               group_by(sp) %>%
-              summarise(Xylem_sap_deltaD_permil.mean = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
+              dplyr::summarise(Xylem_sap_deltaD_permil.mean = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
                         se.mean = mean(se, na.rm = TRUE), .groups = "drop_last") %>%
-              ungroup(sp) %>%
               dplyr::select(sp, Xylem_sap_deltaD_permil.mean, se.mean), by = "sp") %>%
   droplevels()
 
@@ -723,7 +722,6 @@ length(unique(df.erd.to.plot$sp))
 # 36
 
 save(ml.rsq.combine.best, file = file.path(results.folder, "ml.rsq.combine.best.Rdata"))
-save(ml.rsq.combine, file = file.path(results.folder, "ml.rsq.combine.Rdata"))
 save(df.erd.to.plot, file = file.path(results.folder, "df.erd.to.plot.Rdata"))
 
 ###____________________________

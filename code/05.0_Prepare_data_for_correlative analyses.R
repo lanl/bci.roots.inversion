@@ -13,8 +13,12 @@ rm(list=ls())
 #*******************************************
 #### Written  with R version 4.0.3 ###
 #*******************************************
-if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-05-01"
+if (!require("groundhog")) install.packages("groundhog");
+groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
+set.groundhog.folder(groundhog.folder)
+library(groundhog)
+groundhog.day = "2021-01-01"
 pkgs=c('magick', 'cowplot', 'tidyverse','readxl', 'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally',
        'agricolae', 'gridExtra', 'zoo', 'Evapotranspiration',
        'data.table', 'mgcv', 'lubridate', 'smooth', 'viridis')

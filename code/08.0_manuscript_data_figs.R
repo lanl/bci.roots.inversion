@@ -565,6 +565,101 @@ ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
 
 
 #****************************
+### Hydraulic traits vs. Isotopes----
+#****************************
+
+iso.mean <- iso.1.3.join %>%
+  dplyr::select(sp, source, Xylem_sap_deltaD_permil, se) %>%
+  rename(Xylem.se = se) %>%
+  group_by(sp) %>%
+  summarise(Xylem_sap_deltaD_permil = mean(Xylem_sap_deltaD_permil, na.rm = TRUE),
+            Xylem.se = mean(Xylem.se, na.rm = TRUE), .groups ="drop_last")
+
+iso.stem.traits <- erd.stem.traits %>%
+  subset(!trait %in% c("p50S", "lwp.min_Diurnal", "lwp.min_Predawn")) %>%
+  left_join(iso.mean, by = "sp") %>%
+  dplyr::select(deci_sp, sp, trait, Xylem_sap_deltaD_permil, Xylem.se, value) %>%
+  subset(!is.na(Xylem_sap_deltaD_permil)) %>%
+  droplevels()  %>%
+  left_join(deci %>% dplyr::select(sp, deciduousness), by = "sp")
+
+iso.stem.traits.sp <- unique(iso.stem.traits$sp)
+
+iso.stem.traits.lab <- iso.stem.traits %>%
+  left_join(traits.labels.select %>%
+              dplyr::select(trait, trait.plot, trait.plot.chart), by = "trait") %>%
+  droplevels()
+# # Four species are common
+intersect(erd.stem.traits.sp, iso.stem.traits.sp)
+length(union(erd.stem.traits.sp, iso.stem.traits.sp))
+
+iso.pairs <- iso.stem.traits.lab %>%
+  dplyr::select(sp, Xylem_sap_deltaD_permil, Xylem.se, trait.plot.chart, value) %>%
+  pivot_wider(names_from = trait.plot.chart, values_from = value)
+
+iso.cor.data <- iso.pairs %>% dplyr::select(-sp, -Xylem.se) %>%
+  dplyr::select(Xylem_sap_deltaD_permil,`italic(\"K\")[\"max,stem\"]`, everything())
+iso.M <- cor(iso.cor.data, use = "pairwise.complete.obs", method = "spearman")
+
+iso.res1 <- cor.mtest(iso.cor.data, conf.level = 0.95,
+                      use = "pairwise.complete.obs",
+                      method = c("spearman"), alternative = c("two.sided"))
+
+colnames(iso.res1$p) <- rownames(iso.res1$p) <- colnames(iso.M) <- rownames(iso.M) <- c("Xylem_sap_deltaD_permil", ":K['max,stem']", ":Psi[tlp]",
+                                                                                        ":Psi['88,stem']", ":Psi[min]*'-'*Psi['88,stem']")
+
+iso.cor.k <- round(iso.M[which(colnames(iso.M) == ":K['max,stem']"), which(rownames(iso.M) == "Xylem_sap_deltaD_permil")], 2)
+iso.cor.tlp <- round(iso.M[which(colnames(iso.M) == ":Psi[tlp]"), which(rownames(iso.M) == "Xylem_sap_deltaD_permil")], 2)
+iso.cor.stem.88 <- round(iso.M[which(colnames(iso.M) == ":Psi['88,stem']"), which(rownames(iso.M) == "Xylem_sap_deltaD_permil")], 2)
+iso.cor.hsm <- round(iso.M[which(colnames(iso.M) ==  ":Psi[min]*'-'*Psi['88,stem']"), which(rownames(iso.M) == "Xylem_sap_deltaD_permil")], 2)
+
+iso.p.k <- round(iso.res1$p[which(colnames(iso.res1$p) == ":K['max,stem']"), which(rownames(iso.res1$p) == "Xylem_sap_deltaD_permil")], 2)
+iso.p.tlp <- round(iso.res1$p[which(colnames(iso.res1$p) == ":Psi[tlp]"), which(rownames(iso.res1$p) == "Xylem_sap_deltaD_permil")], 2)
+iso.p.stem.88 <- round(iso.res1$p[which(colnames(iso.res1$p) == ":Psi['88,stem']"), which(rownames(iso.res1$p) == "Xylem_sap_deltaD_permil")], 2)
+iso.p.hsm <- round(iso.res1$p[which(colnames(iso.res1$p) ==  ":Psi[min]*'-'*Psi['88,stem']"), which(rownames(iso.res1$p) == "Xylem_sap_deltaD_permil")], 2)
+
+
+iso.traits.labels.cor.p <- traits.labels.select %>%
+  mutate(x = rep(-50, 4),
+         r = c(iso.cor.k, iso.cor.tlp, iso.cor.stem.88, iso.cor.hsm),
+         p = c(iso.p.k, iso.p.tlp, iso.p.stem.88, iso.p.hsm),
+         x.rp = c(-20, -20, -20, -50),
+         y.r = c(1, -2.0, -3.7, -0.7),
+         y.p = c(0, -3.3, -5.3, -1.2))
+
+iso.traits.select.plot <- ggplot(iso.stem.traits.lab,
+                                 aes(x = Xylem_sap_deltaD_permil, y = value)) +
+  geom_smooth(method = "lm", formula = formula) +
+  geom_text(data = traits.labels.select, aes(x = x, y = y,
+                                             label = panel, group = trait.plot),
+            fontface = "bold", vjust = "inward", hjust = "inward") +
+  geom_text(data = iso.traits.labels.cor.p, aes(x = x.rp, y = y.r,
+                                                label = sprintf('italic("r")~"="~%.2f', r),
+                                                group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
+  geom_text(data = iso.traits.labels.cor.p, aes(x = x.rp, y = y.p,
+                                                label = sprintf('italic(p)~"="~%.2f', p),
+                                                group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
+  geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + Xylem.se, xmin = Xylem_sap_deltaD_permil - Xylem.se), size = 0.2) +
+  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 0.8, size = 2.5) +
+  coord_cartesian(xlim = c(min(iso.stem.traits$Xylem_sap_deltaD_permil, na.rm = TRUE), -3)) +
+  xlab(xylem.label) + ylab("") +
+  facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed,
+             strip.position = 'left') +
+  theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
+        strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
+        plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")) +
+  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                             override.aes = list(size = 3),
+                             nrow = 2, byrow = TRUE)) +
+  theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
+  scale_color_viridis_d(drop = FALSE)
+ggsave(file.path(figures.folder, paste0("iso.stem.traits.tiff")),
+       plot = iso.traits.select.plot, height = 5.5, width = 5.5, units ='in')
+ggsave(file.path(figures.folder, paste0("iso.stem.traits.jpeg")),
+       plot = iso.traits.select.plot, height = 5.5, width = 5.5, units ='in')
+
+
+#****************************
 ### Kmax vs. growth----
 #****************************
 stem.k.gr <- erd.stem.traits %>% left_join(demo.sp, by = "sp") %>%

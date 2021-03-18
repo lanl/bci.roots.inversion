@@ -114,9 +114,14 @@ psi.rectangle.1 <- data.frame(
 )
 ### Calculate Correlation of growth rates with psi by depth
 
+psi.stat.4 <- psi.stat.4 %>%
+  subset(depth %in% c(0.12, 0.62, 1) &
+           interval.yrs != "(Missing)") %>% droplevels() %>%
+  transform(interval.yrs.plot = factor(interval.yrs,
+                                      labels = c("1990-95", "*1995-00", "*2000-05", "*2005-10", "2010-15")))
+
 plot.psi.stat.7.interval.q5.depth.base <-
-  ggplot(subset(psi.stat.4, depth %in% c(0.12, 0.62, 1) &
-                  interval.yrs != "(Missing)") %>% droplevels()) +
+  ggplot(psi.stat.4) +
   geom_rect(data = psi.rectangle.1, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, fill = type), color = NA,
             alpha = 0.8, size = 0.3) + #  #cce6ff
   geom_ribbon(aes(x = doy, ymin = q5.clim, ymax = q100.clim, group = as.factor(depth),
@@ -143,7 +148,7 @@ plot.psi.stat.7.interval.q5.depth.base <-
   ylab(expression(Psi[soil]*~"(MPa)")) + xlab("Day of the Year")
 
 plot.psi.stat.7.interval.q5.depth <- plot.psi.stat.7.interval.q5.depth.base +
-  facet_grid(plot.depth ~ interval.yrs) +
+  facet_grid(plot.depth ~ interval.yrs.plot) +
   theme(legend.position = "bottom", legend.direction = "horizontal")
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q5_by_depth.jpeg",
        plot = plot.psi.stat.7.interval.q5.depth, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units='in')
@@ -228,6 +233,7 @@ ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
 df.erd.to.plot <- df.erd.to.plot %>%
   left_join(erd.sp.names, by = "sp") %>%
   dplyr::select(sp, s.names, depth, depth.se) %>%
+  left_join(erd.data %>% dplyr::select(sp, deciduousness), by = "sp") %>%
   transform(s.names = reorder(s.names, depth)) %>%
   droplevels()
 
@@ -235,8 +241,14 @@ erd.sp.plot <- ggplot(df.erd.to.plot,
                       aes(x = s.names, y = depth)) +
   # geom_point(aes(color = s.names), show.legend = FALSE, size = 3) +
   # geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 3) +
-  geom_point(aes(color = depth), alpha = 1, size = 3, show.legend = FALSE) +
-  scale_color_continuous(trans = 'reverse') +
+  geom_point(aes(color = deciduousness), alpha = 1, size = 3) +
+  guides(color = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3),
+                              nrow=4, byrow=TRUE)) +
+  theme(legend.position = c(0.3, 0.3), legend.title = element_blank(), legend.background = element_blank()) +
+  scale_color_viridis_d(drop = FALSE) +
+  # geom_point(aes(color = depth), alpha = 1, size = 3, show.legend = FALSE) +
+  # scale_color_continuous(trans = 'reverse') +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), width = 0.2, size = 0.2) +
   ylab("Effective Rooting Depth (m)") + xlab("Species") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, face = "italic"),
@@ -320,23 +332,23 @@ p3.2 <- ggplot(ml.rsq.combine.sub,
                                               label = sprintf('italic(n)~"="~%.2f', N), group = models.plot1),
             parse = TRUE, vjust = "inward", hjust = "inward", inherit.aes = FALSE) +
   ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
-  scale_y_continuous(trans="rev_sqrt", breaks = unique(ml.rsq.combine.sub$depth)) +
+  scale_y_continuous(trans="reverse", breaks = unique(ml.rsq.combine.sub$depth)) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 0.15, rr.digits = 2,
+               npcx = 0.95, npcy = 0.2, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
-                                     sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.95, npcy = 0.05, size = 4) +
+                                     sprintf('italic(p)~"="~%.3f',stat(p.value)))),
+                  parse = TRUE, npcx = 0.95, npcy = 0.1, size = 4) +
   geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3) +
   guides(fill = guide_legend(title = "Species", order = 1),
          color = FALSE) +
   theme(legend.text = element_text(face = "italic"),
         strip.text.x = element_text(face = "bold"))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_sp_color_Meinzer.jpeg",
-       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 5, width = 7, units = 'in')
+       plot = p3.2, file.path(figures.folder), device = "jpeg", height = 7, width = 7, units = 'in')
 
 #******************************************************
 
@@ -376,17 +388,6 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 #****************************
 ### Hydraulic traits vs. ERD----
 #****************************
-
-hyd.table <-  erd.stem.traits %>%
-  subset(!trait %in% c("lwp.min_Predawn", "HSM88S")) %>%
-  dplyr::select(sp, trait, value) %>%
-  pivot_wider(names_from = trait, values_from = value) %>%
-  left_join(erd.sp.names, by = c("sp")) %>%
-  subset(sp %in% erd.sp) %>%
-  dplyr::select(-sp) %>%
-  dplyr::select(Genus, Species, Family, lwp.min_Diurnal, TLP, everything()) %>%
-  mutate(lwp.min_Diurnal = round(lwp.min_Diurnal, 2),
-         TLP = round(TLP, 2))
 
 erd.stem.traits.only.SI <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
@@ -529,6 +530,8 @@ traits.labels.cor.p <- traits.labels.select %>%
                                    x.rp = c(7.8, 7.8, 7.8, 0.4),
                                    y.r = c(1, -2.0, -3.7, -0.7),
                                    y.p = c(0, -2.3, -4.3, -1.2))
+erd.stem.traits.only.lab <- erd.stem.traits.only.lab %>%
+  left_join(erd.data %>% dplyr::select(sp, deciduousness), by = "sp")
 depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                    aes(x = depth, y = value)) +
   geom_smooth(method = "lm", formula = formula) +
@@ -542,18 +545,25 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                             label = sprintf('italic(p)~"="~%.2f', p),
                                             group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
   geom_errorbarh(aes(xmax = depth + depth.se, xmin = depth - depth.se), size = 0.2) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 0.8, size = 2.5) +
   coord_cartesian(xlim = c(0, max(erd.stem.traits.only.lab$depth) + 0.5)) +
   xlab("Effective Rooting Depth (m)") + ylab("") +
   facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed,
              strip.position = 'left') +
   theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
         strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
-        plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm"))
+        plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")) +
+  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                              override.aes = list(size = 3),
+                              nrow = 2, byrow = TRUE)) +
+  theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
+  scale_color_viridis_d(drop = FALSE)
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
-       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
+       plot = depth.traits.select.plot, height = 5.5, width = 5.5, units ='in')
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
-       plot = depth.traits.select.plot, height = 4.5, width = 5.5, units ='in')
+       plot = depth.traits.select.plot, height = 5.5, width = 5.5, units ='in')
+
+
 #****************************
 ### Kmax vs. growth----
 #****************************

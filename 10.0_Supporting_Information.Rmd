@@ -86,8 +86,8 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.dept
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits_cor.chart.jpeg"))
 ```
 
-```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species mortality rate in each census interval during the study period plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Linear model fits (blue lines) with confidance bands (gray area) are shown for significant fits at $\\alpha$ = 0.05, identified by census-intervals with a superscript *."}
-knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr.jpeg"))
+```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species (circles) Mortality rates in species of various deciduous leaf-habit categories (colors) across census intervals from 1985-2015 plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Species are color colded by deciduous category. Census-intervals with a superscript * are shown for comparison and indicate intervals in which significant mortality was explained by ERD among evergreen species (Fig. 8 in the Main text)."}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr_deciduous.jpeg"))
 ```
 
 

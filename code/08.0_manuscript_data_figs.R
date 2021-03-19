@@ -389,6 +389,22 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 ### Hydraulic traits vs. ERD----
 #****************************
 
+
+#****************************
+### Hydraulic traits vs. ERD----
+#****************************
+# Table for SI
+hyd.table <-  erd.stem.traits %>%
+  subset(!trait %in% c("lwp.min_Predawn", "HSM88S")) %>%
+  dplyr::select(sp, trait, value) %>%
+  pivot_wider(names_from = trait, values_from = value) %>%
+  left_join(erd.sp.names, by = c("sp")) %>%
+  subset(sp %in% erd.sp) %>%
+  dplyr::select(-sp) %>%
+  dplyr::select(Genus, Species, Family, lwp.min_Diurnal, TLP, everything()) %>%
+  mutate(lwp.min_Diurnal = round(lwp.min_Diurnal, 2),
+         TLP = round(TLP, 2))
+
 erd.stem.traits.only.SI <- erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Diurnal", "lwp.min_Predawn")) %>%
   left_join(df.erd.to.plot %>%

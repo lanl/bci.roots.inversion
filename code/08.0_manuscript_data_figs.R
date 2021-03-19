@@ -545,7 +545,7 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                             label = sprintf('italic(p)~"="~%.2f', p),
                                             group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
   geom_errorbarh(aes(xmax = depth + depth.se, xmin = depth - depth.se), size = 0.2) +
-  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 0.8, size = 2.5) +
+  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 1, size = 2.5) +
   coord_cartesian(xlim = c(0, max(erd.stem.traits.only.lab$depth) + 0.5)) +
   xlab("Effective Rooting Depth (m)") + ylab("") +
   facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed,
@@ -559,11 +559,9 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
   theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
   scale_color_viridis_d(drop = FALSE)
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
-       plot = depth.traits.select.plot, height = 5.5, width = 5.5, units ='in')
+       plot = depth.traits.select.plot, height = 5, width = 5.2, units ='in')
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.jpeg")),
-       plot = depth.traits.select.plot, height = 5.5, width = 5.5, units ='in')
-
-
+       plot = depth.traits.select.plot, height = 5, width = 5.2, units ='in')
 
 #****************************
 ### Kmax vs. growth----
@@ -661,10 +659,10 @@ m.r2 <- c(mrate.r2.vals["1982-85"], mrate.r2.vals["1985-90"], mrate.r2.vals["199
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
-  # scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
+  scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_smooth(data = mrate.p.vals.dat, method = "lm", formula = formula) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 1, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  +
   ylab(expression('Mortality Rate (%'*'yr'^-1*')')) +
   facet_grid(. ~ censusint.m.plot) +
@@ -676,11 +674,16 @@ mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
+                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4) +
+  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                             override.aes = list(size = 3),
+                             nrow = 1, byrow = TRUE)) +
+  theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
+  scale_color_viridis_d(drop = FALSE)
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.tiff")),
-       plot = mrate.plot.15.1, height = 2.5, width = 10, units = 'in')
+       plot = mrate.plot.15.1, height = 3, width = 10, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr.jpeg")),
-       plot = mrate.plot.15.1, height = 2.5, width = 10, units = 'in')
+       plot = mrate.plot.15.1, height = 3, width = 10, units = 'in')
 
 
 # mrate.depth.select.sub <- subset(mrate.depth.select, sp %in% erd.stem.traits.sp)
@@ -740,7 +743,7 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
   geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 1, size = 2.5) +
   xlab("Effective Rooting Depth (m)")  +
   ylab(expression('Mortality Rate (%'*'year'^-1*')')) +
   facet_grid(. ~ censusint.m.plot) +
@@ -752,45 +755,109 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4)
+                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4) +
+  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                             override.aes = list(size = 3),
+                             nrow = 1, byrow = TRUE)) +
+  theme(legend.position = c(2,7.5), legend.title = element_blank(), legend.background = element_blank()) +
+  scale_color_viridis_d(drop = FALSE)
 
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen.tiff")),
        plot = mrate.plot.15.1.evg, height = 2.5, width = 10, units = 'in')
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen.jpeg")),
        plot = mrate.plot.15.1.evg, height = 2.5, width = 10, units = 'in')
 
-mrate.plot.15.1.evg.sub <- mrate.plot.15.1.evg %+%
-  subset(mrate.depth.select.evg, !census %in% c(1982, 1985, 1990))
-ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-85-90censuses.jpeg")),
-       plot = mrate.plot.15.1.evg.sub, height = 3, width = 9, units = 'in')
 
-mrate.plot.15.1.evg.flipped <- ggplot(mrate.depth.select.evg, aes(x = mrate, y = rdi.gr)) +
-  coord_cartesian(ylim = c(10, 0)) +
-  # scale_y_reverse(breaks = seq(from = 0, to = 10, by = 2)) +
-  scale_y_reverse(breaks = unique(mrate.depth.select.evg$rdi.gr)) +
-  geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula) +
-  geom_errorbar(aes(ymax = rdi.gr + depth.se, ymin = rdi.gr - depth.se), width = 0.15, size = 0.1) +
-  geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
-  ylab("Effective Rooting Depth (m)")  +
-  xlab(expression('Mortality Rate (% '*'year'^-1*')')) +
+mrate.depth.select.deci <- mrate.depth.select %>%
+  transform(censusint.m.plot = factor(censusint.m,
+                                      labels = c("*1982-85", "**1985-90", "1990-95", "**1995-00", "**2000-05", "**2005-10", "2010-15"))) %>%
+  subset(deciduous != "E")
+mrate.p.vals.deci <- sapply(unique(mrate.depth.select.deci$censusint.m), function(i) {
+  coef(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.deci[mrate.depth.select.deci$censusint.m==i, ])))[2,4]
+})
+mrate.p.vals.dat.deci <- mrate.depth.select.deci[mrate.depth.select.deci$censusint.m %in%
+                                                 names(mrate.p.vals.deci)[round(mrate.p.vals.deci, 2) < 0.05 | round(mrate.p.vals.deci, 2) == 0.05 | round(mrate.p.vals.deci, 2) == 0.06],]
+mrate.r2.vals.deci <- sapply(unique(mrate.depth.select.deci$censusint.m), function(i) {
+  round(summary(lm(mrate ~ rdi.gr, data=mrate.depth.select.deci[mrate.depth.select.deci$censusint.m==i, ]))$r.squared, 2)*100
+})
+m.deci.p.85 <- round(mrate.p.vals.deci["1982-85"], 2)
+m.deci.p.90 <- round(mrate.p.vals.deci["1985-90"], 2)
+m.deci.p.00 <- round(mrate.p.vals.deci["1995-00"], 2)
+m.deci.p.05 <- round(mrate.p.vals.deci["2000-05"], 2)
+m.deci.p.10 <- round(mrate.p.vals.deci["2005-10"], 2)
+
+m.deci.r2.85 <- mrate.r2.vals.deci["1982-85"]
+m.deci.r2.90 <- mrate.r2.vals.deci["1985-90"]
+m.deci.r2.00 <- mrate.r2.vals.deci["1995-00"]
+m.deci.r2.05 <- mrate.r2.vals.deci["2000-05"]
+m.deci.r2.10 <- mrate.r2.vals.deci["2005-10"]
+
+scale_fill_deci <- function(...){
+  ggplot2:::manual_scale(
+    'fill',
+    values = setNames(c("#440154FF", "#31688EFF", "#35B779FF", "#FDE725FF"),
+                      c("Evergreen", "Brevideciduous", "Facultative Deciduous", "Obligate Deciduous"))
+  )
+}
+mrate.plot.15.1.deci <- ggplot(mrate.depth.select.deci, aes(y = mrate, x = rdi.gr)) +
+  coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
+  geom_smooth(data = mrate.p.vals.dat.deci, method = "lm", formula = formula) +
+  geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
+  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 1, size = 2.5) +
+  xlab("Effective Rooting Depth (m)")  +
+  ylab(expression('Mortality Rate (%'*'year'^-1*')')) +
   facet_grid(. ~ censusint.m.plot) +
   stat_poly_eq(aes(label = paste(..rr.label..)),
-               npcx = 0.95, npcy = 0.16, rr.digits = 2,
+               npcx = 0.95, npcy = 0.95, rr.digits = 2,
                formula = formula, parse = TRUE, size = 4) +
   stat_fit_glance(method = 'lm',
                   method.args = list(formula = formula),
                   geom = 'text_npc',
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
-                  npcx = 0.95, npcy = 0.03, size = 4) +
-  theme(axis.title.y = element_text(size = 12))
-ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_flipped.jpeg")),
-       plot = mrate.plot.15.1.evg.flipped, height = 2.7, width = 10, units = 'in')
-
-mrate.plot.15.1.evg.flipped.sub <- mrate.plot.15.1.evg.flipped %+%
-  subset(mrate.depth.select.evg, !census %in% c(1982, 1985, 1990))
-ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-85-90censuses_flipped.jpeg")),
-       plot = mrate.plot.15.1.evg.flipped.sub, height = 3, width = 9, units = 'in')
+                  parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4) +
+  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+                             override.aes = list(size = 3),
+                             nrow = 1, byrow = TRUE)) +
+  theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
+  scale_fill_deci()
+ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_deciduous.tiff")),
+       plot = mrate.plot.15.1.deci, height = 3, width = 10, units = 'in')
+ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_deciduous.jpeg")),
+       plot = mrate.plot.15.1.deci, height = 3, width = 10, units = 'in')
+#
+# mrate.plot.15.1.evg.sub <- mrate.plot.15.1.evg %+%
+#   subset(mrate.depth.select.evg, !census %in% c(1982, 1985, 1990))
+# ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-85-90censuses.jpeg")),
+#        plot = mrate.plot.15.1.evg.sub, height = 3, width = 9, units = 'in')
+#
+# mrate.plot.15.1.evg.flipped <- ggplot(mrate.depth.select.evg, aes(x = mrate, y = rdi.gr)) +
+#   coord_cartesian(ylim = c(10, 0)) +
+#   # scale_y_reverse(breaks = seq(from = 0, to = 10, by = 2)) +
+#   scale_y_reverse(breaks = unique(mrate.depth.select.evg$rdi.gr)) +
+#   geom_smooth(data = mrate.p.vals.dat.evg, method = "lm", formula = formula) +
+#   geom_errorbar(aes(ymax = rdi.gr + depth.se, ymin = rdi.gr - depth.se), width = 0.15, size = 0.1) +
+#   geom_point(shape = 21, color = "white", fill = "black", alpha = 0.8, size = 2.5) +
+#   ylab("Effective Rooting Depth (m)")  +
+#   xlab(expression('Mortality Rate (% '*'year'^-1*')')) +
+#   facet_grid(. ~ censusint.m.plot) +
+#   stat_poly_eq(aes(label = paste(..rr.label..)),
+#                npcx = 0.95, npcy = 0.16, rr.digits = 2,
+#                formula = formula, parse = TRUE, size = 4) +
+#   stat_fit_glance(method = 'lm',
+#                   method.args = list(formula = formula),
+#                   geom = 'text_npc',
+#                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
+#                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
+#                   npcx = 0.95, npcy = 0.03, size = 4) +
+#   theme(axis.title.y = element_text(size = 12))
+# ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_flipped.jpeg")),
+#        plot = mrate.plot.15.1.evg.flipped, height = 2.7, width = 10, units = 'in')
+#
+# mrate.plot.15.1.evg.flipped.sub <- mrate.plot.15.1.evg.flipped %+%
+#   subset(mrate.depth.select.evg, !census %in% c(1982, 1985, 1990))
+# ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen_wo_1982-85-90censuses_flipped.jpeg")),
+#        plot = mrate.plot.15.1.evg.flipped.sub, height = 3, width = 9, units = 'in')
 
 #****************************
 ## mfac.rate vs. ERD ----
@@ -861,6 +928,7 @@ mfac.plot.9.0.int <- ggplot(mrate.mfac.depth.select.sp.mean,
         legend.background = element_rect(fill = "transparent")) +
   scale_x_continuous(breaks = c(sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   # scale_y_continuous(trans = 'sqrt') +
+  coord_cartesian(ylim = c(0, c(max(mrate.mfac.depth.select.sp.mean$mean.mfac.rate, na.rm = TRUE) + 1))) +
   scale_y_continuous(trans = sqrt_trans(),
                        breaks = trans_breaks("sqrt", function(x) x^2)) +
   # scale_fill_brewer(palette = "Greens") + #palette = "Spectral"
@@ -884,6 +952,17 @@ mfac.plot.9.0.int.evg <- mfac.plot.9.0.int %+% mrate.mfac.depth.select.evg
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.jpeg")),
        plot = mfac.plot.9.0.int.evg,  height = 3.1, width = 3.5, units = 'in')
 
+mrate.mfac.depth.select.deci <- subset(mrate.mfac.depth.select,
+                                      deciduous != "E") %>%
+  group_by(depth, censusint.m) %>%
+  summarise(mean.mfac.rate = mean(mfac.rate, na.rm = TRUE),
+            se = sd(mfac.rate, na.rm = TRUE)/n(), .groups = "drop")
+
+mfac.plot.9.0.int.deci <- mfac.plot.9.0.int %+% mrate.mfac.depth.select.deci
+
+ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_deciduous.jpeg")),
+       plot = mfac.plot.9.0.int.deci,  height = 3.1, width = 3.5, units = 'in')
+
 # dat1 <- mrate.mfac.depth.select %>% subset(deciduous == "E")
 # dat1$new_value <- ifelse(dat1$mfac.rate<=5,dat1$mfac.rate,ifelse(dat1$mfac.rate<15,NA,dat1$mfac.rate-10))
 # dat1 <- dat1[!is.na(dat1$new_value) ,]
@@ -894,26 +973,26 @@ ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.jpeg")),
 #         axis.text.x = element_text(angle=90, vjust=1)) +
 #   scale_y_continuous(breaks = 1:9, labels = c(1:5,"break",15:25))
 
-#*********************************************
-## Composite: mrate, droughts and mfac.rate ----
-#*********************************************
-composite.mort <- cowplot::plot_grid(mrate.plot.15.1.evg.flipped.sub, droughts.psi.heat,
-                                     labels = c('a', 'b'),
-                                    label_size = 14, ncol = 1, nrow = 2, rel_heights = c(1, 1.15), hjust = -2.5)
-ggsave("erd_mrate_interval_droughts.jpeg", plot = composite.mort, path =
-         file.path(figures.folder), device = "jpeg", height = 5, width = 9, units ='in')
-ggsave("erd_mrate_interval_droughts.tiff", plot = composite.mort, path =
-         file.path(figures.folder), device = "tiff", height = 5, width = 9, units ='in')
-
-composite.mort.mfac <- cowplot::plot_grid(mrate.plot.15.1.evg.flipped.sub, droughts.psi.heat,
-                                          mfac.plot.9.0.int.evg,
-                                     labels = c('a', 'b', 'c'),
-                                     label_size = 14, ncol = 1, nrow = 3,
-                                     rel_heights = c(1.05, 1.2, 1), hjust = -2.5)
-ggsave("erd_mrate_mfac_interval_droughts.jpeg", plot = composite.mort.mfac, path =
-         file.path(figures.folder), device = "jpeg", height = 7, width = 9, units ='in')
-ggsave("erd_mrate_mfac_interval_droughts.tiff", plot = composite.mort.mfac, path =
-         file.path(figures.folder), device = "tiff", height = 7, width = 9, units ='in')
+# #*********************************************
+# ## Composite: mrate, droughts and mfac.rate ----
+# #*********************************************
+# composite.mort <- cowplot::plot_grid(mrate.plot.15.1.evg.flipped.sub, droughts.psi.heat,
+#                                      labels = c('a', 'b'),
+#                                     label_size = 14, ncol = 1, nrow = 2, rel_heights = c(1, 1.15), hjust = -2.5)
+# ggsave("erd_mrate_interval_droughts.jpeg", plot = composite.mort, path =
+#          file.path(figures.folder), device = "jpeg", height = 5, width = 9, units ='in')
+# ggsave("erd_mrate_interval_droughts.tiff", plot = composite.mort, path =
+#          file.path(figures.folder), device = "tiff", height = 5, width = 9, units ='in')
+#
+# composite.mort.mfac <- cowplot::plot_grid(mrate.plot.15.1.evg.flipped.sub, droughts.psi.heat,
+#                                           mfac.plot.9.0.int.evg,
+#                                      labels = c('a', 'b', 'c'),
+#                                      label_size = 14, ncol = 1, nrow = 3,
+#                                      rel_heights = c(1.05, 1.2, 1), hjust = -2.5)
+# ggsave("erd_mrate_mfac_interval_droughts.jpeg", plot = composite.mort.mfac, path =
+#          file.path(figures.folder), device = "jpeg", height = 7, width = 9, units ='in')
+# ggsave("erd_mrate_mfac_interval_droughts.tiff", plot = composite.mort.mfac, path =
+#          file.path(figures.folder), device = "tiff", height = 7, width = 9, units ='in')
 
 #****************************
 ## ERD vs. growth rates----

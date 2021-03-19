@@ -159,17 +159,17 @@ psi.corr.fun.ls.2 <- list(
 )
 
 get.mfac.ls <- list(
-  "mr.kl50.I" =
+  "mr.kl20.I" =
     function(df) {
       result.df <-
-        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl50, greater.than = FALSE)][
+        as.data.table(psi.study)[, psi.mod := indicator(psi, df$psi_kl20, greater.than = FALSE)][
           , keyby = .(depth, interval, par.sam), .(mfac = sum(psi.mod, na.rm = TRUE))][
             , keyby = .(depth, interval), .(mfac = mean(mfac, na.rm = TRUE))]
       result.df <- data.frame(result.df) %>% pivot_wider(names_from = "depth", values_from = "mfac")
       return(result.df)
     }
 )
-# Originally written by Sean M McMahon, then modified
+# This likelihood function Originally written by Sean M McMahon, then modified
 
 get.ts.lk <- function(df) {
   demo.ts <- df$demo.rate
@@ -867,7 +867,7 @@ for (i in 1:length(names.mfac)) {
 save(mfac.interval.long, file = file.path(results.folder, "mfac.interval.long.Rdata"))
 ## Ordered along Rooting Depth Index
 # load(file = file.path(results.folder, "mfac.interval.long.Rdata"))
-mfac.on <- "mr.kl50.I"
+mfac.on <- "mr.kl20.I"
 mrate.depth <-
   adult.mrate.long %>% mutate(size = "large") %>%
   # mrate.long %>%

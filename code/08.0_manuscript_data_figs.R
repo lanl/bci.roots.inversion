@@ -168,9 +168,13 @@ plot.psi.stat.7.interval.q5.depth.freq.base <-
   scale_y_continuous(breaks = c(0:5)) +
   coord_cartesian(xlim = c(0, 200)) +
   ylab(expression('Frequency of extreme '*Psi[soil]*~"(yrs)")) + xlab("Day of the Year")
+
 ## Minimum Soil water potential reached at depth 1.7 + CI
 psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
   subset(median == min(median, na.rm = TRUE))
+## Psi_crit of most sensitive speceis
+
+min.psi_crit <- round(min(data.model.AB.sub[data.model.AB.sub$sp %in% erd.sp, ]$psi_kl20, na.rm = TRUE), 2)
 
 # Heatmap
 psi.freq.to.plot <- psi.stat.4.select.freq %>%
@@ -225,6 +229,13 @@ f4 <- ggplot(sp.withERD.LAI.to.plot,
         strip.text.x = element_text(face = "italic", size = 11))
 ggsave(("leaf.cover_BCI_multi_panel.jpeg"),
        plot = f4, file.path(figures.folder), device = "jpeg", height = 9, width = 7, units='in')
+
+sp.LAI.obs <- length(unique(sp.withERD.LAI.to.plot$sp[sp.withERD.LAI.to.plot$lifespan.sub %in% c("Observed","Cohort")]))
+sp.LAI.fam <- length(unique(sp.withERD.LAI.to.plot$sp[sp.withERD.LAI.to.plot$lifespan.sub == "Family"]))
+sp.LAI.gen <- length(unique(sp.withERD.LAI.to.plot$sp[sp.withERD.LAI.to.plot$lifespan.sub == "Genus"]))
+sp.LAI.pnm.site <- length(unique(sp.withERD.LAI.to.plot$sp[sp.withERD.LAI.to.plot$lifespan.sub == "PNM.site.mean"]))
+sp.LAI.LMA <- length(unique(sp.withERD.LAI.to.plot$sp[sp.withERD.LAI.to.plot$lifespan.sub == "LMA.Relationship"]))
+
 
 #****************************
 ## ERD by species----
@@ -389,10 +400,6 @@ mrate.mfac.depth.gr.mean.mfac <- mrate.mfac.depth.select %>%
 ### Hydraulic traits vs. ERD----
 #****************************
 
-
-#****************************
-### Hydraulic traits vs. ERD----
-#****************************
 # Table for SI
 hyd.table <-  erd.stem.traits %>%
   subset(!trait %in% c("lwp.min_Predawn", "HSM88S")) %>%
@@ -509,9 +516,9 @@ erd.pairs.SI <- erd.stem.traits.only.SI %>%
 
 chart.erd.pairs <- GGally::ggpairs(
   erd.pairs.SI %>% dplyr::select(-sp),
-  # upper = list(continuous ='cor'),
-  upper = list(continuous = wrap('cor',
-                                 method = 'spearman', symbol = expression('\u03C1 ='))),
+  upper = list(continuous ='cor'),
+  # upper = list(continuous = wrap('cor',
+  #                                method = 'spearman', symbol = expression('\u03C1 ='))),
   lower = list(
     continuous = function(data, mapping, ...) {
       ggally_smooth_lm(data = data, mapping = mapping) +
@@ -539,6 +546,8 @@ chart.erd.pairs <- GGally::ggpairs(
 ggsave(file.path(figures.folder, paste0("erd.stem.traits_cor.chart.jpeg")),
        plot = chart.erd.pairs, height = 7, width = 7, units ='in')
 
+#****************************
+### Hydraulic traits vs. ERD Main text Chart----
 #****************************
 traits.labels.cor.p <- traits.labels.select %>%
   mutate(r = c(cor.k, cor.tlp, cor.stem.88, cor.hsm),
@@ -569,10 +578,14 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
   theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
         strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
         plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")) +
-  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+  guides(fill = guide_legend(order = 1, title = "Leaf habit", direction = "horizontal",
                               override.aes = list(size = 3),
                               nrow = 2, byrow = TRUE)) +
-  theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
+  theme(legend.position = "top",
+        legend.title=element_text(size = 11.5),
+        legend.background = element_blank(),
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-10,-10,-10,-10)) +
   scale_color_viridis_d(drop = FALSE)
 ggsave(file.path(figures.folder, paste0("erd.stem.traits.tiff")),
        plot = depth.traits.select.plot, height = 5, width = 5.2, units ='in')
@@ -675,7 +688,6 @@ m.r2 <- c(mrate.r2.vals["1982-85"], mrate.r2.vals["1985-90"], mrate.r2.vals["199
 
 mrate.plot.15.1 <- ggplot(mrate.depth.select, aes(y = mrate, x = rdi.gr)) +
   coord_cartesian(xlim = c(0, max(mrate.depth$rdi.gr, na.rm = TRUE))) +
-  scale_x_continuous(breaks = c(0, sort(unique(mrate.mfac.depth.gr.mean.mfac$depth)))) +
   geom_smooth(data = mrate.p.vals.dat, method = "lm", formula = formula) +
   geom_errorbarh(aes(xmax = rdi.gr + depth.se, xmin = rdi.gr - depth.se), height = 0.15, size = 0.1) +
   geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 1, size = 2.5) +
@@ -772,10 +784,12 @@ mrate.plot.15.1.evg <- ggplot(mrate.depth.select.evg, aes(y = mrate, x = rdi.gr)
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4) +
-  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+  guides(fill = guide_legend(order = 1, title = "Leaf habit", direction = "horizontal",
                              override.aes = list(size = 3),
                              nrow = 1, byrow = TRUE)) +
-  theme(legend.position = c(2,7.5), legend.title = element_blank(), legend.background = element_blank()) +
+  theme(legend.position = "top", legend.background = element_blank(),
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-10,-10,-10,-10)) +
   scale_color_viridis_d(drop = FALSE)
 
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_evergreen.tiff")),
@@ -832,10 +846,12 @@ mrate.plot.15.1.deci <- ggplot(mrate.depth.select.deci, aes(y = mrate, x = rdi.g
                   aes(label = ifelse(p.value < 0.001, sprintf('italic(p)~"< 0.001"'),
                                      sprintf('italic(p)~"="~%.2f',stat(p.value)))),
                   parse = TRUE, npcx = 0.95, npcy = 0.82, size = 4) +
-  guides(fill = guide_legend(order = 1, title = NULL, direction = "horizontal",
+  guides(fill = guide_legend(order = 1, title = "Leaf habit", direction = "horizontal",
                              override.aes = list(size = 3),
                              nrow = 1, byrow = TRUE)) +
-  theme(legend.position = "top", legend.title = element_blank(), legend.background = element_blank()) +
+  theme(legend.position = "top", legend.background = element_blank(),
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(-10,-10,-10,-10)) +
   scale_fill_deci()
 ggsave(file.path(paste0(figures.folder, "/mortality_by rdi.gr_deciduous.tiff")),
        plot = mrate.plot.15.1.deci, height = 3, width = 10, units = 'in')

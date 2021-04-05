@@ -6,7 +6,7 @@
 # Original date: Summer, 2020
 #-----------------------------------------------------
 #
-rm(list=ls())
+# rm(list=ls())
 #
 # #*******************************************
 # ####   Load Libraries, Prep for graphics, folders  ####
@@ -289,13 +289,14 @@ symbols.table <-
       "$\\mathrm{\\Psi}_{\\textrm{soil},z}$",
       "$\\mathrm{\\Psi}$~leaf~, $\\mathrm{\\Psi}$~stem~",
       "$\\mathrm{\\Psi}$~tlp~",
-      "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~50,leaf~",
+      "$\\mathrm{\\Psi}$~crit~ or $\\mathrm{\\Psi}$~20,leaf~",
       "$\\mathrm{\\Psi}$~88,stem~",
       "$\\mathrm{\\Psi}$~min~",
       "$\\mathrm{\\Psi}$~min~ - $\\mathrm{\\Psi}$~88,stem~",
       "*K*~leaf~",
       "*K*~max,leaf~",
       "*K*~max,stem~",
+      "*FLC*~leaf~",
       "WSG",
       "LMA",
       "$\\mathrm{\\delta}$^2^H~xylem~"
@@ -304,13 +305,14 @@ symbols.table <-
       "Soil water potential at depth $z$",
       "Water potential of leaf, or stem, respectively",
       "Bulk leaf turgor loss point, the $\\mathrm{\\Psi}$~leaf~ where turgor potential = 0",
-      "$\\mathrm{\\Psi}$~leaf~ at 50% loss of leaf conductance",
+      "$\\mathrm{\\Psi}$~leaf~ at 20% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",
       "Seasonal minimum water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday in the dry season",
       "Above-ground hydraulic safety margin",
       "Leaf-area specific hydraulic conductance of leaf",
       "Maximum leaf area-specific hydraulic conductance of leaf",
       "Maximum stem area-specific hydraulic conductivity of stem",
+      "Ratio between current and maximum leaf-area specific hydraulic conductance of leaf",
       "Wood specific gravity",
       "Leaf mass per unit area",
       "$\\mathrm{\\delta}$^2^H of tree xylem sap"
@@ -326,6 +328,7 @@ symbols.table <-
       "mmol m^-2^ s^-1^ MPa^-1^",
       "mmol m^-2^ s^-1^ MPa^-1^",
       "kg m^-1^ s^-1^ MPa^-1^",
+      "-",
       "g cm^-3^",
       "g m^-2^",
       "‰"

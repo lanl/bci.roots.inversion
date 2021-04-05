@@ -72,15 +72,19 @@ if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.fol
 set.groundhog.folder(groundhog.folder)
 library(groundhog)
 groundhog.day = "2021-01-01"
-groundhog.library('rmarkdown', groundhog.day)
+# groundhog.library('rmarkdown', groundhog.day)
+# .rs.restartR() to restart R session
 groundhog.library('bookdown', groundhog.day)
-rmarkdown::render("09.0_manuscript.rmd", output_format = "bookdown::html_document2")
+groundhog.library('knitr', groundhog.day)
+# rmarkdown::render("09.0_manuscript.rmd", output_format = "bookdown::html_document2")
+render("09.0_manuscript.rmd", output_format = "bookdown::word_document2")
 ```
 
 **Supporting Information**
 
 ```{r Chunk 10.0, eval = FALSE}
-render("10.0_Supporting_Information.Rmd", output_format = "bookdown::html_document2")
+# render("10.0_Supporting_Information.Rmd", output_format = "bookdown::html_document2")
+render("10.0_Supporting_Information.Rmd", output_format = "bookdown::word_document2")
 ```
 
 ```{r Chunk 11.0, eval = FALSE}

@@ -3,13 +3,14 @@ title: "Hydraulically-vulnerable trees survive on deep-water access during droug
 author: ''
 date: ''
 output:
+  bookdown::word_document2:
+        reference_docx: manuscriptstyle.docx
+        fig_caption: yes
+        number_sections: false
   bookdown::html_document2:
     number_sections: no
     theme: flatly
     fig_caption: yes
-  bookdown::word_document2:
-        reference_docx: manuscriptstyle.docx
-        fig_caption: yes
   bookdown::pdf_document2: default
 bibliography: references.bib
 csl: new-phytologist.csl
@@ -26,6 +27,18 @@ groundhog.day = "2021-01-01"
 pkgs=c('knitr', 'pander', 'broom')
 groundhog.library(pkgs, groundhog.day)
 options(tinytex.verbose = TRUE)
+if (!require("groundhog")) install.packages("groundhog");
+groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
+set.groundhog.folder(groundhog.folder)
+library(groundhog)
+# set.groundhog.folder('/Users/ftuser/Library/R/3.6/library')
+groundhog.day = "2021-01-01"
+groundhog.library('devtools', groundhog.day)
+pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
+       'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown', 'broom')
+groundhog.library(pkgs, groundhog.day)
+
 source("code/06.0_load.R")
 source("code/08.0_manuscript_data_figs.R")
 ```
@@ -63,7 +76,7 @@ knitr::include_graphics(file.path("figures/ELM_FATES_parameter_sensitivity/sens.
 ```
 
 
-```{r swp-all-depths, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-all-depths}Daily mean soil water potential ($\\Psi_{\\textrm{soil},z}$) by depth $z$ (m; panels) over 1990-2018 predicted from each of the the 100 best-fit ensembles (colored lines). Vertical gray lines demarcate median dates of the demographic censuses at the BCI 50 ha plot. Years 1991 & 1992 for depths > 2.9 m showed marks of model initialisation phase for ELM-FATES, which was run from ($\\Psi_{\\textrm{soil},z}$) = 0 for all depths, starting from 1985-01-01. We therefore removed $\\Psi_{\\textrm{soil}}$ for years 1991 & 1992 for depths greater than 2.9 m, and conservatively removed $\\Psi_{\\textrm{soil}}$ for year 1991 for the depth of 2.9 m."}
+```{r swp-all-depths, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "70%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-swp-all-depths}Daily mean soil water potential ($\\Psi_{\\textrm{soil},z}$) by depth $z$ (m; panels) over 1990-2018 predicted from each of the the 100 best-fit ensembles (colored lines). Vertical gray lines demarcate median dates of the demographic censuses at the BCI 50 ha plot."}
 knitr::include_graphics(file.path("figures/2019-10-14_5000/best-fits/psi_model_daily_all_depths_params.top.few_full_beg_1991.jpeg"))
 ```
 
@@ -86,8 +99,12 @@ knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/psi.corr_best.dept
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/erd.stem.traits_cor.chart.jpeg"))
 ```
 
-```{r erd-mort-census, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-census}Species (circles) Mortality rates in species of various deciduous leaf-habit categories (colors) across census intervals from 1985-2015 plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Species are color colded by deciduous category. Census-intervals with a superscript * are shown for comparison and indicate intervals in which significant mortality was explained by ERD among evergreen species (Fig. 8 in the Main text)."}
+```{r erd-mort-deci, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "100%", fig.pos = 'H', results = "asis", fig.cap = "\\label{lab-erd-mort-cdeci}Species (circles) Mortality rates in species of various deciduous leaf-habit categories (colors) across census intervals from 1985-2015 plotted against ERD. $R$^2^ and significance levels for linear model fits are given in panel insets. Species are color colded by deciduous category. Census-intervals with a superscript * are shown for comparison and indicate intervals in which significant mortality was explained by ERD among evergreen species (see Fig. 8 in the Main text)."}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mortality_by rdi.gr_deciduous.jpeg"))
+```
+
+```{r erd-time-deci, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "40%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-erd-time-deci}")}
+knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/mfac vs. rdi.gr_deciduous.jpeg"))
 ```
 
 
@@ -98,7 +115,7 @@ knitr::kable(param.table, caption = 'ELM-FATES parameters used to generate ensem
 ```
 #
 ```{r hyd-table, results = 'asis', echo = FALSE}
-knitr::kable(hyd.table, caption = paste0("\\label{lab-hyd-table} Minimum leaf water potential $\\mathrm{\\Psi}$~min~, leaf turgor loss point $\\mathrm{\\Psi}$~tlp~, stem maximum hydraulic conductivity $K_\\textrm{max,stem}$ and stem vulnerability to cavitation $\\mathrm{\\Psi}$~88,stem~ for seven species with ERD estimates. $\\mathrm{\\Psi}$~min~ is sourced from @Wolfe.2019, while $\\mathrm{\\Psi}$~tlp~, $K_\\textrm{max,stem}$ and $\\mathrm{\\Psi}$~88,stem~ are sourced from @Wolfe.2020. $\\mathrm{\\Psi}$~min~, $\\mathrm{\\Psi}$~tlp~ and $\\mathrm{\\Psi}$~88,stem~ are in MPa, while $K_\\textrm{max,stem}$ in kg m^-1^ s^-1^ MPa^-1^."), booktabs = TRUE, escape = FALSE)
+knitr::kable(hyd.table, caption = paste0("\\label{lab-hyd-table} Minimum leaf water potential $\\mathrm{\\Psi}$~min~, leaf turgor loss point $\\mathrm{\\Psi}$~tlp~, stem maximum hydraulic conductivity $K_\\textrm{max,stem}$ and stem vulnerability to cavitation $\\mathrm{\\Psi}$~88,stem~ for seven species with ERD estimates. $\\mathrm{\\Psi}$~min~ is sourced from @Wolfe.2019, while $\\mathrm{\\Psi}$~tlp~, $K_\\textrm{max,stem}$ and $\\mathrm{\\Psi}$~88,stem~ are sourced from @Wolfe.2021. $\\mathrm{\\Psi}$~min~, $\\mathrm{\\Psi}$~tlp~ and $\\mathrm{\\Psi}$~88,stem~ are in MPa, while $K_\\textrm{max,stem}$ in kg m^-1^ s^-1^ MPa^-1^."), booktabs = TRUE, escape = FALSE)
 ```
 
 #
@@ -144,16 +161,20 @@ We also leveraged existing GWC measurements by @Kupers:2019 at the depths of 0.1
 knitr::include_graphics(file.path("figures/Matteos_TDR_SWC_data_linear_model.jpeg"))
 ```
 
+## Leaf habit
+
+AT BCI expert botanists have identified four leaf habits: evergreen species ($n$ = `r nrow(subset(erd.data, deciduous != "E"))`, for species with ERD) keep most but not all of their canopy in the dry season; obligate deciduous species ($n$ = `r nrow(subset(erd.data, deciduous != "DO"))`) shed all their leaves in the beginning of the dry season; facultative deciduous ($n$ = `r nrow(subset(erd.data, deciduous != "DF"))`) species drop leaves steadily as the dry season develops, and both facultative and obligate deciduous species leaf out in the beginning of the wet season; brevi-deciduous species ($n$ = `r nrow(subset(erd.data, deciduous != "DB"))`) shed all their leaves in the dry season, but leaf out in a few days to six weeks under ongoing dry season. 
 
 ### Leaf Area Index 
 \
-We generated an estimate of the mean seasonality curve for normalized leaf area index ($\textrm{LAI}^*$, range 0-1, unitless) for individual species as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate [@Wright.1990aeo]. We lead this daily leaf-fall time series by the species-specific average leaf lifespan (in days) and used it as an estimate of the daily leaf-gain time-series. The difference between leaf-fall and leaf-gain gave an estimate of daily leaf-change time series, which was then scaled to express as a fraction of the total leaf fall in a given year. Beginning with the $\textrm{LAI}^*$ of 1 at the end of the wet season in the first year of the record, we accumulated leaf-change over it to obtain a running estimate of the leaf-cover fraction, averaged it by DOY across years and normalized it to obtain the species-specific seasonality curve in $\textrm{LAI}^*$ (range 0-1, unitless). (Fig. S\@ref(fig:leaf-cover)).  
-
+We generated an estimate of the mean seasonality curve for normalized leaf area index ($\textrm{LAI}^*$, range 0-1, unitless) for individual species as follows. We interpolated species-specific weekly leaf-fall data collected at two similar sites in BCI (1985-2020) to a daily estimate of leaf mass fall per unit ground area [@Wright.1990aeo]. We estimated living canopy leaf mass per unit ground area present at time t (L[t]) from mean leaf longevity in days (LL) and leaf mass fall per unit ground area at time t (F[t]) as follows:  L[t] = F[t+1] + F[t+2] + … + F[t + LL]. L[t] was averaged by DOY across years and divided by the max value to obtain the species-specific seasonality curve in $\textrm{LAI}^*$ (range 0-1, unitless). (Fig. S\@ref(fig:leaf-cover)).  
 \
-For five species, an estimate of leaf lifespan was available from direct observations [@Osnas.2018]. For the rest `r erd.sp.wo.ll` species, leaf lifespan was predicted from LMA ($\overline{lifespan} = `r ll.lma.cf[1]` + `r ll.lma.cf[2]`LMA$; $R$^2^ = `r ll.lma.r2`; $p$ `r ll.lma.p`, $n$ = `r ll.lma.n`).
+For `r sp.LAI.obs` species, an estimate of leaf lifespan was available from direct observations at a dry and wet site in Panama [@Osnas.2018]. For the rest it was gap-filled with genus-level (n = `r sp.LAI.gen`) or family-level means (`r sp.LAI.fam`), if available. For `r sp.LAI.pnm.site` deciduous species, dry site-level mean was used. For one species, leaf lifespan was predicted from LMA ($\overline{lifespan} = `r ll.lma.cf[1]` + `r ll.lma.cf[2]`LMA$; $R$^2^ = `r ll.lma.r2`; $p$ `r ll.lma.p`, $n$ = `r ll.lma.n`).
+
+Although deciduous leaf-habits are generally expected to be fully deciduous, at BCI there is a great within-species variation in the timing of leaf-drop and leaf-out and neither do all individuals of a deciduous species may sreach full deciduousness every year [@Condit.2000]. Our reconstruction of $\textrm{LAI}^*$ seasonality is based upon species leaf-fall data, which captures the within-species variation in the timing of leaf-drop, so in our reconstruction the seasonal decline in $\textrm{LAI}^*$ appears to be more spread out and does not reach zero, in contrast to what is expected for an idealised individual of each deciduous leaf habit. Greater uncertainty in leaf-lifespan for deciduous species may have compounded this issue further. We did not normalise the deciduous species' $\textrm{LAI}^*$ curves to reach zero as it may further distort the shape of the $\textrm{LAI}^*$ curve shifting a larger period under a lower $\textrm{LAI}^*$.  
 
 
-```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover}Seasonal variation in standardised LAI (range 0-1) for ", length(erd.sp)," species at Barro Colorado Island (panels). Species are color-coded by deciduous category as defined by expert botanists.")}
+```{r leaf-cover, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "50%", fig.pos = 'H', results = "asis", fig.cap = paste0("\\label{lab-leaf-cover}Seasonal variation in standardised LAI (range 0-1) for ", length(erd.sp)," species at Barro Colorado Island (panels). Species are color-coded by leaf habit as defined by expert botanists.")}
 knitr::include_graphics(file.path("figures/PhenoDemoTraitsPsi/leaf.cover_BCI_multi_panel.jpeg"))
 ```
 
@@ -164,7 +185,7 @@ $K_\textrm{leaf}$ was measured under steady state and high irradiance following 
 ### Stem maximum hydraulic conductivity and vulnerability to cavitation {#SIData.brett} 
 
 \
-Values of stem maximum hydraulic conductivity and vulnerability to cavitation were obtained from the dataset of @Wolfe.2020. The entire dataset includes measurements on 26 tree species collected at three sites in Panama. The raw data, *R* script for the analyses, and data summaries are archived in the NGEE-Tropics archive [@Wolfe.2020]. The data were previously reported by @Dickman.2019 and @Wu.2020. Here, the seven species that overlapped with our assessment of ERD were included in analyses (Table S\@ref(tab:hyd-table)).  
+Values of stem maximum hydraulic conductivity and vulnerability to cavitation were obtained from the dataset of @Wolfe.2021. The entire dataset includes measurements on 26 tree species collected at three sites in Panama. The raw data, *R* script for the analyses, and data summaries are archived in the NGEE-Tropics archive [@Wolfe.2021]. The data were previously reported by @Dickman.2019 and @Wu.2020. Here, the seven species that overlapped with our assessment of ERD were included in analyses (Table S\@ref(tab:hyd-table)).  
 
 \
 Methods for stem maximum hydraulic conductivity and vulnerability to cavitation closely followed @Christman.2012 and @Wolfe.2016. Briefly, canopy branches were collected from 4–10 trees of each species. Segments measured for hydraulic conductivity were removed from the branches and placed in an apparatus similar to that described by @Sperry.1988 except that flow rate was measured with graduated pipettes instead of a balance. Each segment was perfused with a 10 mM KCl solution filtered to 0.2 mM at three pressure heads: two that ranged 0.5–2 kPa and at zero pressure. Following @TorresRuiz.2012, hydraulic conductivity was calculated as the slope of the flow rate versus pressure gradient (i.e., pressure head divided by segment length) among the three pressure heads. Stem area specific hydraulic conductivity ($K_\textrm{stem}$) was calculated by dividing hydraulic conductivity by the cross-sectional area of the stem. For each $K_\textrm{stem}$ segment, three measurements of stem water potential were made on stem sections that were located adjacent to the $K_\textrm{stem}$ segment using psychrometers as described by @Wolfe.2017.  
@@ -183,7 +204,7 @@ Above-ground hydraulic safety margin was calculated as the difference between mi
 
 ### WSG and LMA {#SIData.rutuja}
 \
-We used WSG, the wood specific gravity after drying at 100^$\circ$^C and LMA, the leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules for leaves receiving direct sunlight as described in @Wright:2010.  
+We used WSG, the wood specific gravity after drying at 100^$\circ$^C and LMA, the leaf mass per unit area measured for the leaf lamina excluding the petiole and for compound leaves the petiolules for leaves receiving direct sunlight as described in @Wright:2010.
 
 \
 Among the `r length(sp.exp.param$sp)` species with observed data on ($K_\textrm{leaf}$ vs. $\mathrm{\Psi}$~leaf~) used to build the community-level models of leaf vulnerability curves, two lacked data on WSG and five on LMA~lamina~. We filled three gaps in LMA using a linear relationship between LMA and LMA~disc~, the latter defined as the mean leaf mass per unit area measured for a 1.483 cm^2^ leaf disc taken to avoid veins (g m^-2^) for leaves receiving direct sunlight ($\overline{\textrm{LMA}} = `r disc.cf[1]` + `r disc.cf[2]`\textrm{LMA}_{disc}$; Adj. $R$^2^ = `r disc.r2`; $p$ `r disc.p`, $n$ = `r disc.n`). We filled the two remaining gaps in LMA using a linear relationship between LMA and LMA~lamina~, as measured during the smaller, $K_\textrm{leaf}$ campaign ($\overline{\textrm{LMA}} = `r lma.cf[1]` + `r lma.cf[2]`\textrm{LMA}_{lamina}$; Adj. $R$^2^ = `r lma.r2`; $p$ `r lma.p`, $n$ = `r lma.n`). We chose not to fill the two data gaps in WSG as available data were poor predictors of WSG.
@@ -204,7 +225,7 @@ G_{s,t|z} = \beta_{0,s|z,h} + \beta_{1,s|z,h}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} 
 
 \begin{equation}
 G_{s,t|z} = \beta_{0,s|z,h} + \beta_{1,s|z,h}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} K_{\textrm{leaf},s,i|z,h}^{*} \hat{\textrm{VPD}}_{i}^{*}) + \epsilon_{s,t|z,h}
-(\#eq:M-3)
+(\#eq:M3)
 \end{equation}
 
 \begin{equation}
@@ -222,5 +243,7 @@ G_{s,t|z} = \beta_{0,s|z,h} + \beta_{1,s|z,h}(\frac{1}{n_{t}}\sum_{i=1}^{n_{t}} 
 (\#eq:M6)
 \end{equation}
 where n~t~ are the total number of days in census interval $t$, the superscript * indicates that the variable has been standardized between 0 and 1, and $\epsilon$ is the model error term. $\hat{\textrm{VPD}}$ is the predicted GPP from a locally derived polynomial relationship between gross primary productivity (GPP) and VPD, so as to account for the non-linear impact of VPD on growth. See the ERD model description in the main text for other details.
+
+The best ERD model explained a large fraction of the variance in $\mathrm{\delta}$^2^H~xylem~. This model included an effect of VPD and not LAI (Eq. \@ref(eq:M3)). Two of the alternative models (Eq. \@ref(eq:M4) & \@ref(eq:M6)) with LAI had a strong relationship with $\mathrm{\delta}$^2^H~xylem~ as well, but one that was based on a smaller set of species ($n$ = 4 or 5), because fewer species passed the criteria of sufficient species-level goodness-of-fit for these models (<17 species vs. `r length(erd.sp)` species for the best model, Fig. S9). For the rest of the analyses we therefore used ERD estimates from the less parsimonious model (Eq. \@ref(eq:M-3)).
 
 # References

@@ -147,7 +147,7 @@ sp4 census leaf_gm n_traps       date         site site.trap.area leaf_gm_per_m2
     looping over days t in 1:365   
     LAI[t] <- sum(leaf_fall_LAI[c(t: (t+sp.lifespan)) %% 365])  
     where sp.lifespan are the number of days in species leaf lifespan  
-    To normalise LAI, it is the divided by the maximum value.  
+    To normalise LAI, it is then divided by the maximum value.  
 
 
 ```{r leaf-fall-LAI, eval = TRUE, echo = FALSE, message = FALSE, fig.align ='center', out.width = "90%", results = "asis", fig.cap = paste0("\\label{leaf-fall-LAI}Seasonality curves for Leaf Fall in LAI units. LL = species-specific leaf lifespan in days. Species are color coded by deciduousness.")}

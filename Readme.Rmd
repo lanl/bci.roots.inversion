@@ -66,18 +66,19 @@ source("code/07.0_PhenoDemoTraitsPsi.R")
 # Two files are used within the report
 # For data, 06.0_load.R and 
 # For figures and data, code/08.0_manuscript_data_figs.R
-if (!require("groundhog")) install.packages("groundhog"); 
+if (!require("groundhog")) install.packages("groundhog")
+library(groundhog)
 groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
 if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
 set.groundhog.folder(groundhog.folder)
-library(groundhog)
+
 groundhog.day = "2021-01-01"
-# groundhog.library('rmarkdown', groundhog.day)
+groundhog.library('rmarkdown', groundhog.day)
 # .rs.restartR() to restart R session
 groundhog.library('bookdown', groundhog.day)
-groundhog.library('knitr', groundhog.day)
+# groundhog.library('knitr', groundhog.day)
 # rmarkdown::render("09.0_manuscript.rmd", output_format = "bookdown::html_document2")
-render("09.0_manuscript.rmd", output_format = "bookdown::word_document2")
+rmarkdown::render("09.0_manuscript.rmd", output_format = "bookdown::word_document2")
 ```
 
 **Supporting Information**

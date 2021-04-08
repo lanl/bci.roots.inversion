@@ -280,8 +280,8 @@ hypo.table <-
       "$\\mathrm{\\Psi}$~tlp~",
       "$\\mathrm{\\Psi}$~min~ - $\\mathrm{\\Psi}$~88,stem~"
     ),
-    Deeper.ERD = c("Higher", "Less negative", "Less negative", "More negative"),
-    Shallower.ERD = c("Lower", "More negative", "More negative", "Positive, or less negative")
+    Deeper.ERD = c("Higher", "Less negative", "Less negative", "Narrower"),
+    Shallower.ERD = c("Lower", "More negative", "More negative", "Wider")
   )
 symbols.table <-
   data.frame(
@@ -466,3 +466,13 @@ eddy.table <- data.frame(Variable = c("Rain",
                                         "> 0.15",
                                         "< 55",
                                         "< 55"))
+
+## Distribution of max depth in ELM-FATES and thus root zone
+psi.par.sam <- split(psi, psi$par.sam)
+elm.depths <- unlist(lapply(psi.par.sam, function(x) {max(x$depth)}))
+root.zone.med <- as.numeric(quantile(elm.depths, probs = c(0.5)))
+root.zone.CI1 <- as.numeric(quantile(elm.depths, probs = c(0.05)))
+root.zone.CI2 <- as.numeric(quantile(elm.depths, probs = c(0.95)))
+root.zone.IQ1 <- as.numeric(quantile(elm.depths, probs = c(0.25)))
+root.zone.IQ2 <- as.numeric(quantile(elm.depths, probs = c(0.75)))
+

@@ -1213,7 +1213,7 @@ unique(Bart.stem.hyd$Biome)
 # [7] "TemperateGymno"
 lit.data <- Bart.stem.hyd %>% subset(Group == "Angiosperm") %>%
   droplevels() %>%
-  rename(Species = Name,
+  rename(sp = Name,
          `Psi[tlp]` = TLP..MPa.,
         `Psi["88,stem"]` = Reported.Stem.P88..MPa.,
         `Psi["50,stem"]` = Reported.Stem.P50..MPa.,
@@ -1222,12 +1222,13 @@ lit.data <- Bart.stem.hyd %>% subset(Group == "Angiosperm") %>%
          Dataset = "Bartlett et al. 2016") %>%
   dplyr::select(Dataset, Group, Biome, `Psi[tlp]`, `Psi["88,stem"]`, `Psi["50,stem"]`, `Psi[min] * "-" * Psi["88,stem"]`) %>%
   bind_rows(Li.stem.hyd %>%
-              rename(`Psi[tlp]` = TLP,
+              rename(sp = Species,
+                     `Psi[tlp]` = TLP,
                      `Psi["88,stem"]` = stemP88) %>%
               mutate(Group = "Angiosperm", Biome = "Temperate",
                      Dataset = "Li et al. 2018")) %>%
   bind_rows(erd.pairs.SI %>%
-              mutate(Group = "Angiosperm", Species = sp, Biome = "TropicalMoist",
+              mutate(Group = "Angiosperm", Biome = "TropicalMoist",
                      Dataset = "This Study") %>%
               dplyr::select(Dataset, Group, Biome, `Psi[tlp]`, `Psi["88,stem"]`, `Psi["50,stem"]`, `Psi[min] * "-" * Psi["88,stem"]`)) %>%
   droplevels()
@@ -1257,53 +1258,3 @@ lit.plot <- ggplot(lit.data.tlp.P88,
   xlab("Stem P88 (MPa)") + ylab("Leaf TLP (MPa)")
 ggsave("tlp_stemp88_literature_comparison.jpeg", plot = lit.plot, path =
          file.path("figures/PhenoDemoTraitsPsi"), device = "jpeg", height = 3.3, width = 5.5, units ='in')
-
-# ## Extra-----
-# lit.data.2 <- lit.stem.hyd %>% subset(Group == "Angiosperm") %>%
-#   droplevels() %>%
-#   rename(Species = Name,
-#          `Psi[tlp]` = TLP..MPa.,
-#          `Psi["88,stem"]` = Reported.Stem.P88..MPa.,
-#          `Psi["50,stem"]` = Reported.Stem.P50..MPa.,
-#          `Psi[min]` = Psimin_midday..MPa.) %>%
-#   mutate(`Psi[min] * "-" * Psi["88,stem"]` = `Psi[min]` - `Psi["88,stem"]`,
-#          Dataset = "Bartlett et al. 2016") %>%
-#   dplyr::select(Dataset, Species, Group, Biome, `Psi[tlp]`, `Psi["88,stem"]`, `Psi["50,stem"]`, `Psi[min] * "-" * Psi["88,stem"]`, `Psi[min]`) %>%
-#   bind_rows(erd.stem.traits %>%
-#               select(-se) %>%
-#               pivot_wider(names_from = trait, values_from = value) %>%
-#               mutate(Group = "Angiosperm", Species = sp, Biome = "TropicalMoist",
-#                      Dataset = "Wolfe et al. 2021") %>%
-#               # subset(Species %in% erd.sp) %>%
-#               rename(`Psi[tlp]` = TLP, `Psi["88,stem"]` = p88S, `Psi["50,stem"]` = p50S, `Psi[min] * "-" * Psi["88,stem"]` = HSM88S, `Psi[min]` = lwp.min_Diurnal) %>%
-#               dplyr::select(Dataset, Species, Group, Biome, `Psi[tlp]`, `Psi["88,stem"]`, `Psi["50,stem"]`, `Psi[min] * "-" * Psi["88,stem"]`, `Psi[min]`)) %>%
-#   droplevels()
-#
-# lit.data.tlp <- lit.data.2 %>%
-#   filter_at(vars(`Psi[min]`, `Psi[tlp]`), all_vars(!is.na(.)))
-#
-# lit.plot.base <- ggplot(lit.data.tlp) +
-#   geom_abline(slope = 1) +
-#   scale_shape_manual(values = c(16, 8)) +
-#   scale_size_manual(values = c(2, 2)) +
-#   scale_color_manual(values = c(gg_color_hue(4)[c(4, 2:3)], "red")) +
-#   guides(shape = guide_legend(order = 1,
-#                               override.aes = list(size = 2)),
-#          fill = guide_legend(order = 2,
-#                              override.aes = list(color = "white")),
-#          size = FALSE)
-# lit.plot.tlp <- lit.plot.base + geom_point(aes(y = `Psi[min]`, x = `Psi[tlp]`,
-#                  shape = Dataset,color = Biome, size = Dataset)) +
-#   ylab("minimum Diurnal (MPa)") + xlab("TLP (MPa)")
-# ggsave("minLWP_tlp_Bartlett_2016_vs._Wolfe_2021.jpeg", plot = lit.plot.tlp, path =
-#          file.path("figures/PhenoDemoTraitsPsi"), device = "jpeg", height = 3.3, width = 5.5, units ='in')
-#
-# lit.data.p88 <- lit.data.2 %>%
-#   filter_at(vars(`Psi[min]`, `Psi[tlp]`), all_vars(!is.na(.)))
-#
-# lit.plot.p88 <- lit.plot.base %+%
-#   geom_point(aes(y = `Psi[min]`, x = `Psi["88,stem"]`,
-#                  shape = Dataset,color = Biome, size = Dataset)) +
-#   ylab("minimum Diurnal (MPa)") + xlab("Stem P88 (MPa)")
-# ggsave("minLWP_p88_Bartlett_2016_vs._Wolfe_2021.jpeg", plot = lit.plot.p88, path =
-#          file.path("figures/PhenoDemoTraitsPsi"), device = "jpeg", height = 3.3, width = 5.5, units ='in')

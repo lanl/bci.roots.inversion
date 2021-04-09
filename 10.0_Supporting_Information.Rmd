@@ -242,9 +242,9 @@ where r is the correlation, and $R^2$ the Goodness-of-fit, between observed grow
 
 The best ERD model structure explained a large fraction of the variance in $\mathrm{\delta}$^2^H~xylem~. This model included an effect of VPD and not LAI (Eq. \@ref(eq:M3)). Two of the alternative models (Eqs. \@ref(eq:M4) & \@ref(eq:M6)) with LAI had a strong relationship with $\mathrm{\delta}$^2^H~xylem~ as well, but one that was based on a smaller set of species ($n$ = 4 or 5), because fewer species passed the criteria of sufficient species-level goodness-of-fit for these models (<17 species vs. `r length(erd.sp)` species for the best model, Fig. S9). For the rest of the analyses we therefore used ERD estimates from the less parsimonious model (Eq. \@ref(eq:M3)).
 
-# Additional results on exposure to water-stress
+## Additional results on exposure to water-stress
 
-Overall, species with ERD deeper than 2.9 m did not cross species $\mathrm{\Psi}$~crit~ for the entire 25-yr period for which $\mathrm{\Psi}_{\textrm{soil},z}$ was modeled (1990-2015). Soil depths deeper than 1.7 m remained above `r round(psi.1.7.min$median, 2)` MPa (`r round(as.numeric(psi.1.7.min$q97.5), 2)`, `r round(as.numeric(psi.1.7.min$q2.5), 2)`; median, 95% CI) through all the dry seasons and drought periods, which is above $\mathrm{\Psi}$~crit~ of the most sensitive tree species (`r min.psi_crit` MPa).
+Overall, species with ERD deeper than 2.9 m did not cross species $\mathrm{\Psi}$~crit~ for the entire 25-yr period for which $\mathrm{\Psi}_{\textrm{soil},z}$ was modeled (1990-2015). Soil depths deeper than 2.9 m remained above `r round(psi.2.9.min$median, 2)` MPa (`r round(as.numeric(psi.2.9.min$q97.5), 2)`, `r round(as.numeric(psi.2.9.min$q2.5), 2)`; median, 95% CI) through all the dry seasons and drought periods, which is above $\mathrm{\Psi}$~crit~ of the most sensitive tree species (`r min.psi_crit` MPa).
 
 
 ## Data Descriptions 

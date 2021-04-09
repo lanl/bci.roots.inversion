@@ -17,7 +17,7 @@ gc()
 #### Written with R version 4 ###
 #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-05-01"
+groundhog.day = "2021-01-01"
 pkgs=c('tidyverse', 'scales', 'ggpmisc')
 groundhog.library(pkgs, groundhog.day)
 
@@ -97,6 +97,7 @@ iso <- iso %>%
   unite("deci_sp", deciduous, sp, remove = FALSE) %>%
   mutate(deci_sp.plot = factor(deci_sp, levels=unique(deci_sp[order(Xylem_sap_deltaD_permil)]), ordered=TRUE))
 
+xylem.label <- expression(delta^2*H[xylem]~"( \u2030)")
 g1 <- ggplot(iso %>% subset(!is.na(Xylem_sap_deltaD_permil)),
              aes(x = deci_sp.plot, y = Xylem_sap_deltaD_permil)) +
   geom_col(aes(fill = deciduousness)) +
@@ -104,7 +105,9 @@ g1 <- ggplot(iso %>% subset(!is.na(Xylem_sap_deltaD_permil)),
   theme(legend.position = "top") +
   ylab(xylem.label) + xlab("Species") +
   geom_errorbar(aes(ymax = Xylem_sap_deltaD_permil + se, ymin = Xylem_sap_deltaD_permil - se), width = 0.2, size = 0.5) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_y_continuous(breaks = seq(from = -60, to = 0, by = 5)) +
+  theme(panel.grid.major = element_line(colour = "gray", size = 0.1))
 ggsave(file.path(paste0("data-raw/traits/isotopes/Meinzer1999_Table1_Xylem_Sap_deltaD_Fig4.jpeg")),
        plot = g1, height = 5, width = 6, units='in')
 g2 <- g1 + coord_flip() +
@@ -150,8 +153,11 @@ depth.m1.label2 = paste0("R2 = ", round(summ.depth.m1$r.squared, 2),
 formula <- 'y ~ x'
 g1 <- ggplot(iso.soil.1, aes(y = depth, x = soil.deltaD)) +
   xlab(soil.label) + ylab("Depth (cm)") +
-  scale_y_reverse() +
-  xlim(-60,0) +  theme(text = element_text(size = 20)) +
+  scale_y_reverse(breaks = seq(from = 0, to = 100, by = 10)) +
+  scale_x_continuous(breaks = seq(from = -60, to = -10, by = 5)) +
+  coord_cartesian(xlim = c(-60, -10)) +
+  theme(panel.grid.major = element_line(colour = "gray", size = 0.1)) +
+  theme(text = element_text(size = 10)) +
   geom_smooth(method = "lm", se = FALSE, size = 0.5, formula = formula) +
   geom_errorbarh(aes(xmax = soil.deltaD + se, xmin = soil.deltaD - se), size = 0.3, width = 0.2) +
   geom_point(shape = 21, color = "white", fill = "black", alpha = 1, size = 2) +
@@ -198,8 +204,6 @@ iso <- iso %>% mutate(depth = predict.lm(depth.m1, newdata = data.frame(soil.del
                                                     newdata = data.frame(soil.deltaD = Xylem_sap_deltaD_permil + SE))/100) # from cm to m
 head(iso)
 
-
-xylem.label <- expression(delta^2*H[xylem]~"( \u2030)")
 change.xylem.label <- expression('Change in '*delta^2*H[xylem]~"( \u2030)"*day^-1)
 
 iso.2.raw <- iso.2.raw %>%

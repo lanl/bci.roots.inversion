@@ -170,7 +170,7 @@ plot.psi.stat.7.interval.q5.depth.freq.base <-
   ylab(expression('Frequency of extreme '*Psi[soil]*~"(yrs)")) + xlab("Day of the Year")
 
 ## Minimum Soil water potential reached at depth 1.7 + CI
-psi.1.7.min <- subset(psi.stat.4.select, depth == 1.7) %>%
+psi.2.9.min <- subset(psi.stat.4.select, depth == 2.9) %>%
   subset(median == min(median, na.rm = TRUE))
 ## Psi_crit of most sensitive speceis
 
@@ -285,7 +285,8 @@ ml.rsq.combine.sub <- ml.rsq.combine.best %>%
 formula = y~x
 ml.rsq.combine.chosen <- ml.rsq.combine.sub %>% subset(corr.func == chosen.model)
 lm.erd.iso <- lm(Xylem_sap_deltaD_permil ~ depth, data = ml.rsq.combine.chosen)
-lm.erd.iso.r2 <- round(summary(lm.erd.iso)$r.squared, 2); lm.erd.iso.p <- round(coef(summary(lm.erd.iso))[2,4], 2)
+lm.erd.iso.r2 <- round(summary(lm.erd.iso)$r.squared, 2);
+lm.erd.iso.p <- round(coef(summary(lm.erd.iso))[2,4], 3)
 
 xylem.label <- expression(delta^2*H[xylem]~"( \u2030)")
 p4 <- ggplot(ml.rsq.combine.chosen,

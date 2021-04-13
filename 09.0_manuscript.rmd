@@ -73,7 +73,7 @@ Berkeley, CA, USA 94720
 Section  | Word Count  
 ------------- | -------------  
 Summary | 200  
-Main Text  | 6934  
+Main Text  | 6933  
 Introduction | 831    
 Methods |  3150  
 Results | 838  
@@ -366,13 +366,13 @@ Figure \@ref(fig:ab-fit): Parameters $A$ (panel **a**) & $B$ (panel **b**) for t
 Figure \@ref(fig:erd-iso): Modeled effective rooting depth (ERD; mean $\pm$ 1SE; m) versus dry-season stable isotopic concentration $\mathrm{\delta}$^2^H~xylem~ (mean $\pm$ 1SE; ‰) for `r length(unique(erd.iso$sp))` canopy species from Barro Colorado Island. $\mathrm{\delta}$^2^H~xylem~ data are from @Meinzer:1999. 
 
 \
-Figure \@ref(fig:sp-erd): Modeled effective rooting depth (ERD; mean $\pm$ 1SE in m) for `r  length(erd.sp)` large, canopy species of Barro Colorado Island. A species ERD is defined as the median, across 100 hydrological realizations, of soil layer depth $z$ at which soil water dynamics ($\mathrm{\Psi}_{\textrm{soil,} z}$) best explained observed dynamics of species growth for each realization. As soil layers in the hydrological model are discretely resolved into exponentially increasing depths, so is the ERD axis. Deeper depths are shown with darker blue colors.  
+Figure \@ref(fig:sp-erd): Modeled effective rooting depth (ERD; mean $\pm$ 1SE in m) for `r  length(erd.sp)` large, canopy species of Barro Colorado Island. A species ERD is defined as the median, across 100 hydrological realizations, of soil layer depth $z$ at which soil water dynamics ($\mathrm{\Psi}_{\textrm{soil,} z}$) best explained observed dynamics of species growth for each realization. As soil layers in the hydrological model are discretely resolved into exponentially increasing depths, so is the ERD axis. Species are color coded by leaf habit.  
 
 \
-Figure \@ref(fig:erd-hyd): Modeled effective rooting depth (ERD) versus hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's $r$ and significance levels. Linear model fits (blue lines) with confidence bands (gray area) are shown for significant fits at $\alpha$ = 0.05. See Fig. S10 for the full correlation matrix.
+Figure \@ref(fig:erd-hyd): Modeled effective rooting depth (ERD) versus hydraulic properties for seven canopy species found on Barro Colorado Island (Panama). Spearman's $r$ and significance levels are given in panel insets. Linear model fits (blue lines) with confidence bands (gray area) are shown for significant fits at $\alpha$ = 0.05. See Fig. S10 for the full correlation matrix. Species are color coded by leaf habit. Multiple species in Facultative Deciduous leaf-habit are distinguished by shapes.  
 
 \
-Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE in % yr^-1^) versus modeled effective rooting depth (ERD; mean $\pm$ 1SE in m) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen, canopy species found on Barro Colorado Island over seven census intervals (1981-2015). $R$^2^ and significance levels for linear model fits are given in panel insets. Model fits (blue lines) with confidence bands (gray area) are only shown for periods with significant fits at $\alpha$ = 0.05 or $\alpha$ = 0.1 (1982-85), identified by census-intervals with a superscript *. 
+Figure \@ref(fig:erd-mort-census-evg): Mortality rate (mean $\pm$ 1SE in % yr^-1^) versus modeled effective rooting depth (ERD; mean $\pm$ 1SE in m) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen, canopy species found on Barro Colorado Island over seven census intervals (1981-2015). $R$^2^ and significance levels for linear model fits are given in panel insets. Model fits (blue lines) with confidence bands (gray area) are only shown for periods with significant fits. Census intervals, for which fits are significant at $\alpha$ = 0.05 are identified by superscript $**$, while those significant at $\alpha$ = 0.1 by superscript $*$. 
 
 \
 Figure \@ref(fig:erd-time-evg): Modeled effective rooting depth (ERD; horizontal-axis) versus time spent beyond critical hydraulic threshold (vertical axis) by census interval (colored bars) for `r nrow(mrate.depth.mean %>% subset(deciduous == "E"))` evergreen species included in the mortality analyses (Fig. \@ref(fig:erd-mort-census-evg)). Each bar represents the average time species of the same ERD spent beyond species-specific critical hydraulic thresholds in a given interval, that is, the proportion of days for which $\mathrm{\Psi}_{\textrm{soil},z=\textrm{ERD}}$ was more negative than species $\mathrm{\Psi}$~crit~, defined as $\mathrm{\Psi}$~20,leaf~, and where $z$ is the soil depth matching species ERD. Standard error of the mean are shown over each bar when available. Note the squared y-axis scale.

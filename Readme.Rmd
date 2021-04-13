@@ -53,7 +53,7 @@ Script to load data generated from the data preparation script above for use in 
 
 # Model Setup
 
-Set-up and run effective rooting depth models, evaluate model, and join ERD from the predicted model with hydraulic traits and mortality data, and calculated realized hydraulic risk
+Set-up and run effective rooting depth models, evaluate model, and join ERD from the predicted model with hydraulic traits and mortality data, and calculate realized hydraulic risk
 
 ```{r Chunk 07.0, eval = FALSE}
 source("code/07.0_PhenoDemoTraitsPsi.R")
@@ -84,8 +84,8 @@ rmarkdown::render("09.0_manuscript.rmd", output_format = "bookdown::word_documen
 **Supporting Information**
 
 ```{r Chunk 10.0, eval = FALSE}
-# render("10.0_Supporting_Information.Rmd", output_format = "bookdown::html_document2")
-render("10.0_Supporting_Information.Rmd", output_format = "bookdown::word_document2")
+# rmarkdown::render("10.0_Supporting_Information.Rmd", output_format = "bookdown::html_document2")
+rmarkdown::render("10.0_Supporting_Information.Rmd", output_format = "bookdown::word_document2")
 ```
 
 ```{r Chunk 11.0, eval = FALSE}

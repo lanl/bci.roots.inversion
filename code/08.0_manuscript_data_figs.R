@@ -153,6 +153,9 @@ plot.psi.stat.7.interval.q5.depth <- plot.psi.stat.7.interval.q5.depth.base +
 ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q5_by_depth.jpeg",
        plot = plot.psi.stat.7.interval.q5.depth, file.path(figures.folder), device = "jpeg", height = 5, width = 8, units='in')
 
+ggsave("psi_model_daily_bestfit_params.top.few_CI_full_interval_panels_climatology_over_study_period_q5_by_depth.tiff",
+       plot = plot.psi.stat.7.interval.q5.depth, file.path(figures.folder), device = "tiff", height = 5, width = 8, units='in')
+
 plot.psi.stat.7.interval.q5.depth.freq.base <-
   ggplot(subset(psi.stat.4.select.freq, depth %in% c(0.5, 1, 1.7) &
                   interval.yrs != "(Missing)") %>% droplevels()) +
@@ -571,7 +574,8 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
                                             label = sprintf('italic(p)~"="~%.2f', p),
                                             group = trait.plot), parse = TRUE, vjust = "inward", hjust = "inward") +
   geom_errorbarh(aes(xmax = depth + depth.se, xmin = depth - depth.se), size = 0.2) +
-  geom_point(shape = 21, color = "white", aes(fill = deciduousness), alpha = 1, size = 2.5) +
+  geom_point(color = "white", aes(fill = deciduousness, shape = sp), alpha = 1, size = 2.5) +
+  scale_shape_manual(values = c(21, 22, 23, 21, 24, 21, 25)) +
   coord_cartesian(xlim = c(0, max(erd.stem.traits.only.lab$depth) + 0.5)) +
   xlab("Effective Rooting Depth (m)") + ylab("") +
   facet_wrap(trait.plot ~ ., scales = "free_y", labeller = label_parsed,
@@ -579,9 +583,11 @@ depth.traits.select.plot <- ggplot(erd.stem.traits.only.lab,
   theme(strip.placement = "outside", panel.spacing.x = unit(0, "lines"),
         strip.text.y.left = element_text(size = 10, angle = 90, vjust = -1),
         plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")) +
-  guides(fill = guide_legend(order = 1, title = "Leaf habit", direction = "horizontal",
-                              override.aes = list(size = 3),
-                              nrow = 2, byrow = TRUE)) +
+  guides(fill = guide_legend(order = 1, title = "Leaf habit",
+                             direction = "horizontal",
+                              override.aes = list(size = 3, shape = 21),
+                              nrow = 2, byrow = TRUE),
+         shape = FALSE) +
   theme(legend.position = "top",
         legend.title=element_text(size = 11.5),
         legend.background = element_blank(),
@@ -984,6 +990,9 @@ mfac.plot.9.0.int.evg <- mfac.plot.9.0.int %+% mrate.mfac.depth.select.evg
 
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.jpeg")),
        plot = mfac.plot.9.0.int.evg,  height = 3.1, width = 3.5, units = 'in')
+ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_evergreen.tiff")),
+       plot = mfac.plot.9.0.int.evg,  height = 3.1, width = 3.5, units = 'in')
+
 
 mrate.mfac.depth.select.deci <- subset(mrate.mfac.depth.select,
                                       deciduous != "E") %>%
@@ -994,6 +1003,8 @@ mrate.mfac.depth.select.deci <- subset(mrate.mfac.depth.select,
 mfac.plot.9.0.int.deci <- mfac.plot.9.0.int %+% mrate.mfac.depth.select.deci
 
 ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_deciduous.jpeg")),
+       plot = mfac.plot.9.0.int.deci,  height = 3.1, width = 3.5, units = 'in')
+ggsave(file.path(paste0(figures.folder, "/mfac vs. rdi.gr_deciduous.tiff")),
        plot = mfac.plot.9.0.int.deci,  height = 3.1, width = 3.5, units = 'in')
 
 # dat1 <- mrate.mfac.depth.select %>% subset(deciduous == "E")

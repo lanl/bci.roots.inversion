@@ -18,7 +18,7 @@ csl: new-phytologist.csl
 
 ```{r setup1, include=FALSE, echo = FALSE}
 if (!require("groundhog")) install.packages("groundhog");
-groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+groundhog.folder <- paste0("groundhog.library")
 if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
 set.groundhog.folder(groundhog.folder)
 library(groundhog)

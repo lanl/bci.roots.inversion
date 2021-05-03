@@ -22,11 +22,10 @@ source("code/06.0_load.R")
 ####   Load Libraries, Prep for graphics, folders  ##
 #*******************************************
 
-if (!require("groundhog")) install.packages("groundhog");
-groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
+groundhog.folder <- paste0("groundhog.library")
 if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
 set.groundhog.folder(groundhog.folder)
-library(groundhog)
 groundhog.day = "2021-01-01"
 pkgs=c('tidyverse', 'readxl', 'forcats', 'agricolae', 'gridExtra',
        'scales', 'GGally', 'ggpmisc', 'Evapotranspiration',

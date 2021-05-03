@@ -14,7 +14,10 @@ gc()
 #### Written with R version 4 ###
 #*******************************************
 if (!require("groundhog")) install.packages("groundhog"); library(groundhog)
-groundhog.day = "2020-05-01"
+groundhog.folder <- paste0("groundhog.library")
+if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
+set.groundhog.folder(groundhog.folder)
+groundhog.day = "2021-01-01" # "2020-05-01"
 pkgs=c('tidyverse', 'purrrlyr', 'scales', 'grid', 'gridExtra', 'lme4')
 groundhog.library(pkgs, groundhog.day)
 

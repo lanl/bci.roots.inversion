@@ -68,7 +68,7 @@ source("code/07.0_PhenoDemoTraitsPsi.R")
 # For figures and data, code/08.0_manuscript_data_figs.R
 if (!require("groundhog")) install.packages("groundhog")
 library(groundhog)
-groundhog.folder <- paste0("Users/ftuser/Library/R/4.0/library/bci.roots.inversion")
+groundhog.folder <- paste0("groundhog.library")
 if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
 set.groundhog.folder(groundhog.folder)
 

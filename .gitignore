@@ -9,7 +9,9 @@
 # You can be specific with these rules
 !*.rmd
 !*.md
+!*.Rmd
 !.gitignore
+groundhog.library/*
 .Rproj.user
 .Rhistory
 .RData

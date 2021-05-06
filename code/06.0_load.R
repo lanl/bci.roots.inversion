@@ -306,7 +306,7 @@ symbols.table <-
       "Bulk leaf turgor loss point, the $\\mathrm{\\Psi}$~leaf~ where turgor potential = 0",
       "$\\mathrm{\\Psi}$~leaf~ at 20% loss of leaf conductance",
       "$\\mathrm{\\Psi}$~stem~ at 88% loss of stem conductivity",
-      "Seasonal minimum water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday in the dry season",
+      "Seasonal minimum leaf water potential, the most negative $\\mathrm{\\Psi}$~leaf~ measured at midday in the dry season",
       "Above-ground hydraulic safety margin",
       "Leaf-area specific hydraulic conductance of leaf",
       "Maximum leaf area-specific hydraulic conductance of leaf",
@@ -441,8 +441,8 @@ param.table <-
         "Ben Turner; pers. comm.",
         "Empirical",
         "To account for high macroporosity and direct flow paths in tropical soils that is not accounted for by small soil core samples [@Broedel:2017; @Kinner:2004; @Tomasella:1998]",
-        "For Conrad catchment observed median Ksat (95% CI) for 12.5 cm depth is 38.3 mm hr^-1^ (25.4 - 51.2, n = 75), while for 60 cm depth 0.7 mm hr^-1^ (0.2 - 1.2, n = 40) [@Kinner:2004]. For reference, a storm with 12.5 mm hr^-1^ rainfall intensity has a 0.2 probability of occurring in any given rainfall event.",
-        "Based on throughfall data from [@Zimmermann:2010kzl] and precipitation data for BCI from STRI Physical Monitoring program, defined for precipitation events greater than 10 mm."
+        "For Conrad catchment observed median Ksat (95% CI) for 12.5 cm depth is 38.3 mm hr^-1^ (25.4 - 51.2, n = 75), while for 60 cm depth 0.7 mm hr^-1^ (0.2 - 1.2, n = 40) [@Godsey:2004]. For reference, a storm with 12.5 mm hr^-1^ rainfall intensity has a 0.2 probability of occurring in any given rainfall event.",
+        "Based on throughfall data from [@Zimmermann.2010] and precipitation data for BCI from STRI Physical Monitoring program, defined for precipitation events greater than 10 mm."
       )
   )
 

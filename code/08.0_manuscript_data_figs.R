@@ -1171,20 +1171,20 @@ ab.table.obs <- obs.data.model.AB %>%
   subset(sp %in% erd.sp) %>%
   mutate(Source = "Data") %>%
   rename(A = data.A, B = data.B) %>%
-  dplyr::select(sp, A, B, Kmax, psi_kl50, Source)
+  dplyr::select(sp, A, B, Kmax, psi_kl20, Source)
 ab.table <-  ab.table.obs %>% bind_rows(data.model.AB %>%
               ## only those ERD species that for which data unavailable
               subset(sp %in% erd.sp[!erd.sp %in% unique(ab.table.obs$sp)]) %>%
               mutate(Source = "Model") %>%
               rename(A = model.A, B = model.B) %>%
-              dplyr::select(sp, A, B, Kmax, psi_kl50, Source)) %>%
+              dplyr::select(sp, A, B, Kmax, psi_kl20, Source)) %>%
   left_join(erd.sp.names, by = c("sp")) %>%
-  dplyr::rename(Kmax_leaf = Kmax, Psi_50_leaf = psi_kl50) %>%
+  dplyr::rename(Kmax_leaf = Kmax, Psi_20_leaf = psi_kl20) %>%
   mutate(Species = tolower(Species)) %>%
-  dplyr::select(Genus, Species, Family, A, B, Kmax_leaf, Psi_50_leaf, Source) %>%
+  dplyr::select(Genus, Species, Family, A, B, Kmax_leaf, Psi_20_leaf, Source) %>%
   mutate(Family = as.character(Family)) %>%
   mutate(A = round(A, 4), B = round(B, 4),
-         Kmax_leaf = round(Kmax_leaf, 2), Psi_50_leaf = round(Psi_50_leaf, 2))
+         Kmax_leaf = round(Kmax_leaf, 2), Psi_20_leaf = round(Psi_20_leaf, 2))
 
 # # Some familynames do not end in ceae. Correcting that
 # correct.family <- data.frame(misspelt = unique(ab.table$Family[-grep("aceae", ab.table$Family)]),

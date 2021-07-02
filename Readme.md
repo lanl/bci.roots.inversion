@@ -102,7 +102,7 @@ and calculate realized hydraulic risk
 
 ## Copyrights
 
-© 2021. Triad National Security, LLC. All rights reserved.
+© 2021. Triad National Security, LLC. All rights reserved. LANL C20130.
 
 This program was produced under U.S. Government contract
 89233218CNA000001 for Los Alamos National Laboratory (LANL), which is

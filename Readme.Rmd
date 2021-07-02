@@ -3,11 +3,11 @@ title: "Workflow Part II: Inverse root depth modeling and post-processing"
 author: "Rutuja Chitra-Tarak"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document: default
+  md_document:
   html_document:
     df_print: paged
   word_document: default
-  md_document:
+  pdf_document: default
 subtitle: Hydraulically-vulnerable trees survive on deep-water access during droughts
   in a tropical forest
 ---
@@ -115,7 +115,7 @@ trackmd::trackChanges("09.0_manuscript.rmd")
 
 ## Copyrights
 
-© 2021. Triad National Security, LLC. All rights reserved.
+© 2021. Triad National Security, LLC. All rights reserved. LANL C20130.
 
 This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos
 National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S.

@@ -18,9 +18,9 @@ groundhog.folder <- paste0("groundhog.library")
 if(!dir.exists(file.path(groundhog.folder))) {dir.create(file.path(groundhog.folder))}
 set.groundhog.folder(groundhog.folder)
 
-groundhog.day = "2021-01-01"
+groundhog.day = "2021-05-20"
 groundhog.library('devtools', groundhog.day)
-pkgs=c('lattice', 'magick', 'cowplot', 'corrplot', 'ggcorrplot', 'tidyverse', 'readxl',
+pkgs=c('lattice', 'magick', 'tidyverse', 'cowplot', 'corrplot', 'ggcorrplot', 'readxl',
        'forcats', 'scales', 'data.table', 'ggpmisc', 'GGally', 'bookdown', 'rmarkdown', 'broom')
 groundhog.library(pkgs, groundhog.day)
 

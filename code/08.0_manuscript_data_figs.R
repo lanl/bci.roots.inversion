@@ -69,7 +69,9 @@ erd.sp.names.all <- bci.traits %>%
          Genus = ifelse(Genus == "Trattinnicki", "Trattinnickia", as.character(Genus)),
          Species = ifelse(Species == "costaricensi", "costaricensis", as.character(Species))) %>%
   dplyr::rename(sp = Code) %>%
-  mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", Species))
+  mutate(s.names = paste0(substr(Genus, start = 1, stop = 1), ". ", Species),
+          genus.sp = paste0(Genus, " ", Species))
+
 
 rownames(erd.sp.names.all) <- 1: nrow(erd.sp.names.all)
 
@@ -281,7 +283,7 @@ ml.rsq.combine.sub <- ml.rsq.combine.best %>%
   mutate(depth = as.numeric(depth)) %>%
   subset(!sp %in% c("guapst") & !is.na(Xylem_sap_deltaD_permil.mean)) %>%
   left_join(erd.sp.names.all %>%
-              dplyr::select(sp, s.names), by = "sp") %>%
+              dplyr::select(sp, genus.sp), by = "sp") %>%
   subset(source == "Meinzer et al.1999 Fig. 4") %>%
   droplevels()
 
@@ -295,7 +297,7 @@ xylem.label <- expression(delta^2*H[xylem]~"( \u2030)")
 p4 <- ggplot(ml.rsq.combine.chosen,
              aes(x = Xylem_sap_deltaD_permil, y = depth)) +
   geom_errorbarh(aes(xmax = Xylem_sap_deltaD_permil + se,
-                     xmin = Xylem_sap_deltaD_permil - se, color = s.names),
+                     xmin = Xylem_sap_deltaD_permil - se, color = genus.sp),
                  size = 0.5, height = 0.05, show.legend = FALSE) +
   geom_smooth(method = "lm", se = TRUE, size = 0.5, formula = formula, color = "gray10") +
   ylab(expression("Effective Rooting Depth (m)")) + xlab(xylem.label) +
@@ -310,15 +312,15 @@ p4 <- ggplot(ml.rsq.combine.chosen,
                                      sprintf('italic(p)~"="~%.3f', stat(p.value)))),
                   parse = TRUE,
                   npcx = 0.9, npcy = 0.1, size = 4) +
-  geom_point(shape = 21, color = "white", aes(fill = s.names), alpha = 1, size = 3.5) +
+  geom_point(shape = 21, color = "white", aes(fill = genus.sp), alpha = 1, size = 3.5) +
   geom_errorbar(aes(ymax = depth + depth.se, ymin = depth - depth.se), color = "black",
                 size = 0.3, width = 0.2) +
   guides(fill = guide_legend(title = "Species"), color = FALSE) +
   theme(legend.text = element_text(face = "italic", size = 8))
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.jpeg",
-       plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 4.3, units = 'in')
+       plot = p4, file.path(figures.folder), device = "jpeg", height = 3, width = 5, units = 'in')
 ggsave("psi.corr_best.depth_xylem_sap_deltaD_phenology_Meinzer_gr.Psi.VPD.tiff",
-       plot = p4, file.path(figures.folder), device = "tiff", height = 3, width = 4.3, units = 'in')
+       plot = p4, file.path(figures.folder), device = "tiff", height = 3, width = 5, units = 'in')
 
 
 ## as "gr.Psi.VPD.add" is not present
